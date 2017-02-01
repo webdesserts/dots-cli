@@ -1,0 +1,10 @@
+[package]
+name = "dots"
+version = "0.1.0"
+description = "a cli for managing all your dot(files)s"
+license = "MIT"
+authors = ["Michael Mullins <michael@webdesserts.com>"]
+
+[dependencies]
+clap = "^2.19.0"
+git2 = "^0.6"
