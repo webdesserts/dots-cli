@@ -1,10 +1,19 @@
 [package]
 name = "dots"
 version = "0.1.1"
-description = "a cli for managing all your dot(file)s"
+description = "A cli for managing all your dot(file)s"
 license = "MIT"
 authors = ["Michael Mullins <michael@webdesserts.com>"]
 
 [dependencies]
-clap = "^2.19.0"
-git2 = "^0.6"
+clap = "^2.20"
+colored = "^1.4.0"
+xdg = "^2"
+
+# logging
+env_logger = "^0.4.0"
+log = "^0.3.6"
+# serialization
+serde = "^0.9.6"
+serde_derive = "^0.9.6"
+serde_json = "^0.9"

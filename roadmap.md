@@ -1,6 +1,5 @@
 # Dots
 
-
 ## Interface
 - `dots install`
     - should install & link all dependencies
@@ -29,3 +28,10 @@ Maybe should be a Map of some sort that accepts 3 functions:
 
 Maybe also should list dependent installs so that things don’t try to install until their dependencies have installed?
 
+## Install Process
+
+1. download to `./config/dots/.tmp/`
+2. read `Dots.toml` package name
+3. rename to `./config/dots/{name}/`
+4. link everything
+5. write name => repo in `./config/dots/manifest.toml`
