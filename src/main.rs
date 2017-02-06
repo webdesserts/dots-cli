@@ -43,8 +43,8 @@ fn main() {
         (version: crate_version!())
         (about: crate_description!())
         (author: crate_authors!("\n"))
-        (@subcommand add =>
-            (about: "Downloads and adds the given git repo as a dot")
+        (@subcommand install =>
+            (about: "Downloads and installs the given git repo as a dot")
             (@arg REPO: +required "a git url that points to a Dot repo containing all your dotfiles")
         )
         (@subcommand remove =>
@@ -54,7 +54,7 @@ fn main() {
             (about: "Updates all dots")
         )
         (@subcommand list =>
-            (about: "List the names of all installed dots")
+            (about: "List the names of all installed dots and the repos they link to")
         )
         (@subcommand doctor =>
             (about: "Checks to make sure all files and symlinks are correctly applied")
@@ -64,7 +64,7 @@ fn main() {
     let matches = app.get_matches();
 
     match matches.subcommand() {
-        ("add", Some(sub_matches))    => commands::add(sub_matches),
+        ("install", Some(sub_matches)) => commands::install(sub_matches),
         ("remove", Some(sub_matches)) => commands::remove(sub_matches),
         ("update", Some(sub_matches)) => commands::update(sub_matches),
         ("list", _)   => commands::list(),

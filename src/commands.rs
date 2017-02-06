@@ -6,7 +6,7 @@ use std::process;
 use git_utils;
 use dots::{Dot, self};
 
-pub fn add(matches: &ArgMatches) {
+pub fn install(matches: &ArgMatches) {
 
     let url = matches.value_of("REPO").expect("Missing Argument <REPO>");
     info!("adding {}", url);
