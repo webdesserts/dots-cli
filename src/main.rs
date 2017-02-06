@@ -10,9 +10,10 @@ extern crate colored;
 extern crate serde_derive;
 extern crate serde_json;
 
-mod commands;
-mod git_utils;
+mod dots;
 mod dot_package;
+mod git_utils;
+mod commands;
 
 use colored::*;
 use env_logger::LogBuilder;

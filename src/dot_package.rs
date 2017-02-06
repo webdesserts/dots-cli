@@ -1,9 +1,9 @@
 use serde_json as json;
-use std::path::Path;
+use std::path::{Path};
 use std::collections::HashMap as Map;
-use std::process;
 use std::fs;
 use std::io::{Read, self};
+use std::error::Error;
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -14,20 +14,26 @@ pub struct DotPackage {
 }
 
 impl DotPackage {
-    pub fn new (path: &Path) -> DotPackage {
-        let contents = match read_package(path) {
-            Ok(val) => val,
+    pub fn new(path: &Path) -> Result<DotPackage, String> {
+        let contents = match read_package(path.join("Dot.json")) {
+            Ok(package) => package,
             Err(err) => {
-                error!("unable to read Dot.toml at {}", path.to_str().unwrap());
-                process::exit(1);
+                error!("Error reading Dot.json: {}", err.description());
+                return Err(String::from("Error reading Dot.json"))
             }
         };
-
-        json::from_str(&contents).unwrap()
+        let package = match json::from_str(&contents) {
+            Ok(package) => package,
+            Err(err) => {
+                error!("Error parsing Dot.json: {}", err.description());
+                return Err(String::from("Error parsing Dot.json"))
+            }
+        };
+        Ok(package)
     }
 }
 
-fn read_package(path: &Path) -> Result<String, io::Error> {
+fn read_package<P: AsRef<Path>>(path: P) -> io::Result<String> {
     let mut file = fs::File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
