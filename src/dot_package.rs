@@ -19,14 +19,14 @@ impl DotPackage {
             Ok(package) => package,
             Err(err) => {
                 error!("Error reading Dot.json: {}", err.description());
-                return Err(String::from("Error reading Dot.json"))
+                return Err("Error reading Dot.json".to_string())
             }
         };
         let package = match json::from_str(&contents) {
             Ok(package) => package,
             Err(err) => {
                 error!("Error parsing Dot.json: {}", err.description());
-                return Err(String::from("Error parsing Dot.json"))
+                return Err("Error parsing Dot.json".to_string())
             }
         };
         Ok(package)

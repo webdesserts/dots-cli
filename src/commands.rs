@@ -21,7 +21,7 @@ pub fn add(matches: &ArgMatches) {
 
     let dot = match Dot::new(&tmp) {
         Ok(dot) => dot,
-        Err(err) => {
+        Err(_) => {
             clean(&tmp);
             error!("Repo does not appear to be a Dot");
             process::exit(1);
@@ -35,9 +35,10 @@ pub fn add(matches: &ArgMatches) {
     if target_dir.exists() {
         info!("path already exists {:?}", target_dir);
 
-        //TODO: remove later;
-        warn!("Automatically removing the previously installed package");
-        clean(&target_dir);
+        if tmp.is_dir() {
+            warn!("Cleaning left over .tmp directory.\nIt appears another command failed to clean up after itself.");
+            clean(&target_dir);
+        }
     }
 
     fs::rename(tmp, target_dir).expect("Error renaming repo!");
@@ -46,7 +47,15 @@ pub fn add(matches: &ArgMatches) {
 pub fn remove(matches: &ArgMatches) { println!("remove has not yet been implemented!") }
 pub fn update(matches: &ArgMatches) { println!("update has not yet been implemented!") }
 
-pub fn list() { }
+pub fn list() {
+    for dot in dots::find_all() {
+        let remote = match dot.origin() {
+            Some(origin) => format!(" => {}", origin),
+            None => String::new()
+        };
+        println!("{}{}", dot.package.name, remote)
+    }
+}
 
 pub fn doctor() { println!("doctor has not yet been implemented!") }
 
