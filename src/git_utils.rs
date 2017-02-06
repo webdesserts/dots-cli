@@ -11,7 +11,6 @@ pub fn clone(url: &str, dest: &Path) {
         .arg(url)
         .arg(dest_str)
         .arg("--depth=1")
-        .arg("--shallow-submodules")
         .spawn()
         .map_err(|err| {
             match err.kind() {
