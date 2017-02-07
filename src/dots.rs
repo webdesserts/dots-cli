@@ -1,9 +1,7 @@
-use xdg;
-use dot_package::DotPackage;
 use std::path::{Path, PathBuf};
+use std::{process,env};
+use dot_package::DotPackage;
 use git_utils;
-use std::process;
-use std::env;
 
 pub struct Dot {
     pub package: DotPackage,
@@ -28,8 +26,13 @@ impl Dot {
 }
 
 pub fn root() -> PathBuf {
-    let xdg_dirs = xdg::BaseDirectories::new().expect("XDG Initialization Error");
-    xdg_dirs.create_config_directory("dots").expect("Error creating config directory")
+    match env::home_dir() {
+        Some(home) => home.join(".dots"),
+        None => {
+            error!("Unable to access home directory");
+            process::exit(1)
+        }
+    }
 }
 
 pub fn path<P: AsRef<Path>>(path: P) -> PathBuf {
