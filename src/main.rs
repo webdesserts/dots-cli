@@ -54,6 +54,7 @@ fn main() {
             (about: "Updates all dots")
         )
         (@subcommand list =>
+            (@arg origins: --origins "list the git origin of each dot")
             (about: "List the names of all installed dots and the repos they link to")
         )
         (@subcommand doctor =>
@@ -65,9 +66,9 @@ fn main() {
 
     match matches.subcommand() {
         ("install", Some(sub_matches)) => commands::install(sub_matches),
-        ("remove", Some(sub_matches)) => commands::remove(sub_matches),
-        ("update", Some(sub_matches)) => commands::update(sub_matches),
-        ("list", _)   => commands::list(),
+        ("remove", _) => commands::remove(),
+        ("update", _) => commands::update(),
+        ("list", Some(sub_matches)) => commands::list(sub_matches),
         ("doctor", _) => commands::doctor(),
         _ => { println!("{}", matches.usage()) }
     }

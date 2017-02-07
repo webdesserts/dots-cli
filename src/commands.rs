@@ -44,15 +44,17 @@ pub fn install(matches: &ArgMatches) {
     fs::rename(tmp, target_dir).expect("Error renaming repo!");
 }
 
-pub fn remove(matches: &ArgMatches) { println!("remove has not yet been implemented!") }
-pub fn update(matches: &ArgMatches) { println!("update has not yet been implemented!") }
+pub fn remove() { println!("remove has not yet been implemented!") }
+pub fn update() { println!("update has not yet been implemented!") }
 
-pub fn list() {
+pub fn list(matches: &ArgMatches) {
+
     for dot in dots::find_all() {
-        let remote = match dot.origin() {
-            Some(origin) => format!(" => {}", origin),
-            None => String::new()
+        let mut remote = String::new();
+        if matches.is_present("origins") {
+            remote = dot.origin().map_or(remote, |origin| format!(" => {}", origin.trim()));
         };
+
         println!("{}{}", dot.package.name, remote)
     }
 }
