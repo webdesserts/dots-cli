@@ -55,6 +55,7 @@ fn main() {
         )
         (@subcommand list =>
             (@arg origins: --origins "list the git origin of each dot")
+            (alias: "ls")
             (about: "List the names of all installed dots and the repos they link to")
         )
         (@subcommand doctor =>
