@@ -58,6 +58,10 @@ fn main() {
             (alias: "ls")
             (about: "List the names of all installed dots and the repos they link to")
         )
+        (@subcommand prefix =>
+            (@arg DOT: +required "The dot package name that you would like to search for")
+            (about: "returns the installed location of a given dot")
+        )
         (@subcommand doctor =>
             (about: "Checks to make sure all files and symlinks are correctly applied")
         )
@@ -70,6 +74,7 @@ fn main() {
         ("remove", _) => commands::remove(),
         ("update", _) => commands::update(),
         ("list", Some(sub_matches)) => commands::list(sub_matches),
+        ("prefix", Some(sub_matches)) => commands::prefix(sub_matches),
         ("doctor", _) => commands::doctor(),
         _ => { println!("{}", matches.usage()) }
     }

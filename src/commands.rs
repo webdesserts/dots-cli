@@ -48,7 +48,6 @@ pub fn remove() { println!("remove has not yet been implemented!") }
 pub fn update() { println!("update has not yet been implemented!") }
 
 pub fn list(matches: &ArgMatches) {
-
     for dot in dots::find_all() {
         let mut remote = String::new();
         if matches.is_present("origins") {
@@ -56,6 +55,15 @@ pub fn list(matches: &ArgMatches) {
         };
 
         println!("{}{}", dot.package.name, remote)
+    }
+}
+
+pub fn prefix(matches: &ArgMatches) {
+    let name = matches.value_of("DOT").expect("Missing Argument <REPO>");
+
+    match dots::find_all().iter().find(|dot| dot.package.name == name) {
+        Some(dot) => println!("{}", dot.path.to_str().unwrap()),
+        None => (),
     }
 }
 

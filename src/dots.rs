@@ -41,19 +41,33 @@ pub fn path<P: AsRef<Path>>(path: P) -> PathBuf {
 
 pub fn find_all() -> Vec<Dot> {
     let dir = match root().read_dir() {
-        Ok(val) => val,
+        Ok(read_dir) => read_dir,
         Err(err) => {
-            error!("Error while searching for dots:\n{}", err);
-            process::exit(1);
+            use std::io::ErrorKind as Kind;
+            match err.kind() {
+                Kind::NotFound => { return vec![] },
+                Kind::PermissionDenied => {
+                    error!("Unable access dots directory:\n{}", err);
+                    process::exit(1);
+                },
+                _ => {
+                    error!("Error while accessing dots directory:\n{}", err);
+                    process::exit(1);
+                }
+            }
         }
     };
 
     let mut dots = Vec::new();
 
-    for entries in dir {
-        match Dot::new(entries.unwrap().path().as_path()).ok() {
-            Some(dot) => dots.push(dot),
-            None => {}
+    for entry in dir {
+        let path = match entry {
+            Ok(entry) => entry.path(),
+            Err(_) => continue,
+        };
+        match Dot::new(path.as_path()) {
+            Ok(dot) => dots.push(dot),
+            Err(_) => {}
         }
     }
 
