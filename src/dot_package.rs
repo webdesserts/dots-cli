@@ -1,16 +1,17 @@
 use serde_json as json;
-use std::path::{Path};
+use std::path::{Path,PathBuf};
 use std::collections::HashMap as Map;
 use std::fs;
 use std::io::{Read, self};
-use std::error::Error;
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DotPackage {
     pub name: String,
     pub authors: Vec<String>,
-    pub links: Map<String, String>,
+    #[serde(default)]
+    pub execute: Vec<Map<String, String>>,
+    pub link: Map<PathBuf, PathBuf>,
 }
 
 impl DotPackage {
@@ -18,14 +19,14 @@ impl DotPackage {
         let contents = match read_package(path.join("Dot.json")) {
             Ok(package) => package,
             Err(err) => {
-                error!("Error reading Dot.json: {}", err.description());
+                error!("Error reading Dot.json in {:?}:\n{}", path, err);
                 return Err("Error reading Dot.json".to_string())
             }
         };
         let package = match json::from_str(&contents) {
             Ok(package) => package,
             Err(err) => {
-                error!("Error parsing Dot.json: {}", err.description());
+                error!("Error parsing Dot.json in {:?}:\n{}", path, err);
                 return Err("Error parsing Dot.json".to_string())
             }
         };
