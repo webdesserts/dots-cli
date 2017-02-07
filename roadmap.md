@@ -10,7 +10,7 @@
     - should check to see if all files & links are in place without taking any action
 - `dots outdated`
     - should check to see if there are any upstream changes to any dots 
-- `dots list <DOT>`
+- `dots list`
     - should list all dot files by name
 - `dots prefix <DOT>`
     - should return the folder of the specified dotfile
@@ -18,7 +18,7 @@
 ## Responsibilities
 
 - should link `.bash_profile` & `.bashrc`
-- should pull down velvet, link it, and install it's plugins
+- should pull down velvet, link it, and install its plugins
 - should pull down homebrew and run `brew Bundle` across all dots
 
 ## Install Process
