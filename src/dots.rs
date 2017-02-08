@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
-use std::{process,env};
+use std::collections::HashMap as Map;
+use std::{process,env,io,fs,os};
 use dot_package::DotPackage;
 use git_utils;
 
@@ -72,4 +73,45 @@ pub fn find_all() -> Vec<Dot> {
     }
 
     dots
+}
+
+type LinkPlan = Map<PathBuf, PathBuf>;
+
+pub fn link() -> Result<(), Vec<io::Error>> {
+    let mut plan_errors = vec![];
+    let mut absolute_links : LinkPlan = Map::new();
+    let dots = find_all();
+    for dot in dots {
+        for (src, dest) in dot.package.link {
+            match dot.path.join(src).canonicalize() {
+                Ok(resolved) => { absolute_links.insert(resolved, dot.path.join(dest)); },
+                Err(err) => { plan_errors.push(err); }
+            };
+        }
+    }
+
+    if !plan_errors.is_empty() {
+        return Err(plan_errors)
+    }
+
+    for (src, dest) in absolute_links {
+        let parent = match dest.parent() {
+            Some(val) => val,
+            None => {
+                return Err(vec![io::Error::new(io::ErrorKind::InvalidInput, "Cannot symlink to root")]);
+            }
+        };
+
+        match fs::create_dir_all(parent) {
+            Err(err) => { return Err(vec![err]); }
+            _ => {}
+        }
+
+        match os::unix::fs::symlink(src, dest.clone()) {
+            Err(err) => { return Err(vec![err]) }
+            _ => {}
+        }
+    }
+
+    Ok(())
 }

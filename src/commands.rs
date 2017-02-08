@@ -42,6 +42,16 @@ pub fn install(matches: &ArgMatches) {
     }
 
     fs::rename(tmp, target_dir).expect("Error renaming repo!");
+
+    match dots::link() {
+        Err(errors) => {
+            for err in errors {
+                error!("{}", err)
+            }
+            process::exit(1);
+        }
+        _ => {}
+    };
 }
 
 pub fn remove() { println!("remove has not yet been implemented!") }
