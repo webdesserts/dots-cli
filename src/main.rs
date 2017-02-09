@@ -12,10 +12,10 @@ extern crate serde_json;
 
 mod dots;
 mod dot_package;
-mod git_utils;
 mod commands;
+mod link;
+mod utils;
 
-use colored::*;
 use env_logger::LogBuilder;
 use log::{LogRecord, LogLevelFilter};
 
@@ -23,6 +23,7 @@ fn main() {
     let mut builder = LogBuilder::new();
 
     let log_format = |record: &LogRecord| {
+        use colored::*;
         use log::LogLevel::*;
         let level = match record.level() {
             Debug => "[debug]".bold(),
@@ -43,12 +44,22 @@ fn main() {
         (version: crate_version!())
         (about: crate_description!())
         (author: crate_authors!("\n"))
+        (@subcommand add =>
+            (about: "Downloads the given git repo as a dot")
+            (@arg REPO: +required "A git url that points to a Dot repo containing all your dotfiles")
+            (@arg overwrite: --overwrite "Will remove pre-existing packages of the same name")
+        )
         (@subcommand install =>
-            (about: "Downloads and installs the given git repo as a dot")
-            (@arg REPO: +required "a git url that points to a Dot repo containing all your dotfiles")
+            (about: "Installs all Dots")
+            (@arg REPO: "An optional git url that points to a Dot repo that you want to add before installing")
+            (@arg overwrite: --overwrite "Will remove pre-existing packages of the same name")
+            (@arg force: -f --force "Will overwrite pre-existing directories when creating symlinks")
         )
         (@subcommand remove =>
             (about: "Removes a dot with the given name")
+        )
+        (@subcommand uninstall =>
+            (about: "Removes a dot with the given name and reinstalls all dots")
         )
         (@subcommand update =>
             (about: "Updates all dots")
@@ -70,8 +81,10 @@ fn main() {
     let matches = app.get_matches();
 
     match matches.subcommand() {
+        ("add", Some(sub_matches)) => commands::add(sub_matches),
         ("install", Some(sub_matches)) => commands::install(sub_matches),
         ("remove", _) => commands::remove(),
+        ("uninstall", _) => commands::uninstall(),
         ("update", _) => commands::update(),
         ("list", Some(sub_matches)) => commands::list(sub_matches),
         ("prefix", Some(sub_matches)) => commands::prefix(sub_matches),

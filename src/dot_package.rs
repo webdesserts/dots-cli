@@ -15,19 +15,19 @@ pub struct DotPackage {
 }
 
 impl DotPackage {
-    pub fn new(path: &Path) -> Result<DotPackage, String> {
+    pub fn new(path: &Path) -> Result<DotPackage, &str> {
         let contents = match read_package(path.join("Dot.json")) {
             Ok(package) => package,
             Err(err) => {
                 error!("Error reading Dot.json in {:?}:\n{}", path, err);
-                return Err("Error reading Dot.json".to_string())
+                return Err("Error reading Dot.json")
             }
         };
         let package = match json::from_str(&contents) {
             Ok(package) => package,
             Err(err) => {
                 error!("Error parsing Dot.json in {:?}:\n{}", path, err);
-                return Err("Error parsing Dot.json".to_string())
+                return Err("Error parsing Dot.json")
             }
         };
         Ok(package)

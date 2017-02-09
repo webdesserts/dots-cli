@@ -1,60 +1,43 @@
 use clap::ArgMatches;
-use std::fs;
-use std::path::Path;
 use std::process;
 
-use git_utils;
-use dots::{Dot, self};
+use dots;
+use link;
+
+pub fn add(matches: &ArgMatches) {
+    let url = matches.value_of("REPO").expect("repo is required");
+    let overwrite = matches.is_present("overwrite");
+    dots::add(url, overwrite)
+}
 
 pub fn install(matches: &ArgMatches) {
-
-    let url = matches.value_of("REPO").expect("Missing Argument <REPO>");
-    info!("adding {}", url);
-
-    let tmp = dots::path(".tmp");
-
-    info!("cleaning {:?}", tmp);
-    clean(&tmp);
-
-    info!("cloning...");
-    git_utils::clone(url, &tmp);
-
-    let dot = match Dot::new(&tmp) {
-        Ok(dot) => dot,
-        Err(_) => {
-            clean(&tmp);
-            error!("Repo does not appear to be a Dot");
-            process::exit(1);
-        }
-    };
-
-    info!("found package name: {}", dot.package.name);
-
-    let target_dir = dots::path(dot.package.name);
-
-    if target_dir.exists() {
-        info!("path already exists {:?}", target_dir);
-
-        if tmp.is_dir() {
-            warn!("Cleaning left over .tmp directory.\nIt appears another command failed to clean up after itself.");
-            clean(&target_dir);
-        }
+    if let Some(url) = matches.value_of("REPO") {
+        let overwrite = matches.is_present("overwrite");
+        dots::add(url, overwrite)
     }
 
-    fs::rename(tmp, target_dir).expect("Error renaming repo!");
-
-    match dots::link() {
-        Err(errors) => {
-            for err in errors {
-                error!("{}", err)
-            }
-            process::exit(1);
+    match link::Plan::new(dots::find_all(), matches.is_present("force")) {
+        Ok(plan) => plan,
+        Err(err) => {
+            error!("{}", err);
+            error!("Please resolve errors and run install again");
+            process::exit(1)
         }
-        _ => {}
     };
+
+    /*
+    match link::install(plan) {
+        Ok(_) => { info!("Successfully Installed!") }
+        Err(err) => {
+            error!("Despite our best efforts, we still ran into an issue while installing, Sorry :(\n{}", err);
+            process::exit(1)
+        }
+    };
+    */
 }
 
 pub fn remove() { println!("remove has not yet been implemented!") }
+pub fn uninstall() { println!("uninstall has not yet been implemented!") }
 pub fn update() { println!("update has not yet been implemented!") }
 
 pub fn list(matches: &ArgMatches) {
@@ -78,9 +61,3 @@ pub fn prefix(matches: &ArgMatches) {
 }
 
 pub fn doctor() { println!("doctor has not yet been implemented!") }
-
-fn clean(path: &Path) {
-    if path.exists() {
-        fs::remove_dir_all(path).ok();
-    }
-}

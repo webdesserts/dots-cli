@@ -1,8 +1,7 @@
 use std::path::{Path, PathBuf};
-use std::collections::HashMap as Map;
-use std::{process,env,io,fs,os};
+use std::{process,env,fs};
 use dot_package::DotPackage;
-use git_utils;
+use utils;
 
 pub struct Dot {
     pub package: DotPackage,
@@ -17,7 +16,7 @@ impl Dot {
 
     pub fn origin(&self) -> Option<String> {
         match env::set_current_dir(self.path.clone()) {
-            Ok(_) => git_utils::get_origin(),
+            Ok(_) => utils::git::get_origin(),
             Err(err) => {
                 error!("error changing directory to {:?}:\n{}", self.path, err);
                 process::exit(1);
@@ -38,6 +37,45 @@ pub fn root() -> PathBuf {
 
 pub fn path<P: AsRef<Path>>(path: P) -> PathBuf {
     root().join(path)
+}
+
+pub fn add(url: &str, overwrite: bool) {
+    info!("Adding {}", url);
+    let tmp = self::path(".tmp");
+
+    if tmp.is_dir() {
+        warn!("Cleaning left over .tmp directory.\nIt appears another command failed to clean up after itself.");
+        utils::fs::clean(&tmp);
+    }
+
+    info!("Cloning...");
+    utils::git::clone(url, &tmp);
+
+    let dot = match Dot::new(&tmp) {
+        Ok(dot) => dot,
+        Err(_) => {
+            utils::fs::clean(&tmp);
+            error!("Repo does not appear to be a Dot");
+            process::exit(1);
+        }
+    };
+
+    let target_dir = self::path(&dot.package.name);
+
+    if target_dir.exists() {
+        if overwrite {
+            warn!("Overwriting pre-existing Dot\n\t{}", target_dir.display());
+            utils::fs::clean(&target_dir);
+        } else {
+            error!("A Dot named {} is already installed. Aborting.", dot.package.name);
+            error!("pass --overwrite to overwrite the pre-existing Dot");
+            utils::fs::clean(&tmp);
+            process::exit(1);
+        }
+    }
+
+    fs::rename(tmp, target_dir).expect("Error renaming repo!");
+    info!("Cloning complete!")
 }
 
 pub fn find_all() -> Vec<Dot> {
@@ -75,24 +113,11 @@ pub fn find_all() -> Vec<Dot> {
     dots
 }
 
-type LinkPlan = Map<PathBuf, PathBuf>;
-
+/*
 pub fn link() -> Result<(), Vec<io::Error>> {
-    let mut plan_errors = vec![];
-    let mut absolute_links : LinkPlan = Map::new();
-    let dots = find_all();
-    for dot in dots {
-        for (src, dest) in dot.package.link {
-            match dot.path.join(src).canonicalize() {
-                Ok(resolved) => { absolute_links.insert(resolved, dot.path.join(dest)); },
-                Err(err) => { plan_errors.push(err); }
-            };
-        }
-    }
 
-    if !plan_errors.is_empty() {
-        return Err(plan_errors)
-    }
+    link::Plan::new(find_all());
+
 
     for (src, dest) in absolute_links {
         let parent = match dest.parent() {
@@ -115,3 +140,4 @@ pub fn link() -> Result<(), Vec<io::Error>> {
 
     Ok(())
 }
+*/
