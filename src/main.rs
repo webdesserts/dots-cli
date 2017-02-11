@@ -49,6 +49,7 @@ fn main() {
             (@arg REPO: +required "A git url that points to a Dot repo containing all your dotfiles")
             (@arg overwrite: --overwrite "Will remove pre-existing packages of the same name")
         )
+        /*
         (@subcommand install =>
             (about: "Installs all Dots")
             (@arg REPO: "An optional git url that points to a Dot repo that you want to add before installing")
@@ -59,11 +60,12 @@ fn main() {
             (about: "Removes a dot with the given name")
         )
         (@subcommand uninstall =>
-            (about: "Removes a dot with the given name and reinstalls all dots")
+            (about: "Removes a dot with the given name and re-installs all dots")
         )
         (@subcommand update =>
             (about: "Updates all dots")
         )
+        */
         (@subcommand list =>
             (@arg origins: --origins "list the git origin of each dot")
             (alias: "ls")
@@ -73,8 +75,13 @@ fn main() {
             (@arg DOT: +required "The dot package name that you would like to search for")
             (about: "returns the installed location of a given dot")
         )
+        /*
         (@subcommand doctor =>
-            (about: "Checks to make sure all files and symlinks are correctly applied")
+            (about: "Checks to make sure that the previous install's symlinks still work")
+        )
+        */
+        (@subcommand plan =>
+            (about: "Prints out the install plan for all available Dots. Will list any errors that might cause the install to fail")
         )
     );
 
@@ -82,13 +89,9 @@ fn main() {
 
     match matches.subcommand() {
         ("add", Some(sub_matches)) => commands::add(sub_matches),
-        ("install", Some(sub_matches)) => commands::install(sub_matches),
-        ("remove", _) => commands::remove(),
-        ("uninstall", _) => commands::uninstall(),
-        ("update", _) => commands::update(),
         ("list", Some(sub_matches)) => commands::list(sub_matches),
         ("prefix", Some(sub_matches)) => commands::prefix(sub_matches),
-        ("doctor", _) => commands::doctor(),
+        ("plan", Some(_)) => commands::plan(),
         _ => { println!("{}", matches.usage()) }
     }
 }

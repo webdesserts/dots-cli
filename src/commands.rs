@@ -10,36 +10,6 @@ pub fn add(matches: &ArgMatches) {
     dots::add(url, overwrite)
 }
 
-pub fn install(matches: &ArgMatches) {
-    if let Some(url) = matches.value_of("REPO") {
-        let overwrite = matches.is_present("overwrite");
-        dots::add(url, overwrite)
-    }
-
-    match link::Plan::new(dots::find_all(), matches.is_present("force")) {
-        Ok(plan) => plan,
-        Err(err) => {
-            error!("{}", err);
-            error!("Please resolve errors and run install again");
-            process::exit(1)
-        }
-    };
-
-    /*
-    match link::install(plan) {
-        Ok(_) => { info!("Successfully Installed!") }
-        Err(err) => {
-            error!("Despite our best efforts, we still ran into an issue while installing, Sorry :(\n{}", err);
-            process::exit(1)
-        }
-    };
-    */
-}
-
-pub fn remove() { println!("remove has not yet been implemented!") }
-pub fn uninstall() { println!("uninstall has not yet been implemented!") }
-pub fn update() { println!("update has not yet been implemented!") }
-
 pub fn list(matches: &ArgMatches) {
     for dot in dots::find_all() {
         let mut remote = String::new();
@@ -60,4 +30,15 @@ pub fn prefix(matches: &ArgMatches) {
     }
 }
 
-pub fn doctor() { println!("doctor has not yet been implemented!") }
+pub fn plan() {
+     match link::Plan::new(dots::find_all(), false) {
+        Ok(_) => {
+            info!("Looks Good! Nothing wrong with the current install plan!")
+        },
+        Err(err) => {
+            error!("{}", err);
+            error!("Currently defined install would fail!");
+            process::exit(1)
+        }
+    };
+}
