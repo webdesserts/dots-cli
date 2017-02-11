@@ -1,48 +1,10 @@
-use std::{io, fmt, error, process, self};
+use std::{io, error, fmt, process, self};
+use utils::links::{Link, Anchor, AnchorKind};
 use std::path::{PathBuf};
 use dots::{Dot};
 
-#[derive(Clone, Debug)]
-struct Link {
-    src: Anchor,
-    dest: Anchor
-}
-
-impl Link {
-    fn new(src: Anchor, dest: Anchor) -> Link {
-        Link { src: src, dest: dest }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Anchor {
-    kind: AnchorKind,
-    path: PathBuf,
-}
-
-impl Anchor {
-    fn new(path: PathBuf, kind: AnchorKind) -> Anchor {
-        Anchor { path: path, kind: kind }
-    }
-}
-
-#[derive(Clone, Debug)]
-enum AnchorKind {
-    Source,
-    Destination,
-}
-
-impl fmt::Display for AnchorKind {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            AnchorKind::Source => write!(f, "Source"),
-            AnchorKind::Destination => write!(f, "Destination")
-        }
-    }
-}
-
 #[derive(Debug)]
-pub enum Error {
+pub enum PlanError {
     InvalidPath(Anchor),
     NotFound(Anchor),
     AlreadyExists(Anchor),
@@ -51,34 +13,34 @@ pub enum Error {
     Simple(String)
 }
 
-impl Error {
-    fn new(message: &str) -> Error {
-        Error::Simple(message.to_string())
+impl PlanError {
+    fn new(message: &str) -> PlanError {
+        PlanError::Simple(message.to_string())
     }
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for PlanError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::InvalidPath(ref anchor) => write!(f, "{} is not a valid path: {}", anchor.kind, anchor.path.display()),
-            Error::NotFound(ref anchor) => write!(f, "Can't find {}: {} ", anchor.kind, anchor.path.display()),
-            Error::AlreadyExists(ref anchor) => write!(f, "{} already exists: {} ", anchor.kind, anchor.path.display()),
-            Error::PermissionDenied(ref anchor) => write!(f, "Permission denied to {}: {} ", anchor.kind, anchor.path.display()),
-            Error::Other(ref err) => write!(f, "{}", err),
-            Error::Simple(ref err) => write!(f, "{}", err)
+            PlanError::InvalidPath(ref anchor) => write!(f, "{} is not a valid path: {}", anchor.kind, anchor.path.display()),
+            PlanError::NotFound(ref anchor) => write!(f, "Can't find {}: {} ", anchor.kind, anchor.path.display()),
+            PlanError::AlreadyExists(ref anchor) => write!(f, "{} already exists: {} ", anchor.kind, anchor.path.display()),
+            PlanError::PermissionDenied(ref anchor) => write!(f, "Permission denied to {}: {} ", anchor.kind, anchor.path.display()),
+            PlanError::Other(ref err) => write!(f, "{}", err),
+            PlanError::Simple(ref err) => write!(f, "{}", err)
         }
     }
 }
 
-impl error::Error for Error {
+impl error::Error for PlanError {
     fn description(&self) -> &str {
         match *self {
-            Error::InvalidPath(_) => "Invalid Anchor Path",
-            Error::NotFound(_) => "Anchor Not Found",
-            Error::AlreadyExists(_) => "Anchor Path Already Exists",
-            Error::PermissionDenied(_) => "Permission Denied to Anchor Path",
-            Error::Other(ref err) => err.description(),
-            Error::Simple(ref err) => err,
+            PlanError::InvalidPath(_) => "Invalid Anchor Path",
+            PlanError::NotFound(_) => "Anchor Not Found",
+            PlanError::AlreadyExists(_) => "Anchor Path Already Exists",
+            PlanError::PermissionDenied(_) => "Permission Denied to Anchor Path",
+            PlanError::Other(ref err) => err.description(),
+            PlanError::Simple(ref err) => err,
         }
     }
 }
@@ -88,7 +50,7 @@ pub struct Plan {
 }
 
 impl Plan {
-    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, Error>{
+    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError>{
         let mut has_errors = false;
         let mut suggest_force = false;
         let mut plan = Plan { link: vec![] };
@@ -117,7 +79,7 @@ impl Plan {
                     }
                     if let Err(err) = resolved_dest {
                         match err {
-                            Error::AlreadyExists(_) => { suggest_force = true }
+                            PlanError::AlreadyExists(_) => { suggest_force = true }
                             _ => {}
                         }
                         let dest_path = format!("{}", org_dest.path.display());
@@ -130,14 +92,14 @@ impl Plan {
 
         println!();
         if suggest_force { info!("{}", "use --force to overwrite existing directories") }
-        if has_errors { Err(Error::new("Planning failed.")) }
-        else { Ok(plan) }
+        if has_errors { Err(PlanError::new("Planning failed.")) }
+            else { Ok(plan) }
     }
 
-    fn resolve_src (src: &Anchor, root: &PathBuf) -> Result<Anchor, Error> {
+    fn resolve_src (src: &Anchor, root: &PathBuf) -> Result<Anchor, PlanError> {
         let mut resolved = src.clone();
         if resolved.path.is_absolute() {
-            return Err(Error::InvalidPath(src.clone()))
+            return Err(PlanError::InvalidPath(src.clone()))
         }
 
         resolved.path = root.join(resolved.path);
@@ -147,9 +109,9 @@ impl Plan {
             Err(err) => {
                 use std::io::ErrorKind::*;
                 match err.kind() {
-                    NotFound => { return Err(Error::NotFound(src.clone())) },
-                    PermissionDenied => { return Err(Error::PermissionDenied(src.clone())) },
-                    _ => { return Err(Error::Other(err)) }
+                    NotFound => { return Err(PlanError::NotFound(src.clone())) },
+                    PermissionDenied => { return Err(PlanError::PermissionDenied(src.clone())) },
+                    _ => { return Err(PlanError::Other(err)) }
                 }
             }
         };
@@ -157,7 +119,7 @@ impl Plan {
         Ok(resolved)
     }
 
-    fn resolve_dest (dest: &Anchor, force: &bool) -> Result<Anchor, Error> {
+    fn resolve_dest (dest: &Anchor, force: &bool) -> Result<Anchor, PlanError> {
         let mut resolved = dest.clone();
 
         if resolved.path.is_relative() {
@@ -166,7 +128,7 @@ impl Plan {
                     Some(home) => {
                         let relative = resolved.path.components().skip(1).fold(String::new(), |old, comp| {
                             if old.len() > 0 { old + "/" + comp.as_os_str().to_str().unwrap() }
-                            else { old + comp.as_os_str().to_str().unwrap() }
+                                else { old + comp.as_os_str().to_str().unwrap() }
 
                         });
                         resolved.path = home.join(relative);
@@ -177,12 +139,12 @@ impl Plan {
                     }
                 };
             } else {
-                return Err(Error::InvalidPath(dest.clone()))
+                return Err(PlanError::InvalidPath(dest.clone()))
             }
         }
 
         if resolved.path.is_dir() && !force {
-            return Err(Error::AlreadyExists(dest.clone()))
+            return Err(PlanError::AlreadyExists(dest.clone()))
         }
 
         Ok(resolved)

@@ -13,7 +13,7 @@ extern crate serde_json;
 mod dots;
 mod dot_package;
 mod commands;
-mod link;
+mod install;
 mod utils;
 
 use env_logger::LogBuilder;

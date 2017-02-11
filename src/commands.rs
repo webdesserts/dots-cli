@@ -1,8 +1,8 @@
 use clap::ArgMatches;
 use std::process;
 
+use install;
 use dots;
-use link;
 
 pub fn add(matches: &ArgMatches) {
     let url = matches.value_of("REPO").expect("repo is required");
@@ -31,11 +31,12 @@ pub fn prefix(matches: &ArgMatches) {
 }
 
 pub fn plan() {
-     match link::Plan::new(dots::find_all(), false) {
+     match install::Plan::new(dots::find_all(), false) {
         Ok(_) => {
             info!("Looks Good! Nothing wrong with the current install plan!")
         },
         Err(err) => {
+            println!();
             error!("{}", err);
             error!("Currently defined install would fail!");
             process::exit(1)
