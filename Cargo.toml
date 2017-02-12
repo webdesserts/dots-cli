@@ -8,7 +8,6 @@ authors = ["Michael Mullins <michael@webdesserts.com>"]
 [dependencies]
 # terminal
 clap = "^2.20"
-xdg = "^2"
 
 # logging
 env_logger = "^0.4.0"
