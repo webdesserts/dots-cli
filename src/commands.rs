@@ -45,6 +45,6 @@ pub fn prefix(matches: &ArgMatches) {
 
     match dots::find_all().iter().find(|dot| dot.package.name == name) {
         Some(dot) => println!("{}", dot.path.to_str().unwrap()),
-        None => (),
+        None => { process::exit(1) },
     }
 }
