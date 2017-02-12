@@ -10,6 +10,25 @@ pub fn add(matches: &ArgMatches) {
     dots::add(url, overwrite)
 }
 
+pub fn install(matches: &ArgMatches) {
+    if let Some(url) = matches.value_of("REPO") {
+        let overwrite = matches.is_present("overwrite");
+        dots::add(url, overwrite);
+    };
+
+    match install::Plan::new(dots::find_all(), matches.is_present("force")) {
+        Ok(_) => {
+            info!("Looks Good! Nothing wrong with the current install plan!")
+        },
+        Err(err) => {
+            println!();
+            error!("{}", err);
+            error!("Currently defined install would fail!");
+            process::exit(1)
+        }
+    };
+}
+
 pub fn list(matches: &ArgMatches) {
     for dot in dots::find_all() {
         let mut remote = String::new();
@@ -28,18 +47,4 @@ pub fn prefix(matches: &ArgMatches) {
         Some(dot) => println!("{}", dot.path.to_str().unwrap()),
         None => (),
     }
-}
-
-pub fn plan() {
-     match install::Plan::new(dots::find_all(), false) {
-        Ok(_) => {
-            info!("Looks Good! Nothing wrong with the current install plan!")
-        },
-        Err(err) => {
-            println!();
-            error!("{}", err);
-            error!("Currently defined install would fail!");
-            process::exit(1)
-        }
-    };
 }

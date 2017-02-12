@@ -49,12 +49,12 @@ fn main() {
             (@arg REPO: +required "A git url that points to a Dot repo containing all your dotfiles")
             (@arg overwrite: --overwrite "Will remove pre-existing packages of the same name")
         )
-        /*
         (@subcommand install =>
             (about: "Installs all Dots")
             (@arg REPO: "An optional git url that points to a Dot repo that you want to add before installing")
-            (@arg overwrite: --overwrite "Will remove pre-existing packages of the same name")
-            (@arg force: -f --force "Will overwrite pre-existing directories when creating symlinks")
+            (@arg overwrite: --overwrite "Will remove pre-existing dots of the same name")
+            (@arg force: -f --force "Will remove pre-existing directories when creating symlinks")
+            (@arg dry: --dry "run through the install plan without actually making any changes")
         )
         (@subcommand remove =>
             (about: "Removes a dot with the given name")
@@ -65,7 +65,6 @@ fn main() {
         (@subcommand update =>
             (about: "Updates all dots")
         )
-        */
         (@subcommand list =>
             (@arg origins: --origins "list the git origin of each dot")
             (alias: "ls")
@@ -80,18 +79,15 @@ fn main() {
             (about: "Checks to make sure that the previous install's symlinks still work")
         )
         */
-        (@subcommand plan =>
-            (about: "Prints out the install plan for all available Dots. Will list any errors that might cause the install to fail")
-        )
     );
 
     let matches = app.get_matches();
 
     match matches.subcommand() {
         ("add", Some(sub_matches)) => commands::add(sub_matches),
+        ("install", Some(sub_matches)) => commands::install(sub_matches),
         ("list", Some(sub_matches)) => commands::list(sub_matches),
         ("prefix", Some(sub_matches)) => commands::prefix(sub_matches),
-        ("plan", Some(_)) => commands::plan(),
         _ => { println!("{}", matches.usage()) }
     }
 }
