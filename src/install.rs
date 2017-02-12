@@ -2,45 +2,59 @@ use std::{io, error, fmt, process, self};
 use utils::links::{Anchor, AnchorKind};
 use std::path::{PathBuf};
 use dots::{Dot};
+use colored::*;
 
 #[derive(Debug)]
-pub enum PlanError {
-    InvalidPath(Anchor),
-    NotFound(Anchor),
-    AlreadyExists(Anchor),
-    PermissionDenied(Anchor),
+pub struct ResolveError {
+    anchor: Anchor,
+    kind: ResolveErrorKind
+}
+
+impl ResolveError {
+    fn new(anchor: &Anchor, kind: ResolveErrorKind) -> ResolveError {
+        ResolveError { anchor: anchor.clone(), kind: kind }
+    }
+
+    fn simple(anchor: &Anchor, message: &str) -> ResolveError {
+        Self::new(anchor, ResolveErrorKind::Simple(message.to_string()))
+    }
+}
+
+#[derive(Debug)]
+pub enum ResolveErrorKind {
+    InvalidPath,
+    NotFound,
+    AlreadyExists,
+    PermissionDenied,
     Other(io::Error),
     Simple(String)
 }
 
-impl PlanError {
-    fn new(message: &str) -> PlanError {
-        PlanError::Simple(message.to_string())
-    }
-}
 
-impl fmt::Display for PlanError {
+impl fmt::Display for ResolveError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            PlanError::InvalidPath(ref anchor) => write!(f, "{} is not a valid path: {}", anchor.kind, anchor.path.display()),
-            PlanError::NotFound(ref anchor) => write!(f, "Can't find {}: {} ", anchor.kind, anchor.path.display()),
-            PlanError::AlreadyExists(ref anchor) => write!(f, "{} already exists: {} ", anchor.kind, anchor.path.display()),
-            PlanError::PermissionDenied(ref anchor) => write!(f, "Permission denied to {}: {} ", anchor.kind, anchor.path.display()),
-            PlanError::Other(ref err) => write!(f, "{}", err),
-            PlanError::Simple(ref err) => write!(f, "{}", err)
+        use self::ResolveErrorKind::*;
+        match self.kind {
+            InvalidPath => write!(f, "{} is not a valid path: {}", self.anchor.kind, self.anchor.path.display()),
+            NotFound => write!(f, "Can't find {}: {} ", self.anchor.kind, self.anchor.path.display()),
+            AlreadyExists => write!(f, "{} already exists: {} ", self.anchor.kind, self.anchor.path.display()),
+            PermissionDenied => write!(f, "Permission denied to {}: {} ", self.anchor.kind, self.anchor.path.display()),
+            Other(ref err) => write!(f, "Error resolving {} {}: {}", self.anchor.kind, self.anchor.path.display(), err),
+            Simple(ref msg) => write!(f, "Error resolving {} {}: {}", self.anchor.kind, self.anchor.path.display(), msg)
         }
     }
 }
 
-impl error::Error for PlanError {
+impl error::Error for ResolveError {
     fn description(&self) -> &str {
-        match *self {
-            PlanError::InvalidPath(_) => "Invalid Anchor Path",
-            PlanError::NotFound(_) => "Anchor Not Found",
-            PlanError::AlreadyExists(_) => "Anchor Path Already Exists",
-            PlanError::PermissionDenied(_) => "Permission Denied to Anchor Path",
-            PlanError::Other(ref err) => err.description(),
-            PlanError::Simple(ref err) => err,
+        use self::ResolveErrorKind::*;
+        match self.kind {
+            InvalidPath => "Invalid Anchor Path",
+            NotFound => "Anchor Not Found",
+            AlreadyExists => "Anchor Path Already Exists",
+            PermissionDenied => "Permission Denied to Anchor Path",
+            Other(ref err) => err.description(),
+            Simple(ref msg) => msg,
         }
     }
 }
@@ -50,72 +64,51 @@ pub enum Action {
     // Unlink { src: Anchor, dest: Anchor }
 }
 
-pub struct Plan {
-    actions: Vec<Action>
-}
-
-impl Plan {
-    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError>{
-        use colored::*;
-        let mut has_errors = false;
-        let mut suggest_force = false;
-        let mut plan = Plan { actions: vec![] };
-
+impl fmt::Display for Action {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let checkmark = "✔".green();
-        let x = "✖".red();
-
-        for dot in dots {
-            let mut dot_errors : Vec<PlanError> = vec![];
-            let title = format!("[{}]", &dot.package.name);
-            println!("\n{}", title.bold());
-
-            for (src, dest) in dot.package.link {
-                let org_src = Anchor::new(src, AnchorKind::Source);
-                let org_dest = Anchor::new(dest, AnchorKind::Destination);
-                let resolved_src = Self::resolve_src(&org_src, &dot.path);
-                let resolved_dest = Self::resolve_dest(&org_dest, &force);
-
-                if resolved_src.is_ok() && resolved_dest.is_ok() {
-                    let src = resolved_src.unwrap();
-                    let dest = resolved_dest.unwrap();
-                    println!("  {} {} => {}", checkmark, org_src.path.display(), org_dest.path.display());
-                    plan.actions.push(Action::Link { src: src, dest: dest })
-                } else {
-                    if let Err(err) = resolved_src {
-                        let src_path = format!("{}", org_src.path.display());
-                        println!("  {} {} => {}", x, src_path.italic().red(), org_dest.path.display());
-                        dot_errors.push(err);
-                        has_errors = true;
-                    }
-                    if let Err(err) = resolved_dest {
-                        match err {
-                            PlanError::AlreadyExists(_) => { suggest_force = true }
-                            _ => {}
-                        }
-                        let dest_path = format!("{}", org_dest.path.display());
-                        println!("  {} {} => {}", x, org_src.path.display(), dest_path.italic().red());
-                        dot_errors.push(err);
-                        has_errors = true;
-                    }
-                }
-            }
-
-            for err in dot_errors {
-                println!();
-                error!("{}", err)
+        match *self {
+            Action::Link{ ref src, ref dest } => {
+                write!(f, "{} {} => {}", checkmark, src.path.display(), dest.path.display())
             }
         }
+    }
+}
 
-        println!();
-        if suggest_force { info!("{}", "use --force to overwrite existing directories") }
-        if has_errors { Err(PlanError::new("Planning failed.")) }
-            else { Ok(plan) }
+impl Action {
+    fn display_err(&self, error: &ResolveError) -> String {
+        let cross = "✖".red();
+
+        match *self {
+            Action::Link { ref src, ref dest } => {
+                match error.anchor.kind {
+                    AnchorKind::Source => {
+                        let src_str = format!("{}", src.path.display());
+                        format!("{} {} => {}", cross, src_str.red().italic(), dest.path.display())
+                    },
+                    AnchorKind::Destination => {
+                        let dest_str = format!("{}", dest.path.display());
+                        format!("{} {} => {}", cross, src.path.display(), dest_str.red().italic())
+                    },
+                }
+            }
+        }
     }
 
-    fn resolve_src (src: &Anchor, root: &PathBuf) -> Result<Anchor, PlanError> {
+    fn resolve(&self, root: &PathBuf, force: &bool) -> Result<Action, ResolveError> {
+        match * self {
+            Action::Link { ref src, ref dest } => {
+                let resolved_src = Self::resolve_src(src, root)?;
+                let resolved_dest = Self::resolve_dest(dest, force)?;
+                Ok(Action::Link { src: resolved_src, dest: resolved_dest })
+            }
+        }
+    }
+
+    fn resolve_src (src: &Anchor, root: &PathBuf) -> Result<Anchor, ResolveError> {
         let mut resolved = src.clone();
         if resolved.path.is_absolute() {
-            return Err(PlanError::InvalidPath(src.clone()))
+            return Err(ResolveError::new(src, ResolveErrorKind::InvalidPath))
         }
 
         resolved.path = root.join(resolved.path);
@@ -125,9 +118,9 @@ impl Plan {
             Err(err) => {
                 use std::io::ErrorKind::*;
                 match err.kind() {
-                    NotFound => { return Err(PlanError::NotFound(src.clone())) },
-                    PermissionDenied => { return Err(PlanError::PermissionDenied(src.clone())) },
-                    _ => { return Err(PlanError::Other(err)) }
+                    NotFound => { return Err(ResolveError::new(src, ResolveErrorKind::NotFound)) },
+                    PermissionDenied => { return Err(ResolveError::new(src, ResolveErrorKind::PermissionDenied)) },
+                    _ => { return Err(ResolveError::new(src, ResolveErrorKind::Other(err))) }
                 }
             }
         };
@@ -135,7 +128,7 @@ impl Plan {
         Ok(resolved)
     }
 
-    fn resolve_dest (dest: &Anchor, force: &bool) -> Result<Anchor, PlanError> {
+    fn resolve_dest (dest: &Anchor, force: &bool) -> Result<Anchor, ResolveError> {
         let mut resolved = dest.clone();
 
         if resolved.path.is_relative() {
@@ -155,15 +148,96 @@ impl Plan {
                     }
                 };
             } else {
-                return Err(PlanError::InvalidPath(dest.clone()))
+                return Err(ResolveError::new(dest, ResolveErrorKind::InvalidPath))
             }
         }
 
         if resolved.path.is_dir() && !force {
-            return Err(PlanError::AlreadyExists(dest.clone()))
+            return Err(ResolveError::new(dest, ResolveErrorKind::AlreadyExists))
         }
 
         Ok(resolved)
     }
+}
+
+#[derive(Debug)]
+pub struct PlanError {
+    msg: String,
+}
+
+impl PlanError {
+    fn new(msg: &str) -> PlanError {
+        PlanError { msg: msg.to_string() }
+    }
+}
+
+impl fmt::Display for PlanError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Plan Error: {}", self.msg)
+    }
+}
+
+impl error::Error for PlanError {
+    fn description(&self) -> &str {
+        self.msg.as_str()
+    }
+}
+
+pub struct Plan {
+    actions: Vec<Action>,
+}
+
+impl Plan {
+    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError>{
+        use colored::*;
+
+        let mut suggest_force = false;
+        let mut plan = Plan { actions: vec![] };
+        let mut errors = vec![];
+
+        for dot in dots {
+            let title = format!("[{}]", &dot.package.name);
+            println!("\n{}", title.bold());
+
+            for (src, dest) in dot.package.link {
+                let requested_action = Action::Link {
+                    src: Anchor::new(src, AnchorKind::Source),
+                    dest: Anchor::new(dest, AnchorKind::Destination)
+                };
+
+                match requested_action.resolve(&dot.path, &force) {
+                    Ok(action) => {
+                        println!("  {}", requested_action);
+                        plan.actions.push(action)
+                    }
+                    Err(err) => {
+                        match err.kind {
+                            ResolveErrorKind::AlreadyExists => suggest_force = true,
+                            _ => {}
+                        }
+
+                        println!("  {}", requested_action.display_err(&err));
+                        errors.push(err)
+                    }
+                }
+            }
+        }
+
+        let has_errors = !errors.is_empty();
+
+        if has_errors { println!() }
+        for err in errors {
+            error!("{}", err)
+        }
+
+        println!();
+        if suggest_force { info!("{}", "use --force to overwrite existing directories") }
+        if has_errors {
+            Err(PlanError::new("Planning failed."))
+        } else {
+            Ok(plan)
+        }
+    }
+
 }
 
