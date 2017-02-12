@@ -1,5 +1,5 @@
 use std::{io, error, fmt, process, self};
-use utils::links::{Link, Anchor, AnchorKind};
+use utils::links::{Anchor, AnchorKind};
 use std::path::{PathBuf};
 use dots::{Dot};
 
@@ -45,8 +45,13 @@ impl error::Error for PlanError {
     }
 }
 
+pub enum Action {
+    Link { src: Anchor, dest: Anchor },
+    // Unlink { src: Anchor, dest: Anchor }
+}
+
 pub struct Plan {
-    link: Vec<Link>
+    actions: Vec<Action>
 }
 
 impl Plan {
@@ -54,7 +59,7 @@ impl Plan {
         use colored::*;
         let mut has_errors = false;
         let mut suggest_force = false;
-        let mut plan = Plan { link: vec![] };
+        let mut plan = Plan { actions: vec![] };
 
         let checkmark = "✔".green();
         let x = "✖".red();
@@ -74,7 +79,7 @@ impl Plan {
                     let src = resolved_src.unwrap();
                     let dest = resolved_dest.unwrap();
                     println!("  {} {} => {}", checkmark, org_src.path.display(), org_dest.path.display());
-                    plan.link.push(Link::new(src, dest))
+                    plan.actions.push(Action::Link { src: src, dest: dest })
                 } else {
                     if let Err(err) = resolved_src {
                         let src_path = format!("{}", org_src.path.display());

@@ -1,19 +1,6 @@
 use std::fmt;
 use std::path::{PathBuf};
 
-
-#[derive(Clone, Debug)]
-pub struct Link {
-    pub src: Anchor,
-    pub dest: Anchor
-}
-
-impl Link {
-    pub fn new(src: Anchor, dest: Anchor) -> Link {
-        Link { src: src, dest: dest }
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct Anchor {
     pub kind: AnchorKind,
