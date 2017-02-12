@@ -51,14 +51,19 @@ pub struct Plan {
 
 impl Plan {
     pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError>{
+        use colored::*;
         let mut has_errors = false;
         let mut suggest_force = false;
         let mut plan = Plan { link: vec![] };
 
+        let checkmark = "✔".green();
+        let x = "✖".red();
+
         for dot in dots {
-            use colored::*;
+            let mut dot_errors : Vec<PlanError> = vec![];
             let title = format!("[{}]", &dot.package.name);
             println!("\n{}", title.bold());
+
             for (src, dest) in dot.package.link {
                 let org_src = Anchor::new(src, AnchorKind::Source);
                 let org_dest = Anchor::new(dest, AnchorKind::Destination);
@@ -68,14 +73,14 @@ impl Plan {
                 if resolved_src.is_ok() && resolved_dest.is_ok() {
                     let src = resolved_src.unwrap();
                     let dest = resolved_dest.unwrap();
-                    info!("{} => {}", org_src.path.display(), org_dest.path.display());
-                    //info!("{} => {}", src.path.display(), dest.path.display());
+                    println!("  {} {} => {}", checkmark, org_src.path.display(), org_dest.path.display());
                     plan.link.push(Link::new(src, dest))
                 } else {
                     if let Err(err) = resolved_src {
                         let src_path = format!("{}", org_src.path.display());
-                        error!("{} => {}", src_path.italic().red(), org_dest.path.display());
-                        error!("{}", err); has_errors = true
+                        println!("  {} {} => {}", x, src_path.italic().red(), org_dest.path.display());
+                        dot_errors.push(err);
+                        has_errors = true;
                     }
                     if let Err(err) = resolved_dest {
                         match err {
@@ -83,10 +88,16 @@ impl Plan {
                             _ => {}
                         }
                         let dest_path = format!("{}", org_dest.path.display());
-                        error!("{} => {}", org_src.path.display(), dest_path.italic().red());
-                        error!("{}", err); has_errors = true
+                        println!("  {} {} => {}", x, org_src.path.display(), dest_path.italic().red());
+                        dot_errors.push(err);
+                        has_errors = true;
                     }
                 }
+            }
+
+            for err in dot_errors {
+                println!();
+                error!("{}", err)
             }
         }
 
