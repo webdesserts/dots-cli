@@ -60,6 +60,7 @@ fn main() {
             (@arg force: -f --force "Will remove pre-existing directories when creating symlinks")
             (@arg dry: --dry "run through the install plan without actually making any changes")
         )
+        /*
         (@subcommand remove =>
             (about: "Removes a dot with the given name")
         )
@@ -69,6 +70,7 @@ fn main() {
         (@subcommand update =>
             (about: "Updates all dots")
         )
+        */
         (@subcommand list =>
             (@arg origins: --origins "list the git origin of each dot")
             (alias: "ls")
