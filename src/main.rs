@@ -33,8 +33,10 @@ fn main() {
         };
         let string = format!("{}", record.args());
         let indented = string.lines().enumerate().map(|(i, line)| {
-            let indent = if i == 0 { "" } else { "  " };
-            format!("{} {}{}\n", level, indent, line)
+            let mut indent = "";
+            let mut new_line = "";
+            if i > 0 { indent = "  "; new_line = "\n" }
+            format!("{}{} {}{}", new_line, level, indent, line)
         }).collect::<String>();
         format!("{}", indented)
     };
