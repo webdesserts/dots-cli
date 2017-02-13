@@ -196,7 +196,7 @@ impl Plan {
         let mut errors = vec![];
 
         for dot in dots {
-            let title = format!("[{}]", &dot.package.name);
+            let title = format!("[{}]", &dot.package.package.name);
             println!("\n{}", title.bold());
 
             for (src, dest) in dot.package.link {

@@ -7,7 +7,7 @@ extern crate colored;
 
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
+extern crate toml;
 
 mod dots;
 mod dot_package;

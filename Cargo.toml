@@ -17,4 +17,4 @@ colored = "^1.4.0"
 # serialization
 serde = "^0.9.6"
 serde_derive = "^0.9.6"
-serde_json = "^0.9"
+toml = "^0.3.0"

@@ -60,14 +60,14 @@ pub fn add(url: &str, overwrite: bool) {
         }
     };
 
-    let target_dir = self::path(&dot.package.name);
+    let target_dir = self::path(&dot.package.package.name);
 
     if target_dir.exists() {
         if overwrite {
             warn!("Overwriting pre-existing Dot\n\t{}", target_dir.display());
             utils::fs::clean(&target_dir);
         } else {
-            error!("A Dot named {} is already installed. Aborting.", dot.package.name);
+            error!("A Dot named {} is already installed. Aborting.", dot.package.package.name);
             error!("pass --overwrite to overwrite the pre-existing Dot");
             utils::fs::clean(&tmp);
             process::exit(1);

@@ -1,4 +1,4 @@
-use serde_json as json;
+use toml;
 use std::path::{Path,PathBuf};
 use std::collections::HashMap as Map;
 use std::fs;
@@ -6,28 +6,34 @@ use std::io::{Read, self};
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct DotPackage {
+pub struct DotPackageMeta {
     pub name: String,
-    pub authors: Vec<String>,
+    pub authors: Vec<String>
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DotPackage {
+    pub package: DotPackageMeta,
     #[serde(default)]
-    pub execute: Vec<Map<String, String>>,
+    pub execute: Map<String, Vec<String>>,
     pub link: Map<PathBuf, PathBuf>,
 }
 
 impl DotPackage {
     pub fn new(path: &Path) -> Result<DotPackage, &str> {
-        let contents = match read_package(path.join("Dot.json")) {
+        let contents = match read_package(path.join("Dot.toml")) {
             Ok(package) => package,
             Err(err) => {
-                error!("Error reading Dot.json in {:?}:\n{}", path, err);
-                return Err("Error reading Dot.json")
+                error!("Error reading Dot.toml:\nin {}\n{}", path.display(), err);
+                return Err("Error reading Dot.toml")
             }
         };
-        let package = match json::from_str(&contents) {
+        let package = match toml::from_str(&contents) {
             Ok(package) => package,
             Err(err) => {
-                error!("Error parsing Dot.json in {:?}:\n{}", path, err);
-                return Err("Error parsing Dot.json")
+                error!("Error parsing Dot.toml:\nin {}\n{}", path.display(), err);
+                return Err("Error parsing Dot.toml")
             }
         };
         Ok(package)

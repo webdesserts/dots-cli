@@ -36,14 +36,14 @@ pub fn list(matches: &ArgMatches) {
             remote = dot.origin().map_or(remote, |origin| format!(" => {}", origin.trim()));
         };
 
-        println!("{}{}", dot.package.name, remote)
+        println!("{}{}", dot.package.package.name, remote)
     }
 }
 
 pub fn prefix(matches: &ArgMatches) {
     let name = matches.value_of("DOT").expect("Missing Argument <REPO>");
 
-    match dots::find_all().iter().find(|dot| dot.package.name == name) {
+    match dots::find_all().iter().find(|dot| dot.package.package.name == name) {
         Some(dot) => println!("{}", dot.path.to_str().unwrap()),
         None => { process::exit(1) },
     }
