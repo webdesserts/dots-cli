@@ -31,7 +31,12 @@ fn main() {
             Error => "[error]".red().bold(),
             Trace => "[trace]".bold(),
         };
-        format!("{} {}", level, record.args())
+        let string = format!("{}", record.args());
+        let indented = string.lines().enumerate().map(|(i, line)| {
+            let indent = if i == 0 { "" } else { "  " };
+            format!("{} {}{}\n", level, indent, line)
+        }).collect::<String>();
+        format!("{}", indented)
     };
 
     builder
