@@ -256,6 +256,9 @@ impl Plan {
                         };
                     };
 
+                    if let Some(parent) = dest.path.parent() {
+                        fs::create_dir_all(parent)?;
+                    }
                     std::os::unix::fs::symlink(&src.path, &dest.path)?;
                 }
             }
