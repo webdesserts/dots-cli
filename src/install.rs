@@ -1,4 +1,4 @@
-use std::{io, error, fmt, process, self};
+use std::{io, fs, error, fmt, process, self};
 use utils::links::{Anchor, AnchorKind};
 use std::path::{PathBuf};
 use dots::{Dot};
@@ -239,5 +239,28 @@ impl Plan {
         }
     }
 
+    pub fn execute(&self, force: bool) -> io::Result<()> {
+        for action in &self.actions {
+            match *action {
+                Action::Link { ref src, ref dest } => {
+                    if dest.path.exists() {
+                        let file_type = dest.path.metadata()?.file_type();
+                        if file_type.is_symlink() || file_type.is_file() {
+                            fs::remove_file(&dest.path)?;
+                        } else if file_type.is_dir() {
+                            if force {
+                                fs::remove_dir_all(&dest.path)?;
+                            } else {
+                                return Err(io::Error::new(io::ErrorKind::AlreadyExists, "Destination already Exists!"));
+                            }
+                        };
+                    };
+
+                    std::os::unix::fs::symlink(&src.path, &dest.path)?;
+                }
+            }
+        }
+        Ok(())
+    }
 }
 

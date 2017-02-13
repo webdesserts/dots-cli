@@ -16,9 +16,10 @@ pub fn install(matches: &ArgMatches) {
         dots::add(url, overwrite);
     };
 
-    match install::Plan::new(dots::find_all(), matches.is_present("force")) {
-        Ok(_) => {
-            info!("Looks Good! Nothing wrong with the current install plan!")
+    let plan = match install::Plan::new(dots::find_all(), matches.is_present("force")) {
+        Ok(plan) => {
+            info!("Looks Good! Nothing wrong with the current install plan!");
+            plan
         },
         Err(err) => {
             println!();
@@ -27,6 +28,23 @@ pub fn install(matches: &ArgMatches) {
             process::exit(1)
         }
     };
+
+    if matches.is_present("dry") {
+        process::exit(1)
+    } else {
+        match plan.execute(matches.is_present("force")) {
+            Ok(_) => {
+                info!("Install was a success!");
+                process::exit(0)
+            }
+            Err(err) => {
+                error!("Install Failed!");
+                error!("{}", err);
+
+                process::exit(1)
+            }
+        }
+    }
 }
 
 pub fn list(matches: &ArgMatches) {
