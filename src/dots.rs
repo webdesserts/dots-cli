@@ -112,32 +112,3 @@ pub fn find_all() -> Vec<Dot> {
 
     dots
 }
-
-/*
-pub fn link() -> Result<(), Vec<io::Error>> {
-
-    link::Plan::new(find_all());
-
-
-    for (src, dest) in absolute_links {
-        let parent = match dest.parent() {
-            Some(val) => val,
-            None => {
-                return Err(vec![io::Error::new(io::ErrorKind::InvalidInput, "Cannot symlink to root")]);
-            }
-        };
-
-        match fs::create_dir_all(parent) {
-            Err(err) => { return Err(vec![err]); }
-            _ => {}
-        }
-
-        match os::unix::fs::symlink(src, dest.clone()) {
-            Err(err) => { return Err(vec![err]) }
-            _ => {}
-        }
-    }
-
-    Ok(())
-}
-*/
