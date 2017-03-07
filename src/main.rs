@@ -12,7 +12,7 @@ extern crate toml;
 mod dots;
 mod dot_package;
 mod commands;
-mod install;
+mod plan;
 mod utils;
 
 use env_logger::LogBuilder;

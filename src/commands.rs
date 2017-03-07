@@ -1,7 +1,7 @@
 use clap::ArgMatches;
 use std::process;
 
-use install;
+use plan::{Plan};
 use dots;
 
 pub fn add(matches: &ArgMatches) {
@@ -16,7 +16,7 @@ pub fn install(matches: &ArgMatches) {
         dots::add(url, overwrite);
     };
 
-    let plan = match install::Plan::new(dots::find_all(), matches.is_present("force")) {
+    let plan = match Plan::new(dots::find_all(), matches.is_present("force")) {
         Ok(plan) => {
             info!("Looks Good! Nothing wrong with the current install plan!");
             plan

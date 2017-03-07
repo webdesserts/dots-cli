@@ -1,13 +1,14 @@
-use std::{io, fs, error, fmt, process, self};
-use utils::links::{Anchor, AnchorKind};
+use std::{io, fmt, process, self};
+use std::fmt::{Display};
+use std::error::{Error};
 use std::path::{PathBuf};
-use dots::{Dot};
 use colored::*;
+use plan::links::{Anchor, AnchorKind};
 
 #[derive(Debug)]
 pub struct ResolveError {
-    anchor: Anchor,
-    kind: ResolveErrorKind
+    pub anchor: Anchor,
+    pub kind: ResolveErrorKind
 }
 
 impl ResolveError {
@@ -30,8 +31,7 @@ pub enum ResolveErrorKind {
     Simple(String)
 }
 
-
-impl fmt::Display for ResolveError {
+impl Display for ResolveError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::ResolveErrorKind::*;
         match self.kind {
@@ -45,7 +45,7 @@ impl fmt::Display for ResolveError {
     }
 }
 
-impl error::Error for ResolveError {
+impl Error for ResolveError {
     fn description(&self) -> &str {
         use self::ResolveErrorKind::*;
         match self.kind {
@@ -64,7 +64,7 @@ pub enum Action {
     // Unlink { src: Anchor, dest: Anchor }
 }
 
-impl fmt::Display for Action {
+impl Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let checkmark = "✔".green();
         match *self {
@@ -76,7 +76,7 @@ impl fmt::Display for Action {
 }
 
 impl Action {
-    fn display_err(&self, error: &ResolveError) -> String {
+    pub fn display_err(&self, error: &ResolveError) -> String {
         let cross = "✖".red();
 
         match *self {
@@ -95,7 +95,7 @@ impl Action {
         }
     }
 
-    fn resolve(&self, root: &PathBuf, force: &bool) -> Result<Action, ResolveError> {
+    pub fn resolve(&self, root: &PathBuf, force: &bool) -> Result<Action, ResolveError> {
         match * self {
             Action::Link { ref src, ref dest } => {
                 let resolved_src = Self::resolve_src(src, root)?;
@@ -132,14 +132,10 @@ impl Action {
         let mut resolved = dest.clone();
 
         if resolved.path.is_relative() {
-            if resolved.path.starts_with("~") {
+            if resolved.path.starts_with("~/") {
                 match std::env::home_dir() {
                     Some(home) => {
-                        let relative = resolved.path.components().skip(1).fold(String::new(), |old, comp| {
-                            if old.len() > 0 { old + "/" + comp.as_os_str().to_str().unwrap() }
-                                else { old + comp.as_os_str().to_str().unwrap() }
-
-                        });
+                        let relative = resolved.path.to_str().unwrap().replace("~/", "");
                         resolved.path = home.join(relative);
                     },
                     None => {
@@ -159,111 +155,3 @@ impl Action {
         Ok(resolved)
     }
 }
-
-#[derive(Debug)]
-pub struct PlanError {
-    msg: String,
-}
-
-impl PlanError {
-    fn new(msg: &str) -> PlanError {
-        PlanError { msg: msg.to_string() }
-    }
-}
-
-impl fmt::Display for PlanError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Plan Error: {}", self.msg)
-    }
-}
-
-impl error::Error for PlanError {
-    fn description(&self) -> &str {
-        self.msg.as_str()
-    }
-}
-
-pub struct Plan {
-    actions: Vec<Action>,
-}
-
-impl Plan {
-    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError>{
-        use colored::*;
-
-        let mut suggest_force = false;
-        let mut plan = Plan { actions: vec![] };
-        let mut errors = vec![];
-
-        for dot in dots {
-            let title = format!("[{}]", &dot.package.package.name);
-            println!("\n{}", title.bold());
-
-            for (src, dest) in dot.package.link {
-                let requested_action = Action::Link {
-                    src: Anchor::new(src, AnchorKind::Source),
-                    dest: Anchor::new(dest, AnchorKind::Destination)
-                };
-
-                match requested_action.resolve(&dot.path, &force) {
-                    Ok(action) => {
-                        println!("  {}", requested_action);
-                        plan.actions.push(action)
-                    }
-                    Err(err) => {
-                        match err.kind {
-                            ResolveErrorKind::AlreadyExists => suggest_force = true,
-                            _ => {}
-                        }
-
-                        println!("  {}", requested_action.display_err(&err));
-                        errors.push(err)
-                    }
-                }
-            }
-        }
-
-        let has_errors = !errors.is_empty();
-
-        if has_errors { println!() }
-        for err in errors {
-            error!("{}", err)
-        }
-
-        println!();
-        if suggest_force { info!("{}", "use --force to overwrite existing directories") }
-        if has_errors {
-            Err(PlanError::new("Planning failed."))
-        } else {
-            Ok(plan)
-        }
-    }
-
-    pub fn execute(&self, force: bool) -> io::Result<()> {
-        for action in &self.actions {
-            match *action {
-                Action::Link { ref src, ref dest } => {
-                    if dest.path.exists() {
-                        let file_type = dest.path.metadata()?.file_type();
-                        if file_type.is_symlink() || file_type.is_file() {
-                            fs::remove_file(&dest.path)?;
-                        } else if file_type.is_dir() {
-                            if force {
-                                fs::remove_dir_all(&dest.path)?;
-                            } else {
-                                return Err(io::Error::new(io::ErrorKind::AlreadyExists, "Destination already Exists!"));
-                            }
-                        };
-                    };
-
-                    if let Some(parent) = dest.path.parent() {
-                        fs::create_dir_all(parent)?;
-                    }
-                    std::os::unix::fs::symlink(&src.path, &dest.path)?;
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
