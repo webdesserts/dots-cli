@@ -1,5 +1,27 @@
-use std::fmt;
-use std::path::{PathBuf};
+use std::{fmt};
+use std::path::{Path, PathBuf};
+
+/*=======*\
+*  Links  *
+\*=======*/
+
+pub struct Link {
+    pub src: Anchor,
+    pub dest: Anchor,
+}
+
+impl Link {
+    pub fn new<P: AsRef<Path>>(src: P, dest: P) -> Link {
+        Link {
+            src: Anchor::new_src(src),
+            dest: Anchor::new_dest(dest)
+        }
+    }
+}
+
+/*=========*\
+*  Anchors  *
+\*=========*/
 
 #[derive(Clone, Debug)]
 pub struct Anchor {
@@ -8,11 +30,20 @@ pub struct Anchor {
 }
 
 impl Anchor {
-    pub fn new(path: PathBuf, kind: AnchorKind) -> Anchor {
-        Anchor { path: path, kind: kind }
+    pub fn new<P: AsRef<Path>>(path: P, kind: AnchorKind) -> Anchor {
+        Anchor { path: path.as_ref().to_owned(), kind: kind }
+    }
+
+    pub fn new_src<P: AsRef<Path>>(path: P) -> Anchor {
+        Anchor { path: path.as_ref().to_owned(), kind: AnchorKind::Source }
+    }
+
+    pub fn new_dest<P: AsRef<Path>>(path: P) -> Anchor {
+        Anchor { path: path.as_ref().to_owned(), kind: AnchorKind::Destination }
     }
 }
 
+#[derive(Eq, PartialEq)]
 #[derive(Clone, Debug)]
 pub enum AnchorKind {
     Source,
@@ -27,4 +58,3 @@ impl fmt::Display for AnchorKind {
         }
     }
 }
-

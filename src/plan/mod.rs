@@ -1,5 +1,5 @@
 pub use self::plan::{Plan};
 
 pub mod plan;
-mod actions;
+mod resolve;
 mod links;
