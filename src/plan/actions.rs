@@ -1,9 +1,10 @@
-use std::{io, fmt, process, self};
+use std::{io, fmt, process};
 use std::fmt::{Display};
 use std::error::{Error};
 use std::path::{PathBuf};
 use colored::*;
 use plan::links::{Anchor, AnchorKind};
+use dirs::{home_dir};
 
 #[derive(Debug)]
 pub struct ResolveError {
@@ -133,7 +134,7 @@ impl Action {
 
         if resolved.path.is_relative() {
             if resolved.path.starts_with("~/") {
-                match std::env::home_dir() {
+                match home_dir() {
                     Some(home) => {
                         let relative = resolved.path.to_str().unwrap().replace("~/", "");
                         resolved.path = home.join(relative);

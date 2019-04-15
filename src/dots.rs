@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 use std::{process,env,fs};
 use dot_package::DotPackage;
 use utils;
+use dirs::{home_dir};
 
 pub struct Dot {
     pub package: DotPackage,
@@ -26,7 +27,7 @@ impl Dot {
 }
 
 pub fn root() -> PathBuf {
-    match env::home_dir() {
+    match home_dir() {
         Some(home) => home.join(".dots"),
         None => {
             error!("Unable to access home directory");
