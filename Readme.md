@@ -49,6 +49,6 @@ There are two main problems with this repo as it is:
 
 I'm currently working on both of these issues in the [v1.x][3] branch. If you have any other suggestions feel free to file an issue.
 
-[1]:[https://doc.rust-lang.org/cargo/getting-started/installation.html]
-[2]:[https://github.com/webdesserts/dot]
-[3]:[https://github.com/webdesserts/dots-cli/tree/v1.x]
+[1]:https://doc.rust-lang.org/cargo/getting-started/installation.html
+[2]:https://github.com/webdesserts/dot
+[3]:https://github.com/webdesserts/dots-cli/tree/v1.x
