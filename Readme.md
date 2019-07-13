@@ -1,11 +1,10 @@
 # dots-cli
 
-The `dots-cli` is a tool for quickly installing and linking groups of dotfiles across computers.
+The `dots-cli` is a tool for quickly installing and linking groups of dotfiles across computers. In short, it allows you to do the following:
 
-- Quickly installs a "dot" (a collection of dotfiles) via git to a `~/.dots` directory.
-- Use a dot `Dot.toml` to specify where you want your dotfiles to be linked.
-- Links multiple "dots" in one go and reports any conflicts between each dot or between a dot and existing files on the system.
-
+- Quickly add remote "dots" (a git repo of dotfiles) to your computer's `~/.dots` directory.
+- Use a `Dot.toml` to specify where you want your dotfiles to be linked.
+- Link multiple "dots" in one go and get a report of any conflicts that might happen.
 
 ## Getting Started
 
