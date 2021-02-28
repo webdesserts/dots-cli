@@ -1,3 +1,5 @@
+extern crate camino;
+
 #[macro_use]
 extern crate clap;
 extern crate dirs;
@@ -16,15 +18,17 @@ mod dots;
 mod plan;
 mod utils;
 
-use env_logger::LogBuilder;
-use log::{LogLevelFilter, LogRecord};
+use std::io::Write;
+
+use env_logger::fmt::Formatter;
+use env_logger::Builder;
 
 fn main() {
-    let mut builder = LogBuilder::new();
+    let mut builder = Builder::new();
 
-    let log_format = |record: &LogRecord| {
+    let log_format = |buf: &mut Formatter, record: &log::Record| -> Result<(), std::io::Error> {
         use colored::*;
-        use log::LogLevel::*;
+        use log::Level::*;
         let level = match record.level() {
             Debug => "[debug]".bold(),
             Info => "[info]".blue().bold(),
@@ -46,14 +50,13 @@ fn main() {
                 format!("{}{} {}{}", new_line, level, indent, line)
             })
             .collect::<String>();
-        format!("{}", indented)
+        writeln!(buf, "{}", indented)
     };
 
     builder
         .format(log_format)
-        .filter(None, LogLevelFilter::Info)
-        .init()
-        .unwrap();
+        .filter(None, log::LevelFilter::Info)
+        .init();
 
     let app = clap_app!((crate_name!()) =>
         (version: crate_version!())

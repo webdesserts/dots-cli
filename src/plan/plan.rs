@@ -1,11 +1,14 @@
+use camino::Utf8Path;
 use colored::*;
 use dots::Dot;
-use plan::links::{Anchor, AnchorKind, Link};
+use plan::links::Link;
 use plan::resolve::{resolve, ResolvedLink};
 use std::error::Error;
-use std::fmt::Display;
-use std::path::Path;
-use std::{self, fmt, fs, io};
+use std::{
+    fmt::{self, Display},
+    io,
+    rc::Rc,
+};
 
 /*
 ## TODOs
@@ -80,19 +83,21 @@ pub struct Plan {
 }
 
 impl Plan {
-    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError> {
+    pub fn new(dots: Vec<Dot>, _force: bool) -> Result<Plan, PlanError> {
         use colored::*;
 
-        let mut suggest_force = false;
+        let suggest_force = false;
         let mut plan = Plan { requests: vec![] };
         let mut has_errors = false;
 
         for dot in dots {
             let title = format!("[{}]", &dot.package.package.name);
             println!("\n{}", title.bold());
+            let links = dot.package.link.clone();
+            let dot = Rc::new(dot);
 
-            for (src, dest) in dot.package.link {
-                let request = LinkRequest::new(dot, src, dest);
+            for (src, dest) in links {
+                let request = LinkRequest::new(Rc::clone(&dot), src, dest);
                 if request.has_errors() {
                     has_errors = true
                 }
@@ -112,7 +117,7 @@ impl Plan {
         }
     }
 
-    pub fn execute(&self, force: bool) -> io::Result<()> {
+    pub fn execute(&self, _force: bool) -> io::Result<()> {
         // for action in &self.actions {
         //     match *action {
         //         ResolvedLink { ref src, ref dest } => {
@@ -145,7 +150,7 @@ impl Plan {
 \*===============*/
 
 pub struct LinkRequest {
-    dot: Dot,
+    dot: Rc<Dot>,
     link: ResolvedLink,
 }
 
@@ -154,10 +159,8 @@ impl Display for LinkRequest {
         use plan::resolve::ResolveIssueLevel::*;
         let checkmark = "✔".green();
         let cross = "✖".red();
-        let src = self.link.src;
-        let dest = self.link.dest;
-        let src_is_ok = src.has_errors();
-        let dest_is_ok = dest.has_errors();
+        let src = &self.link.src;
+        let dest = &self.link.dest;
 
         let statusmark = if src.has_errors() | dest.has_errors() {
             cross
@@ -165,14 +168,14 @@ impl Display for LinkRequest {
             checkmark
         };
 
-        let src_path = format!("{}", src.original.path.display());
+        let src_path = format!("{}", src.original.path);
         let src_msg = match src.max_issue_level() {
             Some(Error) => src_path.red().italic().to_string(),
             Some(Warning) => src_path.yellow().underline().to_string(),
             None => src_path,
         };
 
-        let dest_path = format!("{}", dest.original.path.display());
+        let dest_path = format!("{}", dest.original.path);
         let dest_msg = match dest.max_issue_level() {
             Some(Error) => format!("{}", dest_path.red().italic()),
             Some(Warning) => format!("{}", dest_path.yellow().underline()),
@@ -184,12 +187,12 @@ impl Display for LinkRequest {
 }
 
 impl LinkRequest {
-    fn new<P: AsRef<Path>>(dot: Dot, src: P, dest: P) -> Self {
-        let link = Link::new(src, dest);
-        LinkRequest {
-            dot,
-            link: resolve(dot, link),
-        }
+    fn new<P>(dot: Rc<Dot>, src: P, dest: P) -> Self
+    where
+        P: AsRef<Utf8Path>,
+    {
+        let link = resolve(&dot, Link::new(src, dest));
+        LinkRequest { dot, link }
     }
 
     fn has_errors(&self) -> bool {

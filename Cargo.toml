@@ -6,16 +6,18 @@ license = "MIT"
 authors = ["Michael Mullins <michael@webdesserts.com>"]
 
 [dependencies]
+camino = { version = "1.0.1", features = ['serde1']}
+
 # terminal
-clap = "^2.20"
-dirs = "1.0.5"
+clap = "2.33.3"
+dirs = "3.0.1"
 
 # logging
-env_logger = "^0.4.0"
-log = "^0.3.6"
-colored = "^1.4.0"
+env_logger = "0.8.3"
+log = "0.4.11"
+colored = "2.0.0"
 
 # serialization
-serde = "^0.9.6"
-serde_derive = "^0.9.6"
-toml = "^0.3.0"
+serde = "1.0.115"
+serde_derive = "1.0.115"
+toml = "0.5.6"

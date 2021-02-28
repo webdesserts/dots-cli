@@ -67,7 +67,7 @@ pub fn prefix(matches: &ArgMatches) {
         .iter()
         .find(|dot| dot.package.package.name == name)
     {
-        Some(dot) => println!("{}", dot.path.to_str().unwrap()),
+        Some(dot) => println!("{}", dot.path),
         None => process::exit(1),
     }
 }

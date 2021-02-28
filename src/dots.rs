@@ -1,20 +1,23 @@
-use dirs::home_dir;
+use camino::{Utf8Path, Utf8PathBuf};
 use dot_package::DotPackage;
-use std::path::{Path, PathBuf};
 use std::{env, fs, process};
-use utils;
+use utils::{self, fs::home};
 
 pub struct Dot {
     pub package: DotPackage,
-    pub path: PathBuf,
+    pub path: Utf8PathBuf,
 }
 
 impl Dot {
-    pub fn new(path: &Path) -> Result<Dot, String> {
+    pub fn new<P>(path: P) -> Result<Dot, String>
+    where
+        P: AsRef<Utf8Path>,
+    {
+        let path = path.as_ref();
         let package = DotPackage::new(path)?;
         Ok(Dot {
-            package: package,
-            path: path.to_path_buf(),
+            package,
+            path: path.to_owned(),
         })
     }
 
@@ -29,17 +32,14 @@ impl Dot {
     }
 }
 
-pub fn root() -> PathBuf {
-    match home_dir() {
-        Some(home) => home.join(".dots"),
-        None => {
-            error!("Unable to access home directory");
-            process::exit(1)
-        }
-    }
+pub fn root() -> Utf8PathBuf {
+    home().join(".dots")
 }
 
-pub fn path<P: AsRef<Path>>(path: P) -> PathBuf {
+pub fn path<P>(path: P) -> Utf8PathBuf
+where
+    P: AsRef<Utf8Path>,
+{
     root().join(path)
 }
 
@@ -68,7 +68,7 @@ pub fn add(url: &str, overwrite: bool) {
 
     if target_dir.exists() {
         if overwrite {
-            warn!("Overwriting pre-existing Dot\n\t{}", target_dir.display());
+            warn!("Overwriting pre-existing Dot\n\t{}", target_dir);
             utils::fs::clean(&target_dir);
         } else {
             error!(
@@ -107,11 +107,17 @@ pub fn find_all() -> Vec<Dot> {
     let mut dots = Vec::new();
 
     for entry in dir {
-        let path = match entry {
-            Ok(entry) => entry.path(),
-            Err(_) => continue,
+        let maybe_path = entry.map(|entry| entry.path()).ok();
+        let maybe_utf8_path = maybe_path.and_then(|p| Utf8PathBuf::from_path_buf(p).ok());
+
+        let path = match maybe_utf8_path {
+            Some(path) => path,
+            None => {
+                continue;
+            }
         };
-        match Dot::new(path.as_path()) {
+
+        match Dot::new(path) {
             Ok(dot) => dots.push(dot),
             Err(_) => {}
         }

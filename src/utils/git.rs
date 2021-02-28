@@ -1,15 +1,18 @@
 use std::io;
-use std::path::Path;
+
 use std::process::{self, Command};
 
-pub fn clone(url: &str, dest: &Path) {
-    let dest_str = dest.to_str().unwrap();
+use camino::Utf8Path;
 
+pub fn clone<P>(url: &str, dest: P)
+where
+    P: AsRef<Utf8Path>,
+{
     println!();
     let mut child = Command::new("git")
         .arg("clone")
         .arg(url)
-        .arg(dest_str)
+        .arg(dest.as_ref())
         .arg("--depth=1")
         .spawn()
         .map_err(require_git)

@@ -1,9 +1,11 @@
+use camino::{Utf8Path, Utf8PathBuf};
 use dots::Dot;
 use plan::links::{Anchor, AnchorKind, Link};
 use std::fmt::Display;
 use std::fs::FileType;
-use std::path::{Path, PathBuf};
-use std::{self, fmt, fs, io, process};
+use std::{fmt, fs, io, process};
+
+use crate::utils::fs::{canonicalize, home};
 
 /*================*\
 *  Resolved Links  *
@@ -14,11 +16,11 @@ pub struct ResolvedLink {
     pub dest: ResolvedAnchor,
 }
 
-pub fn resolve(dot: Dot, link: Link) -> ResolvedLink {
-    return ResolvedLink {
-        src: resolve_src(link.src, dot.path),
+pub fn resolve(dot: &Dot, link: Link) -> ResolvedLink {
+    ResolvedLink {
+        src: resolve_src(link.src, dot.path.clone()),
         dest: resolve_dest(link.dest),
-    };
+    }
 }
 
 /*==================*\
@@ -26,22 +28,22 @@ pub fn resolve(dot: Dot, link: Link) -> ResolvedLink {
 \*==================*/
 
 pub struct ResolvedAnchor {
-    pub path: Option<PathBuf>,
+    pub path: Option<Utf8PathBuf>,
     pub original: Anchor,
     pub issues: Vec<ResolveIssue>,
 }
 
 impl ResolvedAnchor {
     fn new(original: Anchor) -> Self {
-        return ResolvedAnchor {
+        ResolvedAnchor {
             path: None,
             original,
             issues: vec![],
-        };
+        }
     }
 
-    fn kind(&self) -> AnchorKind {
-        self.original.kind
+    fn kind(&self) -> &AnchorKind {
+        &self.original.kind
     }
 
     pub fn has_errors(&self) -> bool {
@@ -65,7 +67,10 @@ impl ResolvedAnchor {
     }
 }
 
-fn resolve_src<P: AsRef<Path>>(anchor: Anchor, root: P) -> ResolvedAnchor {
+fn resolve_src<P>(anchor: Anchor, root: P) -> ResolvedAnchor
+where
+    P: AsRef<Utf8Path>,
+{
     if anchor.kind != AnchorKind::Destination {
         error!("Invalid AnchorKind passed to resolve_dest");
         process::exit(1);
@@ -84,7 +89,7 @@ fn resolve_src<P: AsRef<Path>>(anchor: Anchor, root: P) -> ResolvedAnchor {
 
     let absolute_path = root.join(&src.original.path);
 
-    match absolute_path.canonicalize() {
+    match canonicalize(absolute_path) {
         Ok(path) => src.path = Some(path),
         Err(err) => {
             use self::ResolveIssueKind as link;
@@ -100,7 +105,7 @@ fn resolve_src<P: AsRef<Path>>(anchor: Anchor, root: P) -> ResolvedAnchor {
         }
     };
 
-    return src;
+    src
 }
 
 fn resolve_dest(anchor: Anchor) -> ResolvedAnchor {
@@ -113,21 +118,14 @@ fn resolve_dest(anchor: Anchor) -> ResolvedAnchor {
 
     // if the path is relative assume they want you to link to the home directory
     if dest.original.path.is_relative() {
-        match std::env::home_dir() {
-            Some(home) => {
-                let mut relative = dest.original.path.to_str().unwrap();
-                // check to see if they already supplied ~/ as the root. If they did, remove it
-                if dest.original.path.starts_with("~/") {
-                    relative = relative.replace("~/", "");
-                };
-                // then use join the relative path to the home directory
-                dest.path = Some(home.join(relative));
-            }
-            None => {
-                error!("Unable to access Home Directory");
-                process::exit(1);
-            }
+        let home = home();
+        let mut relative = dest.original.path.to_string();
+        // check to see if they already supplied ~/ as the root. If they did, remove it
+        if dest.original.path.starts_with("~/") {
+            relative = relative.replace("~/", "");
         };
+        // then use join the relative path to the home directory
+        dest.path = Some(home.join(relative));
     }
 
     if let Some(ref path) = dest.path {
@@ -143,7 +141,7 @@ fn resolve_dest(anchor: Anchor) -> ResolvedAnchor {
         }
     }
 
-    return dest;
+    dest
 }
 
 /*========*\
@@ -176,7 +174,7 @@ impl ResolveIssue {
     fn new(anchor: &Anchor, kind: ResolveIssueKind) -> Self {
         ResolveIssue {
             anchor: anchor.to_owned(),
-            kind: kind,
+            kind,
         }
     }
 
@@ -192,12 +190,12 @@ impl ResolveIssue {
         use self::ResolveIssueKind::*;
         use self::ResolveIssueLevel::*;
         match self.kind {
-            AlreadyExists(ref file_type) => Warning,
-            InvalidPath(ref msg) => Error,
+            AlreadyExists(_) => Warning,
+            InvalidPath(_) => Error,
             NotFound => Error,
             PermissionDenied => Error,
-            IO(ref err) => Error,
-            Other(ref msg) => Error,
+            IO(_) => Error,
+            Other(_) => Error,
         }
     }
 }
@@ -211,40 +209,28 @@ impl Display for ResolveIssue {
                 "{} already exists as {}: {} ",
                 self.anchor.kind,
                 file_type_to_str(file_type),
-                self.anchor.path.display()
+                self.anchor.path
             ),
             InvalidPath(ref msg) => write!(
                 f,
                 "{} is not a valid path. {}: {}",
-                self.anchor.kind,
-                msg,
-                self.anchor.path.display()
+                self.anchor.kind, msg, self.anchor.path
             ),
-            NotFound => write!(
-                f,
-                "Can't find {}: {} ",
-                self.anchor.kind,
-                self.anchor.path.display()
-            ),
+            NotFound => write!(f, "Can't find {}: {} ", self.anchor.kind, self.anchor.path),
             PermissionDenied => write!(
                 f,
                 "Permission denied to {}: {} ",
-                self.anchor.kind,
-                self.anchor.path.display()
+                self.anchor.kind, self.anchor.path
             ),
             IO(ref err) => write!(
                 f,
                 "Error resolving {} {}: {}",
-                self.anchor.kind,
-                self.anchor.path.display(),
-                err
+                self.anchor.kind, self.anchor.path, err
             ),
             Other(ref msg) => write!(
                 f,
                 "Error resolving {} {}: {}",
-                self.anchor.kind,
-                self.anchor.path.display(),
-                msg
+                self.anchor.kind, self.anchor.path, msg
             ),
         }
     }

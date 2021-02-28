@@ -1,7 +1,7 @@
-use std::collections::HashMap as Map;
+use camino::{Utf8Path, Utf8PathBuf};
 use std::fs;
 use std::io::{self, Read};
-use std::path::{Path, PathBuf};
+use std::{collections::HashMap as Map, path::Path};
 use toml;
 
 #[derive(Serialize, Deserialize)]
@@ -17,22 +17,26 @@ pub struct DotPackage {
     pub package: DotPackageMeta,
     #[serde(default)]
     pub execute: Map<String, Vec<String>>,
-    pub link: Map<PathBuf, PathBuf>,
+    pub link: Map<Utf8PathBuf, Utf8PathBuf>,
 }
 
 impl DotPackage {
-    pub fn new(path: &Path) -> Result<DotPackage, &str> {
+    pub fn new<P>(path: P) -> Result<DotPackage, &'static str>
+    where
+        P: AsRef<Utf8Path>,
+    {
+        let path = path.as_ref();
         let contents = match read_package(path.join("Dot.toml")) {
             Ok(package) => package,
             Err(err) => {
-                error!("Error reading Dot.toml:\nin {}\n{}", path.display(), err);
+                error!("Error reading Dot.toml:\nin {}\n{}", path, err);
                 return Err("Error reading Dot.toml");
             }
         };
-        let package = match toml::from_str(&contents) {
+        let package: DotPackage = match toml::from_str(&contents) {
             Ok(package) => package,
             Err(err) => {
-                error!("Error parsing Dot.toml:\nin {}\n{}", path.display(), err);
+                error!("Error parsing Dot.toml:\nin {}\n{}", path, err);
                 return Err("Error parsing Dot.toml");
             }
         };
@@ -40,7 +44,10 @@ impl DotPackage {
     }
 }
 
-fn read_package<P: AsRef<Path>>(path: P) -> io::Result<String> {
+fn read_package<P>(path: P) -> io::Result<String>
+where
+    P: AsRef<Path>,
+{
     let mut file = fs::File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
