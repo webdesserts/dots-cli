@@ -1,15 +1,18 @@
-use std::process::{Command, self};
-use std::path::Path;
 use std::io;
+use std::path::Path;
+use std::process::{self, Command};
 
-pub fn clone(url: &str, dest: &Path) {
-    let dest_str = dest.to_str().unwrap();
+use camino::Utf8Path;
 
+pub fn clone<P>(url: &str, dest: P)
+where
+    P: AsRef<Utf8Path>,
+{
     println!();
     let mut child = Command::new("git")
         .arg("clone")
         .arg(url)
-        .arg(dest_str)
+        .arg(dest.as_ref())
         .arg("--depth=1")
         .spawn()
         .map_err(require_git)
@@ -36,7 +39,7 @@ pub fn get_origin() -> Option<String> {
     if output.status.success() {
         match String::from_utf8(output.stdout) {
             Ok(string) => Some(string),
-            Err(_) => None
+            Err(_) => None,
         }
     } else {
         None
@@ -48,7 +51,7 @@ fn require_git(err: io::Error) -> io::Error {
         io::ErrorKind::NotFound => {
             error!(r#"Unable to find "git" command"#);
             process::exit(1)
-        },
-        _ => err
+        }
+        _ => err,
     }
 }

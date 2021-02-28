@@ -1,11 +1,14 @@
-use std::{io, fs, fmt, self};
-use std::fmt::{Display};
-use std::error::{Error};
-use dots::{Dot};
-use plan::links::{Link, Anchor, AnchorKind};
-use plan::resolve::{resolve, ResolvedLink};
-use std::path::{Path};
+use camino::Utf8Path;
 use colored::*;
+use dots::Dot;
+use plan::links::Link;
+use plan::resolve::{resolve, ResolvedLink};
+use std::error::Error;
+use std::{
+    fmt::{self, Display},
+    io,
+    rc::Rc,
+};
 
 /*
 ## TODOs
@@ -24,13 +27,13 @@ use colored::*;
 - Figure out how to continue gathering errors when something errors out.
 - Figure out how the footprint should be stored and plan a way get all the way
   from a LinkRequest to a Footprint
- 
+
 ## What's in a link?
 A link needs to be used to make the actual symlink
 A link needs to be printed out
 A link needs to print out differently based on errors & warnings
 A link needs to be stored in a dotfootprint
- 
+
 ## Errors & Warnings
 There are two types of errors:
 Errors resolving the source of a link
@@ -42,7 +45,7 @@ The install should still be resumable once a warning is confirmed.
 
 Errors – issues that we can't control or issues that need to be resolved by
 the user. Errors should stop the install in its tracks.
- 
+
 We always want to return an Array of Errors & Warnings even if it's empty
 */
 
@@ -53,7 +56,9 @@ pub struct PlanError {
 
 impl PlanError {
     fn new(msg: &str) -> PlanError {
-        PlanError { msg: msg.to_string() }
+        PlanError {
+            msg: msg.to_string(),
+        }
     }
 }
 
@@ -78,7 +83,7 @@ pub struct Plan {
 }
 
 impl Plan {
-    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError>{
+    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError> {
         use colored::*;
 
         let mut suggest_force = false;
@@ -88,17 +93,23 @@ impl Plan {
         for dot in dots {
             let title = format!("[{}]", &dot.package.package.name);
             println!("\n{}", title.bold());
+            let links = dot.package.link.clone();
+            let dot = Rc::new(dot);
 
-            for (src, dest) in dot.package.link {
-                let request = LinkRequest::new(dot, src, dest);
-                if request.has_errors() { has_errors = true }
+            for (src, dest) in links {
+                let request = LinkRequest::new(Rc::clone(&dot), src, dest);
+                if request.has_errors() {
+                    has_errors = true
+                }
                 println!("\n{}", request);
                 plan.requests.push(request);
             }
         }
 
         println!();
-        if suggest_force { info!("{}", "use --force to overwrite existing directories") }
+        if suggest_force {
+            info!("{}", "use --force to overwrite existing directories")
+        }
         if has_errors {
             Err(PlanError::new("Planning failed."))
         } else {
@@ -139,7 +150,7 @@ impl Plan {
 \*===============*/
 
 pub struct LinkRequest {
-    dot: Dot,
+    dot: Rc<Dot>,
     link: ResolvedLink,
 }
 
@@ -148,25 +159,27 @@ impl Display for LinkRequest {
         use plan::resolve::ResolveIssueLevel::*;
         let checkmark = "✔".green();
         let cross = "✖".red();
-        let src = self.link.src;
-        let dest = self.link.dest;
-        let src_is_ok = src.has_errors();
-        let dest_is_ok = dest.has_errors();
+        let src = &self.link.src;
+        let dest = &self.link.dest;
 
-        let statusmark = if src.has_errors() | dest.has_errors() { cross } else { checkmark };
+        let statusmark = if src.has_errors() | dest.has_errors() {
+            cross
+        } else {
+            checkmark
+        };
 
-        let src_path = format!("{}", src.original.path.display());
+        let src_path = format!("{}", src.original.path);
         let src_msg = match src.max_issue_level() {
             Some(Error) => src_path.red().italic().to_string(),
             Some(Warning) => src_path.yellow().underline().to_string(),
-            None => src_path
+            None => src_path,
         };
 
-        let dest_path = format!("{}", dest.original.path.display());
+        let dest_path = format!("{}", dest.original.path);
         let dest_msg = match dest.max_issue_level() {
             Some(Error) => format!("{}", dest_path.red().italic()),
             Some(Warning) => format!("{}", dest_path.yellow().underline()),
-            None => dest_path
+            None => dest_path,
         };
 
         write!(f, "{} {} => {}", statusmark, src_msg, dest_msg)
@@ -174,9 +187,12 @@ impl Display for LinkRequest {
 }
 
 impl LinkRequest {
-    fn new<P: AsRef<Path>>(dot: Dot, src: P, dest: P) -> Self {
-        let link = Link::new(src, dest);
-        LinkRequest { dot, link: resolve(dot, link) }
+    fn new<P>(dot: Rc<Dot>, src: P, dest: P) -> Self
+    where
+        P: AsRef<Utf8Path>,
+    {
+        let link = resolve(&dot, Link::new(src, dest));
+        LinkRequest { dot, link }
     }
 
     fn has_errors(&self) -> bool {

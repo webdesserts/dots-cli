@@ -1,5 +1,5 @@
-pub use self::git::{clone};
-pub use self::fs::{clean};
+pub use self::fs::clean;
+pub use self::git::clone;
 
-pub mod git;
 pub mod fs;
+pub mod git;
