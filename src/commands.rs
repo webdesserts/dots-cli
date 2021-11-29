@@ -1,8 +1,8 @@
 use clap::ArgMatches;
 use std::process;
 
-use dots;
-use plan::Plan;
+use crate::dots;
+use crate::plan::Plan;
 
 pub fn add(matches: &ArgMatches) {
     let url = matches.value_of("REPO").expect("repo is required");

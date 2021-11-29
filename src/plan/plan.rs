@@ -1,8 +1,8 @@
+use crate::dots::Dot;
+use crate::plan::links::Link;
+use crate::plan::resolve::{resolve, ResolvedLink};
 use camino::Utf8Path;
 use colored::*;
-use dots::Dot;
-use plan::links::Link;
-use plan::resolve::{resolve, ResolvedLink};
 use std::error::Error;
 use std::{
     fmt::{self, Display},
@@ -156,7 +156,7 @@ pub struct LinkRequest {
 
 impl Display for LinkRequest {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use plan::resolve::ResolveIssueLevel::*;
+        use crate::plan::resolve::ResolveIssueLevel::*;
         let checkmark = "✔".green();
         let cross = "✖".red();
         let src = &self.link.src;

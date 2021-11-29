@@ -1,6 +1,6 @@
+use crate::dots::Dot;
+use crate::plan::links::{Anchor, AnchorKind, Link};
 use camino::{Utf8Path, Utf8PathBuf};
-use dots::Dot;
-use plan::links::{Anchor, AnchorKind, Link};
 use std::fmt::Display;
 use std::fs::FileType;
 use std::{fmt, fs, io, process};

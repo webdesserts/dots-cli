@@ -4,6 +4,7 @@ version = "0.2.1"
 description = "A cli for managing all your dot(file)s"
 license = "MIT"
 authors = ["Michael Mullins <michael@webdesserts.com>"]
+edition = "2021"
 
 [dependencies]
 # errors

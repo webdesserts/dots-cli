@@ -1,7 +1,7 @@
+use crate::dot_package::DotPackage;
+use crate::utils::{self, fs::home};
 use camino::{Utf8Path, Utf8PathBuf};
-use dot_package::DotPackage;
 use std::{env, fs, process};
-use utils::{self, fs::home};
 
 pub struct Dot {
     pub package: DotPackage,
