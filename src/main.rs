@@ -1,4 +1,5 @@
 extern crate camino;
+extern crate failure;
 
 #[macro_use]
 extern crate clap;
@@ -14,9 +15,9 @@ extern crate toml;
 
 mod commands;
 mod dot_package;
-mod dots;
-mod plan;
-mod utils;
+pub mod dots;
+pub mod plan;
+pub mod utils;
 
 use std::io::Write;
 

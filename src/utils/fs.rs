@@ -26,7 +26,6 @@ where
     P: AsRef<Utf8Path>,
 {
     let path = path.as_ref();
-    path
-        .canonicalize()
+    path.canonicalize()
         .map(|path| Utf8PathBuf::from_path_buf(path).unwrap())
 }

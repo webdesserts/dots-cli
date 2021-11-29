@@ -6,6 +6,10 @@ license = "MIT"
 authors = ["Michael Mullins <michael@webdesserts.com>"]
 
 [dependencies]
+# errors
+failure = "0.1.8"
+
+# paths & io
 camino = { version = "1.0.1", features = ['serde1']}
 
 # terminal

@@ -101,7 +101,7 @@ impl Plan {
                 if request.has_errors() {
                     has_errors = true
                 }
-                println!("\n{}", request);
+                println!("{}", request);
                 plan.requests.push(request);
             }
         }
@@ -197,5 +197,20 @@ impl LinkRequest {
 
     fn has_errors(&self) -> bool {
         self.link.src.has_errors() | self.link.dest.has_errors()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    mod link_request {
+        use crate::dots::Dot;
+
+        #[test]
+        fn it_should_display_correctly() -> Result<(), failure::Error> {
+            let dot = Dot::new("./fixtures/example_dot/")?;
+            assert_eq!(dot.path, "./fixtures/example_dot/");
+            assert_eq!(dot.package.package.name, "example_package");
+            Ok(())
+        }
     }
 }

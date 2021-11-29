@@ -78,3 +78,26 @@ impl fmt::Display for AnchorKind {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    mod link {
+        use crate::plan::links::{AnchorKind, Link};
+
+        #[test]
+        fn it_should_create_a_new_link() {
+            let link = Link::new("./src.txt", "./dest.txt");
+            assert_eq!(link.src.path, "./src.txt");
+            assert_eq!(link.src.kind, AnchorKind::Source);
+            assert_eq!(link.dest.path, "./dest.txt");
+            assert_eq!(link.dest.kind, AnchorKind::Destination);
+        }
+
+        #[test]
+        fn it_should_display_correctly_when_printed() {
+            let link = Link::new("./src.txt", "./dest.txt");
+            assert_eq!(format!("{}", link.src.kind), "Source");
+            assert_eq!(format!("{}", link.dest.kind), "Destination");
+        }
+    }
+}

@@ -71,8 +71,8 @@ fn resolve_src<P>(anchor: Anchor, root: P) -> ResolvedAnchor
 where
     P: AsRef<Utf8Path>,
 {
-    if anchor.kind != AnchorKind::Destination {
-        error!("Invalid AnchorKind passed to resolve_dest");
+    if anchor.kind != AnchorKind::Source {
+        error!("Invalid AnchorKind passed to resolve_src");
         process::exit(1);
     }
 
