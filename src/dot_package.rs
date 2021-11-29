@@ -4,7 +4,6 @@ use std::fs;
 use std::io::{self, Read};
 use std::{collections::HashMap, path::Path};
 
-
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DotPackageMeta {
