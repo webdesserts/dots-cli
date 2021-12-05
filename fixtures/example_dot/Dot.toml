@@ -4,4 +4,4 @@ authors = [ "Michael Mullins" ]
 
 [link]
 "shell/bashrc" = "~/.bashrc"
-"shell/gitconfig" = "~/.gitconfig"
+"shell/zshrc" = "~/.zshrc"

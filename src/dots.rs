@@ -179,13 +179,11 @@ mod tests {
         #[test]
         fn it_should_contain_links_from_the_dot_toml() -> Result<(), failure::Error> {
             let dot = Dot::new("./fixtures/example_dot/")?;
-            let expected: HashMap<Utf8PathBuf, Utf8PathBuf> = vec![
-                ("shell/bashrc", "~/.bashrc"),
-                ("shell/gitconfig", "~/.gitconfig"),
-            ]
-            .into_iter()
-            .map(|(key, value)| (Utf8PathBuf::from(key), Utf8PathBuf::from(value)))
-            .collect();
+            let expected: HashMap<Utf8PathBuf, Utf8PathBuf> =
+                vec![("shell/bashrc", "~/.bashrc"), ("shell/zshrc", "~/.zshrc")]
+                    .into_iter()
+                    .map(|(key, value)| (Utf8PathBuf::from(key), Utf8PathBuf::from(value)))
+                    .collect();
 
             assert_eq!(dot.package.link, expected);
             Ok(())

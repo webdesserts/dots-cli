@@ -1,0 +1,6 @@
+[info] Adding {SRC_PATH}
+[info] Cloning...
+Cloning into '{DEST_PATH}'...
+warning: --depth is ignored in local clones; use file:// instead.
+done.
+[info] Cloning complete!

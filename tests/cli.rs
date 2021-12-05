@@ -1,38 +1,24 @@
-const VERSION: &str = "dots 0.2.1";
-const AUTHOR: &str = "Michael Mullins <michael@webdesserts.com>";
-const DESCRIPTION: &str = "A cli for managing all your dot(file)s";
-
-const USAGE: &str = "USAGE:
-    dots [OPTIONS] [SUBCOMMAND]";
-
-const FLAGS: &str = "FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information";
-
-const OPTIONS: &str = "OPTIONS:
-        --dotsPath <dots_path>    The location to find and install dots";
-
-const SUBCOMMANDS: &str = "SUBCOMMANDS:
-    add        Downloads the given git repo as a dot
-    help       Prints this message or the help of the given subcommand(s)
-    install    Installs all Dots
-    list       List the names of all installed dots and the repos they link to
-    prefix     returns the installed location of a given dot";
+mod utils;
 
 mod cli_tests {
     use crate::*;
     use assert_cmd::prelude::*;
     use std::process::Command;
-    
+    use utils::{AssertableOutput, Fixture, TestDir};
+
     type TestResult = Result<(), failure::Error>;
 
     mod root_command {
         use crate::cli_tests::*;
 
         #[test]
-        fn it_should_print_usage() {
-            let mut cmd = Command::cargo_bin("dots").unwrap();
-            cmd.assert().success().stdout(format!("{}\n", USAGE));
+        fn it_should_print_usage() -> TestResult {
+            let mut cmd = Command::cargo_bin("dots")?;
+            let output = cmd.output()?;
+            let expected = include_str!("output/usage.out");
+
+            output.assert_success().assert_stdout_eq(expected);
+            Ok(())
         }
     }
 
@@ -40,29 +26,66 @@ mod cli_tests {
         use crate::cli_tests::*;
 
         #[test]
-        fn it_should_print_help() {
-            let mut cmd = Command::cargo_bin("dots").unwrap();
-            cmd.arg("help").assert().success().stdout(format!(
-                "{}\n{}\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n",
-                VERSION, AUTHOR, DESCRIPTION, USAGE, FLAGS, OPTIONS, SUBCOMMANDS
-            ));
+        fn it_should_print_help() -> TestResult {
+            let mut cmd = Command::cargo_bin("dots")?;
+            let output = cmd.arg("help").output()?;
+            let expected = include_str!("output/help.out");
+
+            output.assert_success().assert_stdout_eq(expected);
+            Ok(())
         }
     }
 
     mod list_subcommand {
         use crate::cli_tests::*;
-        use tempfile::tempdir;
 
         #[test]
         fn it_should_list_nothing_by_default() -> TestResult {
-            let dir = tempdir()?;
+            let test_dir = TestDir::new()?;
             let mut cmd = Command::cargo_bin("dots").unwrap();
-            cmd.arg("list")
+            let output = cmd
+                .arg("list")
                 .arg("--dotsPath")
-                .arg(dir.path())
-                .assert()
-                .success()
-                .stdout("");
+                .arg(test_dir.dots_root())
+                .output()?;
+
+            output.assert_success().assert_stdout_eq("");
+            Ok(())
+        }
+    }
+
+    mod add_subcommand {
+        use crate::cli_tests::*;
+
+        #[test]
+        /**
+         * @todo consider removing git output from stderr unless there was an error
+         */
+        fn it_should_add_a_dot_to_the_dots_folder() -> TestResult {
+            let test_dir = TestDir::new()?;
+            let fixture = Fixture::ExampleDot;
+            let fixture_path = test_dir.setup_fixture_as_git_repo(&fixture)?;
+            let dots_root = test_dir.dots_root();
+
+            let mut cmd = Command::cargo_bin("dots").unwrap();
+
+            cmd.arg("add")
+                .arg(&fixture_path)
+                .arg("--dotsPath")
+                .arg(&dots_root);
+
+            let output = cmd.output()?;
+            let expected = format!(
+                std::include_str!("output/add_dot_success.out"),
+                SRC_PATH = fixture_path,
+                DEST_PATH = dots_root.join(".tmp"),
+            );
+
+            output.assert_success().assert_stderr_eq(expected);
+
+            assert!(dots_root.exists());
+            assert!(fixture_path.exists());
+            assert!(fixture_path.join("Dot.toml").exists());
             Ok(())
         }
     }

@@ -1,0 +1,20 @@
+dots 0.2.1
+Michael Mullins <michael@webdesserts.com>
+A cli for managing all your dot(file)s
+
+USAGE:
+    dots [OPTIONS] [SUBCOMMAND]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+        --dotsPath <dots_path>    The location to find and install dots
+
+SUBCOMMANDS:
+    add        Downloads the given git repo as a dot
+    help       Prints this message or the help of the given subcommand(s)
+    install    Installs all Dots
+    list       List the names of all installed dots and the repos they link to
+    prefix     returns the installed location of a given dot
