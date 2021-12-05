@@ -32,20 +32,46 @@ impl Dot {
     }
 }
 
-pub fn root() -> Utf8PathBuf {
-    home().join(".dots")
+pub struct Environment {
+    root: Utf8PathBuf,
 }
 
-pub fn path<P>(path: P) -> Utf8PathBuf
-where
-    P: AsRef<Utf8Path>,
-{
-    root().join(path)
+impl Default for Environment {
+    fn default() -> Self {
+        Self {
+            root: home().join(".dots"),
+        }
+    }
 }
 
-pub fn add(url: &str, overwrite: bool) {
+impl Environment {
+    pub fn new<P>(root: Option<P>) -> Self
+    where
+        P: AsRef<Utf8Path>,
+    {
+        match root {
+            Some(path) => Environment {
+                root: path.as_ref().to_owned(),
+            },
+            None => Environment::default(),
+        }
+    }
+
+    pub fn path<P>(&self, path: P) -> Utf8PathBuf
+    where
+        P: AsRef<Utf8Path>,
+    {
+        self.root.join(path)
+    }
+
+    pub fn package_path(&self, dot: &Dot) -> Utf8PathBuf {
+        self.path(&dot.package.package.name)
+    }
+}
+
+pub fn add(url: &str, overwrite: bool, env: &Environment) {
     info!("Adding {}", url);
-    let tmp = self::path(".tmp");
+    let tmp = env.path(".tmp");
 
     if tmp.is_dir() {
         warn!("Cleaning left over .tmp directory.\nIt appears another command failed to clean up after itself.");
@@ -64,7 +90,7 @@ pub fn add(url: &str, overwrite: bool) {
         }
     };
 
-    let target_dir = self::path(&dot.package.package.name);
+    let target_dir = env.package_path(&dot);
 
     if target_dir.exists() {
         if overwrite {
@@ -73,7 +99,7 @@ pub fn add(url: &str, overwrite: bool) {
         } else {
             error!(
                 "A Dot named {} is already installed. Aborting.",
-                dot.package.package.name
+                env.package_path(&dot)
             );
             error!("pass --overwrite to overwrite the pre-existing Dot");
             utils::fs::clean(&tmp);
@@ -85,8 +111,8 @@ pub fn add(url: &str, overwrite: bool) {
     info!("Cloning complete!")
 }
 
-pub fn find_all() -> Vec<Dot> {
-    let dir = match root().read_dir() {
+pub fn find_all(env: &Environment) -> Vec<Dot> {
+    let dir = match env.root.read_dir() {
         Ok(read_dir) => read_dir,
         Err(err) => {
             use std::io::ErrorKind as Kind;

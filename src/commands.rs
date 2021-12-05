@@ -1,22 +1,26 @@
 use clap::ArgMatches;
 use std::process;
 
-use crate::dots;
+use crate::dots::{self, Environment};
 use crate::plan::Plan;
 
 pub fn add(matches: &ArgMatches) {
+    let dots_path = matches.value_of("dots_path");
+    let env = Environment::new(dots_path);
     let url = matches.value_of("REPO").expect("repo is required");
     let overwrite = matches.is_present("overwrite");
-    dots::add(url, overwrite)
+    dots::add(url, overwrite, &env)
 }
 
 pub fn install(matches: &ArgMatches) {
+    let dots_path = matches.value_of("dots_path");
+    let env = Environment::new(dots_path);
     if let Some(url) = matches.value_of("REPO") {
         let overwrite = matches.is_present("overwrite");
-        dots::add(url, overwrite);
+        dots::add(url, overwrite, &env);
     };
 
-    let plan = match Plan::new(dots::find_all(), matches.is_present("force")) {
+    let plan = match Plan::new(dots::find_all(&env), matches.is_present("force")) {
         Ok(plan) => {
             info!("Looks Good! Nothing wrong with the current install plan!");
             plan
@@ -48,7 +52,9 @@ pub fn install(matches: &ArgMatches) {
 }
 
 pub fn list(matches: &ArgMatches) {
-    for dot in dots::find_all() {
+    let dots_path = matches.value_of("dots_path");
+    let env = Environment::new(dots_path);
+    for dot in dots::find_all(&env) {
         let mut remote = String::new();
         if matches.is_present("origins") {
             remote = dot
@@ -61,9 +67,11 @@ pub fn list(matches: &ArgMatches) {
 }
 
 pub fn prefix(matches: &ArgMatches) {
+    let dots_path = matches.value_of("dots_path");
+    let env = Environment::new(dots_path);
     let name = matches.value_of("DOT").expect("Missing Argument <REPO>");
 
-    match dots::find_all()
+    match dots::find_all(&env)
         .iter()
         .find(|dot| dot.package.package.name == name)
     {
