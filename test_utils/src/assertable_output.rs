@@ -59,14 +59,19 @@ impl AssertableOutput for Output {
     }
 
     fn assert_fail_with_code(&self, expected_code: i32) -> &Self {
-        let code = self.status.code();
-        assert_eq!(
-            code,
-            Some(expected_code),
-            "expected fail signal {:?} but it succeeded with {:?}",
-            expected_code,
-            code
-        );
+        match self.status.code() {
+            Some(0) => panic!("expected command to fail, but it succeeded"),
+            Some(code) => assert_eq!(
+                expected_code, code,
+                "expected command to fail with exit code {} but instead it failed with {}",
+                expected_code, code
+            ),
+            None => panic!(
+                "expected command to fail with exit code {} but the process was terminated early",
+                expected_code
+            ),
+        }
+
         &self
     }
 }
