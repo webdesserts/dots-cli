@@ -12,7 +12,7 @@ mod subcommand_list {
             .arg(test_dir.dots_root())
             .output()?;
 
-        output.assert_success().assert_stdout_eq("");
+        output.assert_stdout_eq("").assert_success();
         Ok(())
     }
 }

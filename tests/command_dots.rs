@@ -9,7 +9,7 @@ mod command_dots {
         let output = cmd.output()?;
         let expected = include_str!("output/usage.out");
 
-        output.assert_success().assert_stdout_eq(expected);
+        output.assert_stdout_eq(expected).assert_success();
         Ok(())
     }
 
@@ -19,7 +19,7 @@ mod command_dots {
         let output = cmd.arg("--help").output()?;
         let expected = format!(include_str!("output/help.out"), VERSION = crate_version!());
 
-        output.assert_success().assert_stdout_eq(expected);
+        output.assert_stdout_eq(expected).assert_success();
         Ok(())
     }
 
@@ -32,7 +32,7 @@ mod command_dots {
             VERSION = crate_version!()
         );
 
-        output.assert_success().assert_stdout_eq(expected);
+        output.assert_stdout_eq(expected).assert_success();
         Ok(())
     }
 }

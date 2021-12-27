@@ -24,7 +24,7 @@ mod subcommand_add {
             DEST_PATH = dots_root.join(fixture.name()),
         );
 
-        output.assert_success().assert_stderr_eq(expected);
+        output.assert_stderr_eq(expected).assert_success();
 
         assert!(dots_root.exists());
         assert!(fixture_path.exists());
@@ -62,7 +62,7 @@ mod subcommand_add {
             TMP_PATH = dots_root.join(".tmp"),
         );
 
-        output.assert_fail().assert_stderr_eq(expected);
+        output.assert_stderr_eq(expected).assert_fail();
 
         Ok(())
     }
@@ -98,7 +98,7 @@ mod subcommand_add {
             DEST_PATH = dots_root.join(fixture.name()),
         );
 
-        output.assert_fail().assert_stderr_eq(expected);
+        output.assert_stderr_eq(expected).assert_fail();
 
         Ok(())
     }
@@ -135,7 +135,7 @@ mod subcommand_add {
             DEST_PATH = dots_root.join(fixture.name()),
         );
 
-        output.assert_success().assert_stderr_eq(expected);
+        output.assert_stderr_eq(expected).assert_success();
 
         Ok(())
     }

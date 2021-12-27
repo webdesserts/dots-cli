@@ -9,7 +9,7 @@ mod subcommand_help {
         let output = cmd.arg("help").output()?;
         let expected = format!(include_str!("output/help.out"), VERSION = crate_version!());
 
-        output.assert_success().assert_stdout_eq(expected);
+        output.assert_stdout_eq(expected).assert_success();
         Ok(())
     }
 }
