@@ -94,7 +94,7 @@ pub fn add(url: &str, overwrite: bool, env: &Environment) {
 
     if target_dir.exists() {
         if overwrite {
-            warn!("Overwriting pre-existing Dot\n\t{}", target_dir);
+            warn!("Overwriting pre-existing Dot\n{}", target_dir);
             utils::fs::clean(&target_dir);
         } else {
             error!(

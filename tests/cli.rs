@@ -157,5 +157,42 @@ mod cli_tests {
 
             Ok(())
         }
+
+        #[test]
+        fn it_should_succeed_if_the_dot_is_already_added_but_overwrite_is_passed() -> TestResult {
+            let test_dir = TestDir::new()?;
+            let fixture = Fixture::ExampleDot;
+            let fixture_path = test_dir.setup_fixture_as_git_repo(&fixture)?;
+            let dots_root = test_dir.dots_root();
+
+            let mut first_add_cmd = Command::cargo_bin("dots")?;
+
+            first_add_cmd
+                .arg("add")
+                .arg(&fixture_path)
+                .arg("--dotsPath")
+                .arg(&dots_root)
+                .output()?;
+
+            let mut second_add_cmd = Command::cargo_bin("dots")?;
+
+            let output = second_add_cmd
+                .arg("add")
+                .arg(&fixture_path)
+                .arg("--overwrite")
+                .arg("--dotsPath")
+                .arg(&dots_root)
+                .output()?;
+
+            let expected = format!(
+                std::include_str!("output/add_success_using_overwrite.out"),
+                SRC_PATH = fixture_path,
+                DEST_PATH = dots_root.join(fixture.name()),
+            );
+
+            output.assert_success().assert_stderr_eq(expected);
+
+            Ok(())
+        }
     }
 }
