@@ -1,0 +1,16 @@
+dots-add 
+Downloads the given git repo as a dot
+
+USAGE:
+    dots add [FLAGS] [OPTIONS] <REPO>
+
+FLAGS:
+    -h, --help         Prints help information
+        --overwrite    Will remove pre-existing packages of the same name
+    -V, --version      Prints version information
+
+OPTIONS:
+        --dotsPath <dots_path>    The location to find and install dots
+
+ARGS:
+    <REPO>    A git url that points to a Dot repo containing all your dotfiles

@@ -2,6 +2,8 @@ use camino::{Utf8Path, Utf8PathBuf};
 use std::{fs, io, process::Command};
 use walkdir::WalkDir;
 
+pub type TestResult = Result<(), failure::Error>;
+
 pub fn copy_dir<S, D>(source: S, destination: D) -> Result<(), io::Error>
 where
     S: AsRef<Utf8Path>,
