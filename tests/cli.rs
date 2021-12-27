@@ -1,10 +1,7 @@
-mod utils;
-
 mod cli_tests {
-    use crate::*;
     use assert_cmd::prelude::*;
     use std::process::Command;
-    use utils::{AssertableOutput, Fixture, TestDir};
+    use test_utils::{AssertableOutput, Fixture, TestDir};
 
     type TestResult = Result<(), failure::Error>;
 

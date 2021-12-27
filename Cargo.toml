@@ -11,7 +11,7 @@ edition = "2021"
 failure = "0.1.8"
 
 # paths & io
-camino = { version = "1.0.1", features = ['serde1']}
+camino = { version = "1.0.5", features = ['serde1'] }
 
 # terminal
 clap = "2.33.3"
@@ -32,3 +32,4 @@ walkdir = "2.3.2"
 [dev-dependencies]
 assert_cmd = "2.0.0"
 pretty_assertions = "1.0.0"
+test_utils = { path = "test_utils" }

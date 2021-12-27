@@ -9,19 +9,18 @@ where
     P: AsRef<Utf8Path>,
 {
     println!();
-    let mut child = Command::new("git")
+    let output = Command::new("git")
         .arg("clone")
         .arg(url)
         .arg(dest.as_ref())
         .arg("--depth=1")
-        .spawn()
+        .output()
         .map_err(require_git)
         .expect("Failed to execute Command");
 
-    let status = child.wait().expect("Failed to wait on git clone");
     println!();
 
-    if !status.success() {
+    if !output.status.success() {
         error!("Could not clone {}", url);
         process::exit(1);
     }

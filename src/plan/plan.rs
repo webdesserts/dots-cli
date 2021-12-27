@@ -203,13 +203,16 @@ impl LinkRequest {
 #[cfg(test)]
 mod tests {
     mod link_request {
+        use test_utils::Fixture;
+
         use crate::dots::Dot;
 
         #[test]
         fn it_should_display_correctly() -> Result<(), failure::Error> {
-            let dot = Dot::new("./fixtures/example_dot/")?;
-            assert_eq!(dot.path, "./fixtures/example_dot/");
-            assert_eq!(dot.package.package.name, "example_package");
+            let fixture = Fixture::ExampleDot;
+            let dot = Dot::new(fixture.template_path())?;
+            assert_eq!(dot.path, fixture.template_path());
+            assert_eq!(dot.package.package.name, fixture.name());
             Ok(())
         }
     }

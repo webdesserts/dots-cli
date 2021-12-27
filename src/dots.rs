@@ -158,27 +158,31 @@ mod tests {
         use std::collections::HashMap;
 
         use camino::Utf8PathBuf;
+        use test_utils::Fixture;
 
         use crate::dots::Dot;
 
         #[test]
         fn it_should_contain_the_original_path() -> Result<(), failure::Error> {
-            let dot = Dot::new("./fixtures/example_dot/")?;
-            assert_eq!(dot.path, "./fixtures/example_dot/");
+            let fixture = Fixture::ExampleDot;
+            let dot = Dot::new(fixture.template_path())?;
+            assert_eq!(dot.path, fixture.template_path());
             Ok(())
         }
 
         #[test]
         fn it_should_contain_package_details_from_the_dot_toml() -> Result<(), failure::Error> {
-            let dot = Dot::new("./fixtures/example_dot/")?;
-            assert_eq!(dot.package.package.name, "example_package");
+            let fixture = Fixture::ExampleDot;
+            let dot = Dot::new(fixture.template_path())?;
+            assert_eq!(dot.package.package.name, fixture.name());
             assert_eq!(dot.package.package.authors, vec!["Michael Mullins"]);
             Ok(())
         }
 
         #[test]
         fn it_should_contain_links_from_the_dot_toml() -> Result<(), failure::Error> {
-            let dot = Dot::new("./fixtures/example_dot/")?;
+            let fixture = Fixture::ExampleDot;
+            let dot = Dot::new(fixture.template_path())?;
             let expected: HashMap<Utf8PathBuf, Utf8PathBuf> =
                 vec![("shell/bashrc", "~/.bashrc"), ("shell/zshrc", "~/.zshrc")]
                     .into_iter()
