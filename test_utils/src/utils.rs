@@ -52,6 +52,17 @@ where
         .current_dir(&path)
         .output()?;
 
+    commit_all(&path, "initial commit")?;
+
+    Ok(())
+}
+
+pub fn commit_all<P>(path: P, message: &str) -> Result<(), failure::Error>
+where
+    P: AsRef<Utf8Path>,
+{
+    let path = path.as_ref();
+
     Command::new("git")
         .arg("add")
         .arg("--all")
@@ -61,7 +72,7 @@ where
     Command::new("git")
         .arg("commit")
         .arg("-m")
-        .arg("\"initial commit\"")
+        .arg(format!("\"{}\"", message))
         .current_dir(&path)
         .output()?;
 

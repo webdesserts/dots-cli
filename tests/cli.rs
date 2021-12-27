@@ -52,12 +52,13 @@ mod cli_tests {
     }
 
     mod add_subcommand {
+        use std::fs;
+
+        use test_utils::commit_all;
+
         use crate::cli_tests::*;
 
         #[test]
-        /**
-         * @todo consider removing git output from stderr unless there was an error
-         */
         fn it_should_add_a_dot_to_the_dots_folder() -> TestResult {
             let test_dir = TestDir::new()?;
             let fixture = Fixture::ExampleDot;
@@ -73,7 +74,7 @@ mod cli_tests {
 
             let output = cmd.output()?;
             let expected = format!(
-                std::include_str!("output/add_dot_success.out"),
+                std::include_str!("output/add_success.out"),
                 SRC_PATH = fixture_path,
                 DEST_PATH = dots_root.join(fixture.name()),
             );
@@ -83,6 +84,41 @@ mod cli_tests {
             assert!(dots_root.exists());
             assert!(fixture_path.exists());
             assert!(fixture_path.join("Dot.toml").exists());
+            Ok(())
+        }
+
+        /*
+         * @todo remove TMP_PATH from the output. It's an implementation detail and doesn't offer
+         * much help to the user.
+         */
+        #[test]
+        fn it_should_complain_if_there_is_no_dot_toml() -> TestResult {
+            let test_dir = TestDir::new()?;
+            let fixture = Fixture::ExampleDot;
+            let fixture_path = test_dir.setup_fixture_as_git_repo(&fixture)?;
+            let dots_root = test_dir.dots_root();
+            let dot_toml_path = fixture_path.join("Dot.toml");
+
+            // remove Dot.toml from fixture copy
+            fs::remove_file(&dot_toml_path)?;
+            commit_all(&fixture_path, "remove Dot.toml")?;
+
+            let mut cmd = Command::cargo_bin("dots").unwrap();
+
+            cmd.arg("add")
+                .arg(&fixture_path)
+                .arg("--dotsPath")
+                .arg(&dots_root);
+
+            let output = cmd.output()?;
+            let expected = format!(
+                std::include_str!("output/add_fail_with_missing_dot_toml.out"),
+                SRC_PATH = fixture_path,
+                TMP_PATH = dots_root.join(".tmp"),
+            );
+
+            output.assert_fail().assert_stderr_eq(expected);
+
             Ok(())
         }
     }
