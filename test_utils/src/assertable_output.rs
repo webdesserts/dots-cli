@@ -23,7 +23,7 @@ impl AssertableOutput for Output {
         let stdout = self.stdout.clone();
         let stdout_str = std::str::from_utf8(&stdout).unwrap();
 
-        assert_eq!(stdout_str, expected);
+        assert_eq!(expected, stdout_str);
 
         self
     }
@@ -37,7 +37,7 @@ impl AssertableOutput for Output {
         let stderr = self.stderr.clone();
         let stderr_str = std::str::from_utf8(&stderr).unwrap();
 
-        assert_eq!(stderr_str, expected);
+        assert_eq!(expected, stderr_str);
         self
     }
 
