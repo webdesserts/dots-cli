@@ -1,0 +1,4 @@
+[info] Adding {SRC_PATH}
+[info] Cloning...
+[error] A Dot named {DEST_PATH} is already installed. Aborting.
+[error] pass --overwrite to overwrite the pre-existing Dot
