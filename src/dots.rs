@@ -107,8 +107,9 @@ pub fn add(url: &str, overwrite: bool, env: &Environment) {
         }
     }
 
+    info!("Copying to {}", target_dir);
     fs::rename(tmp, target_dir).expect("Error renaming repo!");
-    info!("Cloning complete!")
+    info!("Done!")
 }
 
 pub fn find_all(env: &Environment) -> Vec<Dot> {

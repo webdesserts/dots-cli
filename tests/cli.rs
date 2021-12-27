@@ -75,7 +75,7 @@ mod cli_tests {
             let expected = format!(
                 std::include_str!("output/add_dot_success.out"),
                 SRC_PATH = fixture_path,
-                DEST_PATH = dots_root.join(".tmp"),
+                DEST_PATH = dots_root.join(fixture.name()),
             );
 
             output.assert_success().assert_stderr_eq(expected);
