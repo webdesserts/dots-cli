@@ -194,5 +194,21 @@ mod cli_tests {
 
             Ok(())
         }
+
+        #[test]
+        fn it_should_complain_if_no_repo_repo_was_passed() -> TestResult {
+            let test_dir = TestDir::new()?;
+            let dots_root = test_dir.dots_root();
+
+            let mut cmd = Command::cargo_bin("dots")?;
+
+            let output = cmd.arg("add").arg("--dotsPath").arg(&dots_root).output()?;
+
+            let expected = std::include_str!("output/add_fail_with_missing_repo.out").to_string();
+
+            output.assert_stderr_eq(expected).assert_fail_with_signal(1);
+
+            Ok(())
+        }
     }
 }
