@@ -62,7 +62,7 @@ mod subcommand_add {
             TMP_PATH = dots_root.join(".tmp"),
         );
 
-        output.assert_stderr_eq(expected).assert_fail();
+        output.assert_stderr_eq(expected).assert_fail_with_code(1);
 
         Ok(())
     }
@@ -98,7 +98,7 @@ mod subcommand_add {
             DEST_PATH = dots_root.join(fixture.name()),
         );
 
-        output.assert_stderr_eq(expected).assert_fail();
+        output.assert_stderr_eq(expected).assert_fail_with_code(1);
 
         Ok(())
     }
@@ -151,7 +151,7 @@ mod subcommand_add {
 
         let expected = std::include_str!("output/add_fail_with_missing_repo.out").to_string();
 
-        output.assert_stderr_eq(expected).assert_fail_with_signal(1);
+        output.assert_stderr_eq(expected).assert_fail_with_code(1);
 
         Ok(())
     }

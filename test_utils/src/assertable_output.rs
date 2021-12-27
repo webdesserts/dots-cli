@@ -10,7 +10,7 @@ pub trait AssertableOutput {
         E: AsRef<str>;
     fn assert_success(&self) -> &Self;
     fn assert_fail(&self) -> &Self;
-    fn assert_fail_with_signal(&self, signal: i32) -> &Self;
+    fn assert_fail_with_code(&self, code: i32) -> &Self;
 }
 
 impl AssertableOutput for Output {
@@ -58,7 +58,7 @@ impl AssertableOutput for Output {
         &self
     }
 
-    fn assert_fail_with_signal(&self, expected_code: i32) -> &Self {
+    fn assert_fail_with_code(&self, expected_code: i32) -> &Self {
         let code = self.status.code();
         assert_eq!(
             code,
