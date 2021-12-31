@@ -1,5 +1,6 @@
 mod assertable_output;
 mod fixtures;
+mod style;
 mod test_dir;
 mod utils;
 
