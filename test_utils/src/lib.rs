@@ -1,10 +1,10 @@
 mod assertable_output;
 mod fixtures;
-mod style;
 mod test_dir;
-mod utils;
+mod types;
 
 pub use assertable_output::*;
 pub use fixtures::*;
 pub use test_dir::*;
-pub use utils::*;
+pub use test_dir::*;
+pub use types::*;

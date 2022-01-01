@@ -1,8 +1,7 @@
 use camino::{Utf8Path, Utf8PathBuf};
+use dirs::home_dir;
 use std::{fs, io, process::Command};
 use walkdir::WalkDir;
-
-pub type TestResult = Result<(), failure::Error>;
 
 pub fn copy_dir<S, D>(source: S, destination: D) -> Result<(), io::Error>
 where
@@ -43,45 +42,27 @@ where
     Ok(())
 }
 
-pub fn init_git_repo<P>(path: P) -> Result<(), failure::Error>
-where
-    P: AsRef<Utf8Path>,
-{
-    let path = path.as_ref();
-
-    Command::new("git")
-        .arg("init")
-        .current_dir(&path)
-        .output()?;
-
-    commit_all(&path, "initial commit")?;
-
-    Ok(())
-}
-
-pub fn commit_all<P>(path: P, message: &str) -> Result<(), failure::Error>
-where
-    P: AsRef<Utf8Path>,
-{
-    let path = path.as_ref();
-
-    Command::new("git")
-        .arg("add")
-        .arg("--all")
-        .current_dir(&path)
-        .output()?;
-
-    Command::new("git")
-        .arg("commit")
-        .arg("-m")
-        .arg(format!("\"{}\"", message))
-        .current_dir(&path)
-        .output()?;
-
-    Ok(())
-}
-
 pub fn current_dir() -> Utf8PathBuf {
     let current_dir = std::env::current_dir().expect("Unable to get current directory");
-    Utf8PathBuf::from_path_buf(current_dir).unwrap()
+    Utf8PathBuf::from_path_buf(current_dir).expect("Unable to parse current directory as utf8")
+}
+
+pub fn home() -> Utf8PathBuf {
+    let home = home_dir().expect("unable to get home directory");
+    Utf8PathBuf::from_path_buf(home).expect("Unable to parse home directory as utf8")
+}
+
+pub fn clean(path: &Utf8Path) {
+    if path.exists() {
+        fs::remove_dir_all(path).ok();
+    }
+}
+
+pub fn canonicalize<P>(path: P) -> Result<Utf8PathBuf, io::Error>
+where
+    P: AsRef<Utf8Path>,
+{
+    let path = path.as_ref();
+    path.canonicalize()
+        .map(|path| Utf8PathBuf::from_path_buf(path).unwrap())
 }

@@ -1,29 +1,18 @@
 use similar::{Algorithm, ChangeTag, TextDiff};
 use std::process::Output;
+use utils::stylize::Stylable;
 
 mod styles {
-    use crate::style::Style;
+    use utils::stylize::Style;
 
-    pub const fn expected() -> Style {
-        Style::new().green()
-    }
-    pub const fn received() -> Style {
-        Style::new().red()
-    }
+    pub const EXPECTED: Style = Style::new().green();
+    pub const RECEIVED: Style = Style::new().red();
 
-    pub const fn normal() -> Style {
-        Style::new().dim()
-    }
-    pub const fn emphasis() -> Style {
-        Style::new().reverse().bold()
-    }
+    pub const NORMAL: Style = Style::new().dim();
+    pub const EMPHASIS: Style = Style::new().reverse().bold();
 
-    pub const fn sign() -> Style {
-        Style::new().bold()
-    }
-    pub const fn separator() -> Style {
-        Style::new().bold().italic().dim()
-    }
+    pub const SIGN: Style = Style::new().bold();
+    pub const SEPARATOR: Style = Style::new().italic().dim();
 }
 
 pub trait AssertableOutput {
@@ -127,9 +116,9 @@ where
                         diff.iter_inline_changes(&op)
                             .map(|change| {
                                 let (sign, style) = match change.tag() {
-                                    ChangeTag::Equal => (" ", styles::normal()),
-                                    ChangeTag::Delete => ("-", styles::expected()),
-                                    ChangeTag::Insert => ("+", styles::received()),
+                                    ChangeTag::Equal => (" ", styles::NORMAL),
+                                    ChangeTag::Delete => ("-", styles::EXPECTED),
+                                    ChangeTag::Insert => ("+", styles::RECEIVED),
                                 };
 
                                 let mut line: String = String::from("");
@@ -138,31 +127,31 @@ where
                                     let mut value_style = style.clone();
 
                                     if *emphasis {
-                                        value_style = value_style.merge(&styles::emphasis());
+                                        value_style = value_style.merge(&styles::EMPHASIS);
                                     };
 
-                                    line = format!("{}{}", line, value_style.apply_to(value));
+                                    line = format!("{}{}", line, value.apply_style(value_style));
                                 }
 
-                                format!("{} {}", style.merge(&styles::sign()).apply_to(sign), line)
+                                format!("{} {}", sign.apply_style(style.merge(&styles::SIGN)), line)
                             })
                             .collect::<String>()
                     })
                     .collect();
                 format!(
                     "{}{}",
-                    &styles::separator().apply_to(&group_sep),
+                    &group_sep.apply_style(styles::SEPARATOR),
                     group_diff
                 )
             })
             .collect();
 
-        let received_label = styles::received().apply_to("Received ");
-        let expected_label = styles::expected().apply_to("Expected ");
+        let received_label = "Received ".apply_style(styles::RECEIVED);
+        let expected_label = "Expected ".apply_style(styles::EXPECTED);
         let legend = format!(
             "{expected_sign} {expected}\n{received_sign} {received}",
-            expected_sign = styles::expected().merge(&styles::sign()).apply_to("-"),
-            received_sign = styles::received().merge(&styles::sign()).apply_to("+"),
+            expected_sign = "-".apply_style(styles::EXPECTED.merge(&styles::SIGN)),
+            received_sign = "+".apply_style(styles::RECEIVED.merge(&styles::SIGN)),
             expected = expected_label,
             received = received_label
         );

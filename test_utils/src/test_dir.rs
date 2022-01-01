@@ -1,7 +1,8 @@
+use crate::Fixture;
 use camino::{Utf8Path, Utf8PathBuf};
 use tempfile::{tempdir, TempDir};
-
-use crate::{copy_dir, init_git_repo, Fixture};
+use utils::fs::copy_dir;
+use utils::git::init_git_repo;
 
 pub struct TestDir {
     tmpdir: TempDir,

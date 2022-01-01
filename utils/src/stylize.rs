@@ -158,7 +158,7 @@ impl Style {
         }
     }
 
-    pub fn apply_to<D>(&self, val: D) -> console::StyledObject<D> {
+    pub fn apply<D>(&self, val: D) -> console::StyledObject<D> {
         self.to_console_style().apply_to(val)
     }
 
@@ -196,5 +196,24 @@ impl Style {
         }
 
         style
+    }
+}
+
+pub trait Stylable
+where
+    Self: Sized,
+{
+    fn apply_style(self, style: Style) -> console::StyledObject<Self>;
+}
+
+impl<'a> Stylable for &'a str {
+    fn apply_style(self, style: Style) -> console::StyledObject<Self> {
+        style.apply(self)
+    }
+}
+
+impl Stylable for String {
+    fn apply_style(self, style: Style) -> console::StyledObject<Self> {
+        style.apply(self)
     }
 }

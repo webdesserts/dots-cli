@@ -1,5 +1,6 @@
 extern crate camino;
 extern crate failure;
+extern crate utils;
 
 #[macro_use]
 extern crate clap;
@@ -7,7 +8,6 @@ extern crate dirs;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
-extern crate colored;
 
 #[macro_use]
 extern crate serde_derive;
@@ -17,25 +17,36 @@ mod commands;
 mod dot_package;
 pub mod dots;
 pub mod plan;
-pub mod utils;
 
 use std::io::Write;
 
 use env_logger::fmt::Formatter;
 use env_logger::Builder;
+use utils::stylize::Stylable;
+
+mod styles {
+    use utils::stylize::Style;
+
+    const LOG: Style = Style::new().bold();
+
+    pub const DEBUG_LOG: Style = LOG;
+    pub const INFO_LOG: Style = LOG.blue();
+    pub const WARN_LOG: Style = LOG.yellow();
+    pub const ERROR_LOG: Style = LOG.red();
+    pub const TRACE_LOG: Style = LOG;
+}
 
 fn main() {
     let mut builder = Builder::new();
 
     let log_format = |buf: &mut Formatter, record: &log::Record| -> Result<(), std::io::Error> {
-        use colored::*;
         use log::Level::*;
         let level = match record.level() {
-            Debug => "[debug]".bold(),
-            Info => "[info]".blue().bold(),
-            Warn => "[warn]".yellow().bold(),
-            Error => "[error]".red().bold(),
-            Trace => "[trace]".bold(),
+            Debug => "[debug]".apply_style(styles::DEBUG_LOG),
+            Info => "[info]".apply_style(styles::INFO_LOG),
+            Warn => "[warn]".apply_style(styles::WARN_LOG),
+            Error => "[error]".apply_style(styles::ERROR_LOG),
+            Trace => "[trace]".apply_style(styles::TRACE_LOG),
         };
         let string = format!("{}", record.args());
         let indented = string

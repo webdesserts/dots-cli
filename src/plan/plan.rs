@@ -2,13 +2,13 @@ use crate::dots::Dot;
 use crate::plan::links::Link;
 use crate::plan::resolve::{resolve, ResolvedLink};
 use camino::Utf8Path;
-use colored::*;
 use std::error::Error;
 use std::{
     fmt::{self, Display},
     io,
     rc::Rc,
 };
+use utils::stylize::Stylable;
 
 /*
 ## TODOs
@@ -49,6 +49,19 @@ the user. Errors should stop the install in its tracks.
 We always want to return an Array of Errors & Warnings even if it's empty
 */
 
+mod styles {
+    use utils::stylize::Style;
+
+    pub const OK: Style = Style::new().green();
+    pub const ERROR: Style = Style::new().red();
+    pub const WARN: Style = Style::new().yellow();
+
+    pub const WARN_PATH: Style = WARN.underlined();
+    pub const ERROR_PATH: Style = ERROR.italic();
+
+    pub const TITLE: Style = Style::new().bold();
+}
+
 #[derive(Debug)]
 pub struct PlanError {
     msg: String,
@@ -84,15 +97,13 @@ pub struct Plan {
 
 impl Plan {
     pub fn new(dots: Vec<Dot>, _force: bool) -> Result<Plan, PlanError> {
-        use colored::*;
-
         let suggest_force = false;
         let mut plan = Plan { requests: vec![] };
         let mut has_errors = false;
 
         for dot in dots {
             let title = format!("[{}]", &dot.package.package.name);
-            println!("\n{}", title.bold());
+            println!("\n{}", title.apply_style(styles::TITLE));
             let links = dot.package.link.clone();
             let dot = Rc::new(dot);
 
@@ -157,8 +168,8 @@ pub struct LinkRequest {
 impl Display for LinkRequest {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use crate::plan::resolve::ResolveIssueLevel::*;
-        let checkmark = "✔".green();
-        let cross = "✖".red();
+        let checkmark = "✔".apply_style(styles::OK);
+        let cross = "✖".apply_style(styles::ERROR);
         let src = &self.link.src;
         let dest = &self.link.dest;
 
@@ -168,17 +179,17 @@ impl Display for LinkRequest {
             checkmark
         };
 
-        let src_path = format!("{}", src.original.path);
+        let src_path = src.original.path.to_string();
         let src_msg = match src.max_issue_level() {
-            Some(Error) => src_path.red().italic().to_string(),
-            Some(Warning) => src_path.yellow().underline().to_string(),
+            Some(Error) => src_path.apply_style(styles::ERROR_PATH).to_string(),
+            Some(Warning) => src_path.apply_style(styles::WARN_PATH).to_string(),
             None => src_path,
         };
 
-        let dest_path = format!("{}", dest.original.path);
+        let dest_path = dest.original.path.to_string();
         let dest_msg = match dest.max_issue_level() {
-            Some(Error) => format!("{}", dest_path.red().italic()),
-            Some(Warning) => format!("{}", dest_path.yellow().underline()),
+            Some(Error) => dest_path.apply_style(styles::ERROR_PATH).to_string(),
+            Some(Warning) => dest_path.apply_style(styles::WARN_PATH).to_string(),
             None => dest_path,
         };
 

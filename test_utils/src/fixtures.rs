@@ -1,7 +1,6 @@
 use camino::Utf8PathBuf;
 use std::fmt::Display;
-
-use crate::current_dir;
+use utils::fs::current_dir;
 
 pub enum Fixture {
     ExampleDot,

@@ -1,7 +1,7 @@
 use crate::dot_package::DotPackage;
 use crate::utils::{self, fs::home};
 use camino::{Utf8Path, Utf8PathBuf};
-use std::{env, fs, process};
+use std::{env, fs, io, process};
 
 pub struct Dot {
     pub package: DotPackage,
@@ -23,7 +23,16 @@ impl Dot {
 
     pub fn origin(&self) -> Option<String> {
         match env::set_current_dir(self.path.clone()) {
-            Ok(_) => utils::git::get_origin(),
+            Ok(_) => match utils::git::get_origin().map_err(require_git) {
+                Ok(origin) => origin,
+                Err(err) => {
+                    error!(
+                        "error getting origin in git repository {:?}:\n{}",
+                        self.path, err
+                    );
+                    process::exit(1)
+                }
+            },
             Err(err) => {
                 error!("error changing directory to {:?}:\n{}", self.path, err);
                 process::exit(1);
@@ -79,7 +88,9 @@ pub fn add(url: &str, overwrite: bool, env: &Environment) {
     }
 
     info!("Cloning...");
-    utils::git::clone(url, &tmp);
+    utils::git::clone(url, &tmp)
+        .map_err(require_git)
+        .expect("Unable to clone dot");
 
     let dot = match Dot::new(&tmp) {
         Ok(dot) => dot,
@@ -151,6 +162,16 @@ pub fn find_all(env: &Environment) -> Vec<Dot> {
     }
 
     dots
+}
+
+fn require_git(err: io::Error) -> io::Error {
+    match err.kind() {
+        io::ErrorKind::NotFound => {
+            error!(r#"Unable to find "git" command"#);
+            process::exit(1)
+        }
+        _ => err,
+    }
 }
 
 #[cfg(test)]

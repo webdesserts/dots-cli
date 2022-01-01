@@ -1,7 +1,8 @@
 mod subcommand_add {
     use assert_cmd::Command;
     use std::fs;
-    use test_utils::{commit_all, AssertableOutput, Fixture, TestDir, TestResult};
+    use test_utils::{AssertableOutput, Fixture, TestDir, TestResult};
+    use utils::git::commit_all;
 
     #[test]
     fn it_should_add_a_dot_to_the_dots_folder() -> TestResult {
