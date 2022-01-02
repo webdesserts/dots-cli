@@ -33,16 +33,6 @@ pub struct Anchor {
 }
 
 impl Anchor {
-    pub fn new<P>(path: P, kind: AnchorKind) -> Anchor
-    where
-        P: AsRef<Utf8Path>,
-    {
-        Anchor {
-            path: path.as_ref().to_owned(),
-            kind,
-        }
-    }
-
     pub fn new_src<P>(path: P) -> Anchor
     where
         P: AsRef<Utf8Path>,

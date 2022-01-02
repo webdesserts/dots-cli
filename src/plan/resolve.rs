@@ -42,7 +42,7 @@ impl ResolvedAnchor {
         }
     }
 
-    fn kind(&self) -> &AnchorKind {
+    pub fn kind(&self) -> &AnchorKind {
         &self.original.kind
     }
 
@@ -52,7 +52,7 @@ impl ResolvedAnchor {
             .any(|issue| issue.level() == ResolveIssueLevel::Error)
     }
 
-    fn has_warnings(&self) -> bool {
+    pub fn has_warnings(&self) -> bool {
         self.issues
             .iter()
             .any(|issue| issue.level() == ResolveIssueLevel::Warning)
@@ -167,7 +167,6 @@ pub enum ResolveIssueKind {
     NotFound,
     PermissionDenied,
     IO(io::Error),
-    Other(String),
 }
 
 impl ResolveIssue {
@@ -176,10 +175,6 @@ impl ResolveIssue {
             anchor: anchor.to_owned(),
             kind,
         }
-    }
-
-    fn simple(anchor: &Anchor, message: &str) -> Self {
-        Self::new(anchor, ResolveIssueKind::Other(message.to_string()))
     }
 
     fn io(anchor: &Anchor, error: io::Error) -> Self {
@@ -195,7 +190,6 @@ impl ResolveIssue {
             NotFound => Error,
             PermissionDenied => Error,
             IO(_) => Error,
-            Other(_) => Error,
         }
     }
 }
@@ -226,11 +220,6 @@ impl Display for ResolveIssue {
                 f,
                 "Error resolving {} {}: {}",
                 self.anchor.kind, self.anchor.path, err
-            ),
-            Other(ref msg) => write!(
-                f,
-                "Error resolving {} {}: {}",
-                self.anchor.kind, self.anchor.path, msg
             ),
         }
     }

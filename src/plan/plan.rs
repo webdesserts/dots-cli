@@ -29,7 +29,7 @@ use utils::stylize::Stylable;
 A link needs to be used to make the actual symlink
 A link needs to be printed out
 A link needs to print out differently based on errors & warnings
-A link needs to be stored in a dotfootprint
+A link needs to be stored in a footprint
 
 ## Errors & Warnings
 There are two types of errors:
@@ -158,22 +158,19 @@ impl Plan {
 \*===============*/
 
 pub struct LinkRequest {
-    dot: Rc<Dot>,
     link: ResolvedLink,
 }
 
 impl Display for LinkRequest {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use crate::plan::resolve::ResolveIssueLevel::*;
-        let checkmark = "✔".apply_style(styles::OK);
-        let cross = "✖".apply_style(styles::ERROR);
         let src = &self.link.src;
         let dest = &self.link.dest;
 
         let statusmark = if src.has_errors() | dest.has_errors() {
-            cross
+            "✖".apply_style(styles::ERROR)
         } else {
-            checkmark
+            "✔".apply_style(styles::OK)
         };
 
         let src_path = src.original.path.to_string();
@@ -200,7 +197,7 @@ impl LinkRequest {
         P: AsRef<Utf8Path>,
     {
         let link = resolve(&dot, Link::new(src, dest));
-        LinkRequest { dot, link }
+        LinkRequest { link }
     }
 
     fn has_errors(&self) -> bool {
