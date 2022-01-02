@@ -13,20 +13,17 @@ use utils::stylize::Stylable;
 /*
 ## TODOs
 
-- rework plan to use new resolve structure
-- Figure out what to do with the Footprint
-- Figure out if a "root" directory should be a part of Anchor::Source
-- Figure out a way to make all of this testable, this is getting out of hand
-    - Make .dots path configurable (probably moved to tmp somewhere)
-    - Make "home directory" configurable (so we aren't still linking relative to it)
-
---- vvv Original TODOs (almost complete?) vvv ---
-
-- Figure out how to structure, store, and handle Request Errors & Warnings
-- Figure out how to convert LinkRequests into a flat array of actions
-- Figure out how to continue gathering errors when something errors out.
-- Figure out how the footprint should be stored and plan a way get all the way
-  from a LinkRequest to a Footprint
+- [ ] rework plan to use new resolve structure
+- [ ] Figure out what to do with the Footprint
+- [ ] Figure out how the footprint should be stored and plan a way get all the way
+      from a LinkRequest to a Footprint
+- [ ] Figure out if a "root" directory should be a part of Anchor::Source
+- [x] Figure out a way to make all of this testable, this is getting out of hand
+    - [x] Make .dots path configurable (probably moved to tmp somewhere)
+    - [x] Make "home directory" configurable (so we aren't still linking relative to it)
+- [x] Figure out how to structure, store, and handle Request Errors & Warnings
+- [x] Figure out how to convert LinkRequests into a flat array of actions
+- [x] Figure out how to continue gathering errors when something errors out.
 
 ## What's in a link?
 A link needs to be used to make the actual symlink
