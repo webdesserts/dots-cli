@@ -1,4 +1,5 @@
 use similar::{Algorithm, ChangeTag, TextDiff};
+use std::fmt::Write;
 use std::process::Output;
 use utils::stylize::Stylable;
 
@@ -123,17 +124,26 @@ where
 
                                 let mut line: String = String::from("");
 
-                                for (emphasis, value) in change.values() {
+                                let sign_style = style.merge(&styles::SIGN);
+
+                                write!(line, "{} ", sign.apply_style(sign_style)).ok();
+
+                                for &(emphasis, value) in change.values() {
                                     let mut value_style = style.clone();
 
-                                    if *emphasis {
+                                    if emphasis {
                                         value_style = value_style.merge(&styles::EMPHASIS);
                                     };
 
-                                    line = format!("{}{}", line, value.apply_style(value_style));
+                                    write!(line, "{}", value.apply_style(value_style)).ok();
                                 }
 
-                                format!("{} {}", sign.apply_style(style.merge(&styles::SIGN)), line)
+                                if change.missing_newline() {
+                                    writeln!(line, "{}", "↵".apply_style(styles::EXPECTED.bold()))
+                                        .ok();
+                                }
+
+                                line
                             })
                             .collect::<String>()
                     })

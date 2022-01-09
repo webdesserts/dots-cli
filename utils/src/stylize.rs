@@ -25,6 +25,35 @@ pub struct Style {
     hidden: bool,
 }
 
+#[macro_export]
+macro_rules! style {
+    /* returns final expression if no more tokens remain */
+    (@props () -> ($style:expr)) => { $style };
+    /* Adds a color to the style */
+    (@props (color: $fg:ident; $($rest:tt)*) -> ($style:expr)) => {
+        style!(@props ($($rest)*) -> ($style.color(console::Color::$fg)))
+    };
+    /* Adds a background to the style */
+    (@props (background: $bg:ident; $($rest:tt)*) -> ($style:expr)) => {
+        style!(@props ($($rest)*) -> ($style.background(console::Color::$bg)))
+    };
+    /* Adds a color and matching background to the style */
+    (@props (color: $fg:ident on $bg:ident; $($rest:tt)*) -> ($style:expr)) => {
+        style!(@props ($($rest)*) -> ($style.color(console::Color::$fg).background(console::Color::$bg)))
+    };
+    /* Adds an attribute to the style */
+    (@props ($attr:ident; $($rest:tt)*) -> ($style:expr)) => {
+        style!(@props ($($rest)*) -> ($style.attr(console::Attribute::$attr)))
+    };
+    (@props ($($rest:tt)*) -> ($style:expr)) => {
+        style!(@props ($($rest)*;) -> ($style))
+    };
+    /* Creates the style and starts parsing for props */
+    ($($props:tt)*) => {
+        style!(@props ($($props)*) -> ($crate::stylize::Style::new()))
+    };
+}
+
 impl Style {
     pub const fn new() -> Style {
         Style { ..DEFAULT }
@@ -215,5 +244,47 @@ impl<'a> Stylable for &'a str {
 impl Stylable for String {
     fn apply_style(self, style: Style) -> console::StyledObject<Self> {
         style.apply(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // #![feature(trace_macros)]
+    // trace_macros!(true);
+
+    use console::Color;
+
+    #[test]
+    fn style_macro_should_accept_a_color() {
+        let style = style! { color: White };
+        assert_eq!(style.color, Some(Color::White))
+    }
+
+    #[test]
+    fn style_macro_should_allow_a_trailing_comma() {
+        let style = style! { color: White; };
+        assert_eq!(style.color, Some(Color::White));
+        assert_eq!(style.background, None);
+    }
+
+    #[test]
+    fn style_macro_should_accept_a_background_color() {
+        let style = style! { background: Black; };
+        assert_eq!(style.color, None);
+        assert_eq!(style.background, Some(Color::Black));
+    }
+
+    #[test]
+    fn style_macro_should_accept_a_color_with_background_with_on_keyword() {
+        let style = style! { color: White on Black; };
+        assert_eq!(style.color, Some(Color::White));
+        assert_eq!(style.background, Some(Color::Black))
+    }
+
+    #[test]
+    fn style_macro_should_accept_an_attribute() {
+        let style = style! { Bold; Underlined; };
+        assert_eq!(style.bold, true);
+        assert_eq!(style.underlined, true);
     }
 }
