@@ -25,9 +25,9 @@ use env_logger::Builder;
 use utils::stylize::Stylable;
 
 mod styles {
-    use utils::stylize::Style;
+    use utils::{style, stylize::Style};
 
-    const LOG: Style = Style::new().bold();
+    const LOG: Style = style! { Bold };
 
     pub const DEBUG_LOG: Style = LOG;
     pub const INFO_LOG: Style = LOG.blue();

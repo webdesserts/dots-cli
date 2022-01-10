@@ -4,16 +4,16 @@ use std::process::Output;
 use utils::stylize::Stylable;
 
 mod styles {
-    use utils::stylize::Style;
+    use utils::{style, stylize::Style};
 
-    pub const EXPECTED: Style = Style::new().green();
-    pub const RECEIVED: Style = Style::new().red();
+    pub const EXPECTED: Style = style! { color: Green };
+    pub const RECEIVED: Style = style! { color: Red };
 
-    pub const NORMAL: Style = Style::new().dim();
-    pub const EMPHASIS: Style = Style::new().reverse().bold();
+    pub const NORMAL: Style = style! { Dim };
+    pub const EMPHASIS: Style = style! { Reverse; Bold };
 
-    pub const SIGN: Style = Style::new().bold();
-    pub const SEPARATOR: Style = Style::new().italic().dim();
+    pub const SIGN: Style = style! { Bold };
+    pub const SEPARATOR: Style = style! { Italic; Dim };
 }
 
 pub trait AssertableOutput {

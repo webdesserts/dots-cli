@@ -31,19 +31,19 @@ macro_rules! style {
     (@props () -> ($style:expr)) => { $style };
     /* Adds a color to the style */
     (@props (color: $fg:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.color(console::Color::$fg)))
+        style!(@props ($($rest)*) -> ($style.color($crate::stylize::Color::$fg)))
     };
     /* Adds a background to the style */
     (@props (background: $bg:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.background(console::Color::$bg)))
+        style!(@props ($($rest)*) -> ($style.background($crate::stylize::Color::$bg)))
     };
     /* Adds a color and matching background to the style */
     (@props (color: $fg:ident on $bg:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.color(console::Color::$fg).background(console::Color::$bg)))
+        style!(@props ($($rest)*) -> ($style.color($crate::stylize::Color::$fg).background($crate::stylize::Color::$bg)))
     };
     /* Adds an attribute to the style */
     (@props ($attr:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.attr(console::Attribute::$attr)))
+        style!(@props ($($rest)*) -> ($style.attr($crate::stylize::Attribute::$attr)))
     };
     (@props ($($rest:tt)*) -> ($style:expr)) => {
         style!(@props ($($rest)*;) -> ($style))

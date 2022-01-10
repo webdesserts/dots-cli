@@ -47,16 +47,16 @@ We always want to return an Array of Errors & Warnings even if it's empty
 */
 
 mod styles {
-    use utils::stylize::Style;
+    use utils::{style, stylize::Style};
 
-    pub const OK: Style = Style::new().green();
-    pub const ERROR: Style = Style::new().red();
-    pub const WARN: Style = Style::new().yellow();
+    pub const OK: Style = style! { color: Green };
+    pub const ERROR: Style = style! { color: Red };
+    pub const WARN: Style = style! { color: Yellow };
 
     pub const WARN_PATH: Style = WARN.underlined();
     pub const ERROR_PATH: Style = ERROR.italic();
 
-    pub const TITLE: Style = Style::new().bold();
+    pub const TITLE: Style = style! { Bold };
 }
 
 #[derive(Debug)]
