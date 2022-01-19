@@ -99,8 +99,8 @@ impl Plan {
         let mut has_errors = false;
 
         for dot in dots {
-            let title = format!("[{}]", &dot.package.package.name);
-            println!("\n{}", title.apply_style(styles::TITLE));
+            let title = format!("[{name}]", name = &dot.package.package.name);
+            println!("\n{title}", title = title.apply_style(styles::TITLE));
             let links = dot.package.link.clone();
             let dot = Rc::new(dot);
 
@@ -109,7 +109,7 @@ impl Plan {
                 if request.has_errors() {
                     has_errors = true
                 }
-                println!("{}", request);
+                println!("{request}");
                 plan.requests.push(request);
             }
         }

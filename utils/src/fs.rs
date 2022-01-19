@@ -23,11 +23,11 @@ where
             // We're explicitely avoiding using `fs::copy` here as it sends `cargo watch` into an infinite loop
             fs::read(&from)
                 .and_then(|file| fs::write(&to, &file))
-                .expect(format!("Failed to copy file from {} to {}", &from, &to).as_str());
+                .expect(format!("Failed to copy file from {from} to {to}").as_str());
         }
         if file_type.is_dir() {
             fs::create_dir_all(&to)
-                .expect(format!("Failed to copy dir from {} to {}", &from, &to).as_str());
+                .expect(format!("Failed to copy dir from {from} to {to}").as_str());
         }
     }
     Ok(())

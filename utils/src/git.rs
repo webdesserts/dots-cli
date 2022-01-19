@@ -33,7 +33,7 @@ where
     Command::new("git")
         .arg("commit")
         .arg("-m")
-        .arg(format!("\"{}\"", message))
+        .arg(format!("\"{message}\""))
         .current_dir(&path)
         .output()?;
 

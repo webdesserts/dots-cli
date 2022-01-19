@@ -6,5 +6,4 @@ mod types;
 pub use assertable_output::*;
 pub use fixtures::*;
 pub use test_dir::*;
-pub use test_dir::*;
 pub use types::*;

@@ -149,28 +149,20 @@ where
                     })
                     .collect();
                 format!(
-                    "{}{}",
-                    &group_sep.apply_style(styles::SEPARATOR),
-                    group_diff
+                    "{separator}{group_diff}",
+                    separator = &group_sep.apply_style(styles::SEPARATOR),
                 )
             })
             .collect();
 
         let received_label = "Received ".apply_style(styles::RECEIVED);
         let expected_label = "Expected ".apply_style(styles::EXPECTED);
-        let legend = format!(
-            "{expected_sign} {expected}\n{received_sign} {received}",
-            expected_sign = "-".apply_style(styles::EXPECTED.merge(&styles::SIGN)),
-            received_sign = "+".apply_style(styles::RECEIVED.merge(&styles::SIGN)),
-            expected = expected_label,
-            received = received_label
-        );
+        let expected_sign = "-".apply_style(styles::EXPECTED.merge(&styles::SIGN));
+        let received_sign = "+".apply_style(styles::RECEIVED.merge(&styles::SIGN));
 
-        println!(
-            "\n{legend}\n\n{diff}\n",
-            legend = legend,
-            diff = indent(2, diff_text)
-        );
+        let legend = format!("{expected_sign} {expected_label}\n{received_sign} {received_label}");
+
+        println!("\n{legend}\n\n{diff}\n", diff = indent(2, diff_text));
         panic!("assertion failed")
     }
 }
@@ -182,6 +174,6 @@ where
     let string = string.as_ref();
     string
         .lines()
-        .map(|line: &str| format!("{indent}{line}\n", indent = " ".repeat(indent), line = line,))
+        .map(|line: &str| format!("{indent}{line}\n", indent = " ".repeat(indent)))
         .collect()
 }

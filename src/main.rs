@@ -48,7 +48,7 @@ fn main() {
             Error => "[error]".apply_style(styles::ERROR_LOG),
             Trace => "[trace]".apply_style(styles::TRACE_LOG),
         };
-        let string = format!("{}", record.args());
+        let string = format!("{}", args = record.args());
         let indented = string
             .lines()
             .enumerate()
@@ -59,7 +59,7 @@ fn main() {
                     indent = "  ";
                     new_line = "\n"
                 }
-                format!("{}{} {}{}", new_line, level, indent, line)
+                format!("{new_line}{level} {indent}{line}")
             })
             .collect::<String>();
         writeln!(buf, "{}", indented)

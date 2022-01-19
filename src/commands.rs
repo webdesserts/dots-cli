@@ -62,7 +62,7 @@ pub fn list(matches: &ArgMatches) {
                 .map_or(remote, |origin| format!(" => {}", origin.trim()));
         };
 
-        println!("{}{}", dot.package.package.name, remote)
+        println!("{name}{remote}", name = dot.package.package.name)
     }
 }
 
@@ -75,7 +75,7 @@ pub fn prefix(matches: &ArgMatches) {
         .iter()
         .find(|dot| dot.package.package.name == name)
     {
-        Some(dot) => println!("{}", dot.path),
+        Some(dot) => println!("{}", path = dot.path),
         None => process::exit(1),
     }
 }
