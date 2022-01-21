@@ -1,18 +1,21 @@
-use std::path::{Path, PathBuf};
-use std::{process,env,fs};
+use dirs::home_dir;
 use dot_package::DotPackage;
+use std::path::{Path, PathBuf};
+use std::{env, fs, process};
 use utils;
-use dirs::{home_dir};
 
 pub struct Dot {
     pub package: DotPackage,
-    pub path: PathBuf
+    pub path: PathBuf,
 }
 
 impl Dot {
     pub fn new(path: &Path) -> Result<Dot, String> {
         let package = DotPackage::new(path)?;
-        Ok(Dot { package: package, path: path.to_path_buf() })
+        Ok(Dot {
+            package: package,
+            path: path.to_path_buf(),
+        })
     }
 
     pub fn origin(&self) -> Option<String> {
@@ -68,7 +71,10 @@ pub fn add(url: &str, overwrite: bool) {
             warn!("Overwriting pre-existing Dot\n\t{}", target_dir.display());
             utils::fs::clean(&target_dir);
         } else {
-            error!("A Dot named {} is already installed. Aborting.", dot.package.package.name);
+            error!(
+                "A Dot named {} is already installed. Aborting.",
+                dot.package.package.name
+            );
             error!("pass --overwrite to overwrite the pre-existing Dot");
             utils::fs::clean(&tmp);
             process::exit(1);
@@ -85,11 +91,11 @@ pub fn find_all() -> Vec<Dot> {
         Err(err) => {
             use std::io::ErrorKind as Kind;
             match err.kind() {
-                Kind::NotFound => { return vec![] },
+                Kind::NotFound => return vec![],
                 Kind::PermissionDenied => {
                     error!("Unable access dots directory:\n{}", err);
                     process::exit(1);
-                },
+                }
                 _ => {
                     error!("Error while accessing dots directory:\n{}", err);
                     process::exit(1);

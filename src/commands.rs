@@ -1,8 +1,8 @@
 use clap::ArgMatches;
 use std::process;
 
-use plan::{Plan};
 use dots;
+use plan::Plan;
 
 pub fn add(matches: &ArgMatches) {
     let url = matches.value_of("REPO").expect("repo is required");
@@ -20,7 +20,7 @@ pub fn install(matches: &ArgMatches) {
         Ok(plan) => {
             info!("Looks Good! Nothing wrong with the current install plan!");
             plan
-        },
+        }
         Err(err) => {
             println!();
             error!("{}", err);
@@ -51,7 +51,9 @@ pub fn list(matches: &ArgMatches) {
     for dot in dots::find_all() {
         let mut remote = String::new();
         if matches.is_present("origins") {
-            remote = dot.origin().map_or(remote, |origin| format!(" => {}", origin.trim()));
+            remote = dot
+                .origin()
+                .map_or(remote, |origin| format!(" => {}", origin.trim()));
         };
 
         println!("{}{}", dot.package.package.name, remote)
@@ -61,8 +63,11 @@ pub fn list(matches: &ArgMatches) {
 pub fn prefix(matches: &ArgMatches) {
     let name = matches.value_of("DOT").expect("Missing Argument <REPO>");
 
-    match dots::find_all().iter().find(|dot| dot.package.package.name == name) {
+    match dots::find_all()
+        .iter()
+        .find(|dot| dot.package.package.name == name)
+    {
         Some(dot) => println!("{}", dot.path.to_str().unwrap()),
-        None => { process::exit(1) },
+        None => process::exit(1),
     }
 }

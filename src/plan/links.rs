@@ -1,5 +1,5 @@
 use std::fmt;
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
 #[derive(Clone, Debug)]
 pub struct Anchor {
@@ -9,7 +9,10 @@ pub struct Anchor {
 
 impl Anchor {
     pub fn new(path: PathBuf, kind: AnchorKind) -> Anchor {
-        Anchor { path: path, kind: kind }
+        Anchor {
+            path: path,
+            kind: kind,
+        }
     }
 }
 
@@ -23,8 +26,7 @@ impl fmt::Display for AnchorKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             AnchorKind::Source => write!(f, "Source"),
-            AnchorKind::Destination => write!(f, "Destination")
+            AnchorKind::Destination => write!(f, "Destination"),
         }
     }
 }
-

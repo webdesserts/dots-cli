@@ -1,9 +1,9 @@
-use std::{io, fs, fmt, self};
-use std::fmt::{Display};
-use std::error::{Error};
-use dots::{Dot};
-use plan::actions::{Action,ResolveErrorKind};
+use dots::Dot;
+use plan::actions::{Action, ResolveErrorKind};
 use plan::links::{Anchor, AnchorKind};
+use std::error::Error;
+use std::fmt::Display;
+use std::{self, fmt, fs, io};
 
 #[derive(Debug)]
 pub struct PlanError {
@@ -12,7 +12,9 @@ pub struct PlanError {
 
 impl PlanError {
     fn new(msg: &str) -> PlanError {
-        PlanError { msg: msg.to_string() }
+        PlanError {
+            msg: msg.to_string(),
+        }
     }
 }
 
@@ -33,7 +35,7 @@ pub struct Plan {
 }
 
 impl Plan {
-    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError>{
+    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError> {
         use colored::*;
 
         let mut suggest_force = false;
@@ -47,7 +49,7 @@ impl Plan {
             for (src, dest) in dot.package.link {
                 let requested_action = Action::Link {
                     src: Anchor::new(src, AnchorKind::Source),
-                    dest: Anchor::new(dest, AnchorKind::Destination)
+                    dest: Anchor::new(dest, AnchorKind::Destination),
                 };
 
                 match requested_action.resolve(&dot.path, &force) {
@@ -70,13 +72,17 @@ impl Plan {
 
         let has_errors = !errors.is_empty();
 
-        if has_errors { println!() }
+        if has_errors {
+            println!()
+        }
         for err in errors {
             error!("{}", err)
         }
 
         println!();
-        if suggest_force { info!("{}", "use --force to overwrite existing directories") }
+        if suggest_force {
+            info!("{}", "use --force to overwrite existing directories")
+        }
         if has_errors {
             Err(PlanError::new("Planning failed."))
         } else {
@@ -96,7 +102,10 @@ impl Plan {
                             if force {
                                 fs::remove_dir_all(&dest.path)?;
                             } else {
-                                return Err(io::Error::new(io::ErrorKind::AlreadyExists, "Destination already Exists!"));
+                                return Err(io::Error::new(
+                                    io::ErrorKind::AlreadyExists,
+                                    "Destination already Exists!",
+                                ));
                             }
                         };
                     };
@@ -111,4 +120,3 @@ impl Plan {
         Ok(())
     }
 }
-

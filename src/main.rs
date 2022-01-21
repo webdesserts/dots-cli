@@ -10,14 +10,14 @@ extern crate colored;
 extern crate serde_derive;
 extern crate toml;
 
-mod dots;
-mod dot_package;
 mod commands;
+mod dot_package;
+mod dots;
 mod plan;
 mod utils;
 
 use env_logger::LogBuilder;
-use log::{LogRecord, LogLevelFilter};
+use log::{LogLevelFilter, LogRecord};
 
 fn main() {
     let mut builder = LogBuilder::new();
@@ -33,19 +33,27 @@ fn main() {
             Trace => "[trace]".bold(),
         };
         let string = format!("{}", record.args());
-        let indented = string.lines().enumerate().map(|(i, line)| {
-            let mut indent = "";
-            let mut new_line = "";
-            if i > 0 { indent = "  "; new_line = "\n" }
-            format!("{}{} {}{}", new_line, level, indent, line)
-        }).collect::<String>();
+        let indented = string
+            .lines()
+            .enumerate()
+            .map(|(i, line)| {
+                let mut indent = "";
+                let mut new_line = "";
+                if i > 0 {
+                    indent = "  ";
+                    new_line = "\n"
+                }
+                format!("{}{} {}{}", new_line, level, indent, line)
+            })
+            .collect::<String>();
         format!("{}", indented)
     };
 
     builder
         .format(log_format)
         .filter(None, LogLevelFilter::Info)
-        .init().unwrap();
+        .init()
+        .unwrap();
 
     let app = clap_app!((crate_name!()) =>
         (version: crate_version!())
@@ -97,6 +105,8 @@ fn main() {
         ("install", Some(sub_matches)) => commands::install(sub_matches),
         ("list", Some(sub_matches)) => commands::list(sub_matches),
         ("prefix", Some(sub_matches)) => commands::prefix(sub_matches),
-        _ => { println!("{}", matches.usage()) }
+        _ => {
+            println!("{}", matches.usage())
+        }
     }
 }

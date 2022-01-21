@@ -1,14 +1,14 @@
-use toml;
-use std::path::{Path,PathBuf};
 use std::collections::HashMap as Map;
 use std::fs;
-use std::io::{Read, self};
+use std::io::{self, Read};
+use std::path::{Path, PathBuf};
+use toml;
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DotPackageMeta {
     pub name: String,
-    pub authors: Vec<String>
+    pub authors: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -26,14 +26,14 @@ impl DotPackage {
             Ok(package) => package,
             Err(err) => {
                 error!("Error reading Dot.toml:\nin {}\n{}", path.display(), err);
-                return Err("Error reading Dot.toml")
+                return Err("Error reading Dot.toml");
             }
         };
         let package = match toml::from_str(&contents) {
             Ok(package) => package,
             Err(err) => {
                 error!("Error parsing Dot.toml:\nin {}\n{}", path.display(), err);
-                return Err("Error parsing Dot.toml")
+                return Err("Error parsing Dot.toml");
             }
         };
         Ok(package)
@@ -46,4 +46,3 @@ fn read_package<P: AsRef<Path>>(path: P) -> io::Result<String> {
     file.read_to_string(&mut contents)?;
     Ok(contents)
 }
-
