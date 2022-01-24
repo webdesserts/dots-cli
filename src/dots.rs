@@ -2,6 +2,7 @@ use crate::dot_package::DotPackage;
 use crate::utils::{self, fs::home};
 use camino::{Utf8Path, Utf8PathBuf};
 use std::{env, fs, io, process};
+use tempfile::tempdir;
 
 pub struct Dot {
     pub package: DotPackage,
@@ -79,23 +80,18 @@ impl Environment {
 }
 
 pub fn add(url: &str, overwrite: bool, env: &Environment) {
-    info!("Adding {}", url);
-    let tmp = env.path(".tmp");
-
-    if tmp.is_dir() {
-        warn!("Cleaning left over .tmp directory.\nIt appears another command failed to clean up after itself.");
-        utils::fs::clean(&tmp);
-    }
+    info!("Adding {url}");
+    let tmp = tempdir().expect("Unable to create temporary directory");
+    let tmp_path = Utf8Path::from_path(tmp.path()).unwrap().join("dot");
 
     info!("Cloning...");
-    utils::git::clone(url, &tmp)
+    utils::git::clone(url, &tmp_path)
         .map_err(require_git)
         .expect("Unable to clone dot");
 
-    let dot = match Dot::new(&tmp) {
+    let dot = match Dot::new(&tmp_path) {
         Ok(dot) => dot,
         Err(_) => {
-            utils::fs::clean(&tmp);
             error!("Repo does not appear to be a Dot");
             process::exit(1);
         }
@@ -113,14 +109,16 @@ pub fn add(url: &str, overwrite: bool, env: &Environment) {
                 env.package_path(&dot)
             );
             error!("pass --overwrite to overwrite the pre-existing Dot");
-            utils::fs::clean(&tmp);
             process::exit(1);
         }
     }
 
+    fs::create_dir_all(&target_dir).expect("Creating package root");
     info!("Copying to {}", target_dir);
-    fs::rename(tmp, target_dir).expect("Error renaming repo!");
-    info!("Done!")
+    match fs::rename(&tmp_path, &target_dir) {
+        Ok(_) => info!("Done!"),
+        Err(err) => error!("Error adding dot. Copy failed due to the following error:\n  {err}"),
+    };
 }
 
 pub fn find_all(env: &Environment) -> Vec<Dot> {
