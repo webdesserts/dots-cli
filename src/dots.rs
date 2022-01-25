@@ -1,7 +1,7 @@
 use crate::dot_package::DotPackage;
 use crate::utils::{self, fs::home};
 use camino::{Utf8Path, Utf8PathBuf};
-use std::{env, fs, io, process};
+use std::{env, fs, process};
 use tempfile::tempdir;
 
 pub struct Dot {
@@ -22,18 +22,15 @@ impl Dot {
         })
     }
 
-    pub fn origin(&self) -> Option<String> {
+    pub fn origin(&self) -> String {
         match env::set_current_dir(self.path.clone()) {
-            Ok(_) => match utils::git::get_origin().map_err(require_git) {
-                Ok(origin) => origin,
-                Err(err) => {
-                    error!(
-                        "error getting origin in git repository {:?}:\n{}",
-                        self.path, err
-                    );
-                    process::exit(1)
-                }
-            },
+            Ok(_) => utils::git::get_origin().unwrap_or_else(|err| {
+                error!(
+                    "error getting origin in git repository {}:\n{}",
+                    self.path, err
+                );
+                process::exit(1);
+            }),
             Err(err) => {
                 error!("error changing directory to {:?}:\n{}", self.path, err);
                 process::exit(1);
@@ -85,9 +82,10 @@ pub fn add(url: &str, overwrite: bool, env: &Environment) {
     let tmp_path = Utf8Path::from_path(tmp.path()).unwrap().join("dot");
 
     info!("Cloning...");
-    utils::git::clone(url, &tmp_path)
-        .map_err(require_git)
-        .expect("Unable to clone dot");
+    utils::git::clone(url, &tmp_path).unwrap_or_else(|error| {
+        error!("Unable to clone dot\n{}", error);
+        process::exit(1)
+    });
 
     let dot = match Dot::new(&tmp_path) {
         Ok(dot) => dot,
@@ -160,16 +158,6 @@ pub fn find_all(env: &Environment) -> Vec<Dot> {
     }
 
     dots
-}
-
-fn require_git(err: io::Error) -> io::Error {
-    match err.kind() {
-        io::ErrorKind::NotFound => {
-            error!(r#"Unable to find "git" command"#);
-            process::exit(1)
-        }
-        _ => err,
-    }
 }
 
 #[cfg(test)]

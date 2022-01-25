@@ -57,9 +57,7 @@ pub fn list(matches: &ArgMatches) {
     for dot in dots::find_all(&env) {
         let mut remote = String::new();
         if matches.is_present("origins") {
-            remote = dot
-                .origin()
-                .map_or(remote, |origin| format!(" => {}", origin.trim()));
+            remote = dot.origin()
         };
 
         println!("{name}{remote}", name = dot.package.package.name)
