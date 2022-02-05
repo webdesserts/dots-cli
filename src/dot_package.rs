@@ -29,7 +29,7 @@ impl DotPackage {
         let contents = match read_package(path.join("Dot.toml")) {
             Ok(contents) => contents,
             Err(err) => {
-                error!("Error reading Dot.toml:\nin {}\n{}", path, err);
+                error!("Error reading Dot.toml:\n{}", err);
                 return Err(format_err!("Error reading Dot.toml"));
             }
         };
@@ -37,7 +37,7 @@ impl DotPackage {
         let package = match parse_package(&contents) {
             Ok(package) => package,
             Err(err) => {
-                error!("Error parsing Dot.toml:\nin {}\n{}", path, err);
+                error!("Error parsing Dot.toml:\n{}", err);
                 return Err(format_err!("Error reading Dot.toml"));
             }
         };

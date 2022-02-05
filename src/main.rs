@@ -1,14 +1,13 @@
 extern crate camino;
 extern crate failure;
+extern crate tempfile;
 extern crate utils;
-
 #[macro_use]
 extern crate clap;
 extern crate dirs;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
-
 #[macro_use]
 extern crate serde_derive;
 extern crate toml;

@@ -11,7 +11,7 @@ mod subcommand_add {
         let fixture_path = test_dir.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = test_dir.dots_root();
 
-        let mut cmd = Command::cargo_bin("dots").unwrap();
+        let mut cmd = Command::cargo_bin("dots")?;
 
         cmd.arg("add")
             .arg(&fixture_path)
@@ -33,10 +33,6 @@ mod subcommand_add {
         Ok(())
     }
 
-    /*
-     * @todo remove TMP_PATH from the output. It's an implementation detail and doesn't offer
-     * much help to the user.
-     */
     #[test]
     fn it_should_complain_if_there_is_no_dot_toml() -> TestResult {
         let test_dir = TestDir::new()?;
@@ -49,7 +45,7 @@ mod subcommand_add {
         fs::remove_file(&dot_toml_path)?;
         commit_all(&fixture_path, "remove Dot.toml")?;
 
-        let mut cmd = Command::cargo_bin("dots").unwrap();
+        let mut cmd = Command::cargo_bin("dots")?;
 
         cmd.arg("add")
             .arg(&fixture_path)
@@ -60,7 +56,6 @@ mod subcommand_add {
         let expected = format!(
             std::include_str!("output/add_fail_with_missing_dot_toml.out"),
             SRC_PATH = fixture_path,
-            TMP_PATH = dots_root.join(".tmp"),
         );
 
         output.assert_stderr_eq(expected).assert_fail_with_code(1);
