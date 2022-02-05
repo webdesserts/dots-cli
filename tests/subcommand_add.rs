@@ -11,7 +11,7 @@ mod subcommand_add {
         let fixture_path = test_dir.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = test_dir.dots_root();
 
-        let mut cmd = Command::cargo_bin("dots").unwrap();
+        let mut cmd = Command::cargo_bin("dots")?;
 
         cmd.arg("add")
             .arg(&fixture_path)
@@ -45,7 +45,7 @@ mod subcommand_add {
         fs::remove_file(&dot_toml_path)?;
         commit_all(&fixture_path, "remove Dot.toml")?;
 
-        let mut cmd = Command::cargo_bin("dots").unwrap();
+        let mut cmd = Command::cargo_bin("dots")?;
 
         cmd.arg("add")
             .arg(&fixture_path)

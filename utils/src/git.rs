@@ -43,7 +43,7 @@ impl fmt::Display for GitError {
     }
 }
 
-pub fn init_git_repo<P>(path: P) -> Result<(), GitError>
+pub fn init_repo<P>(path: P) -> Result<(), GitError>
 where
     P: AsRef<Utf8Path>,
 {
@@ -51,7 +51,23 @@ where
 
     map_result(Command::new("git").arg("init").current_dir(&path).output())?;
 
-    commit_all(&path, "initial commit")?;
+    Ok(())
+}
+
+pub fn config<P>(path: P, key: &str, value: &str) -> Result<(), GitError>
+where
+    P: AsRef<Utf8Path>,
+{
+    let path = path.as_ref();
+
+    map_result(
+        Command::new("git")
+            .arg("config")
+            .arg(key)
+            .arg(value)
+            .current_dir(&path)
+            .output(),
+    )?;
 
     Ok(())
 }

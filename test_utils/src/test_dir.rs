@@ -2,7 +2,7 @@ use crate::Fixture;
 use camino::{Utf8Path, Utf8PathBuf};
 use tempfile::{tempdir, TempDir};
 use utils::fs::copy_dir;
-use utils::git::init_git_repo;
+use utils::git;
 
 pub struct TestDir {
     tmpdir: TempDir,
@@ -52,7 +52,13 @@ impl TestDir {
         fixture: &Fixture,
     ) -> Result<Utf8PathBuf, failure::Error> {
         let fixture_path = self.copy_fixture(fixture)?;
-        init_git_repo(&fixture_path)?;
+        git::init_repo(&fixture_path)?;
+
+        git::config(&fixture_path, "user.name", "webdesserts")?;
+        git::config(&fixture_path, "user.email", "test@webdesserts.com")?;
+
+        git::commit_all(&fixture_path, "initial commit")?;
+
         Ok(fixture_path)
     }
 }
