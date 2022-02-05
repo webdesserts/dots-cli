@@ -9,9 +9,6 @@ edition = "2021"
 [dependencies]
 utils = { path = "utils" }
 
-# errors
-failure = "^0.1.8"
-
 # paths & io
 camino = { version = "^1.0.5", features = ['serde1'] }
 
@@ -27,6 +24,7 @@ log = "^0.4.14"
 serde = "^1.0.133"
 serde_derive = "^1.0.133"
 toml = "^0.5.8"
+anyhow = "1.0.53"
 
 # fs
 tempfile = "^3.2.0"

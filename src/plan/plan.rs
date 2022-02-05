@@ -2,7 +2,6 @@ use crate::dots::Dot;
 use crate::plan::links::Link;
 use crate::plan::resolve::{resolve, ResolvedLink};
 use camino::Utf8Path;
-use std::error::Error;
 use std::{
     fmt::{self, Display},
     io,
@@ -78,7 +77,7 @@ impl Display for PlanError {
     }
 }
 
-impl Error for PlanError {
+impl std::error::Error for PlanError {
     fn description(&self) -> &str {
         self.msg.as_str()
     }
@@ -208,12 +207,12 @@ impl LinkRequest {
 #[cfg(test)]
 mod tests {
     mod link_request {
-        use test_utils::Fixture;
+        use test_utils::{Fixture, TestResult};
 
         use crate::dots::Dot;
 
         #[test]
-        fn it_should_display_correctly() -> Result<(), failure::Error> {
+        fn it_should_display_correctly() -> TestResult {
             let fixture = Fixture::ExampleDot;
             let dot = Dot::new(fixture.template_path())?;
             assert_eq!(dot.path, fixture.template_path());

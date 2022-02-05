@@ -1,1 +1,1 @@
-pub type TestResult = Result<(), failure::Error>;
+pub type TestResult = anyhow::Result<()>;

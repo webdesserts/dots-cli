@@ -1,5 +1,6 @@
 use crate::dot_package::DotPackage;
 use crate::utils::{self, fs::home};
+use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use std::{env, fs, process};
 use tempfile::tempdir;
@@ -10,7 +11,7 @@ pub struct Dot {
 }
 
 impl Dot {
-    pub fn new<P>(path: P) -> Result<Dot, failure::Error>
+    pub fn new<P>(path: P) -> Result<Dot>
     where
         P: AsRef<Utf8Path>,
     {
@@ -166,12 +167,12 @@ mod tests {
         use std::collections::HashMap;
 
         use camino::Utf8PathBuf;
-        use test_utils::Fixture;
+        use test_utils::{Fixture, TestResult};
 
         use crate::dots::Dot;
 
         #[test]
-        fn it_should_contain_the_original_path() -> Result<(), failure::Error> {
+        fn it_should_contain_the_original_path() -> TestResult {
             let fixture = Fixture::ExampleDot;
             let dot = Dot::new(fixture.template_path())?;
             assert_eq!(dot.path, fixture.template_path());
@@ -179,7 +180,7 @@ mod tests {
         }
 
         #[test]
-        fn it_should_contain_package_details_from_the_dot_toml() -> Result<(), failure::Error> {
+        fn it_should_contain_package_details_from_the_dot_toml() -> TestResult {
             let fixture = Fixture::ExampleDot;
             let dot = Dot::new(fixture.template_path())?;
             assert_eq!(dot.package.package.name, fixture.name());
@@ -188,7 +189,7 @@ mod tests {
         }
 
         #[test]
-        fn it_should_contain_links_from_the_dot_toml() -> Result<(), failure::Error> {
+        fn it_should_contain_links_from_the_dot_toml() -> TestResult {
             let fixture = Fixture::ExampleDot;
             let dot = Dot::new(fixture.template_path())?;
             let expected: HashMap<Utf8PathBuf, Utf8PathBuf> =

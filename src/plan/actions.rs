@@ -1,7 +1,7 @@
 use colored::*;
 use dirs::home_dir;
 use plan::links::{Anchor, AnchorKind};
-use std::error::Error;
+use anyhow::Result;
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::{fmt, io, process};

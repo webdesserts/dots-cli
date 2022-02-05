@@ -1,5 +1,5 @@
+use anyhow::{anyhow, Result};
 use camino::{Utf8Path, Utf8PathBuf};
-use failure::format_err;
 use std::fs;
 use std::io::{self, Read};
 use std::{collections::HashMap, path::Path};
@@ -21,7 +21,7 @@ pub struct DotPackage {
 }
 
 impl DotPackage {
-    pub fn new<P>(path: P) -> Result<DotPackage, failure::Error>
+    pub fn new<P>(path: P) -> Result<DotPackage>
     where
         P: AsRef<Utf8Path>,
     {
@@ -30,7 +30,7 @@ impl DotPackage {
             Ok(contents) => contents,
             Err(err) => {
                 error!("Error reading Dot.toml:\n{}", err);
-                return Err(format_err!("Error reading Dot.toml"));
+                return Err(anyhow!("Error reading Dot.toml"));
             }
         };
 
@@ -38,7 +38,7 @@ impl DotPackage {
             Ok(package) => package,
             Err(err) => {
                 error!("Error parsing Dot.toml:\n{}", err);
-                return Err(format_err!("Error reading Dot.toml"));
+                return Err(anyhow!("Error reading Dot.toml"));
             }
         };
 
@@ -68,9 +68,9 @@ mod tests {
     use super::*;
     mod dot_package {
         use camino::Utf8PathBuf;
+        use test_utils::TestResult;
 
         use super::parse_package;
-        type TestResult = Result<(), failure::Error>;
 
         const EXAMPLE_PACKAGE: &str = r#"
         [package]

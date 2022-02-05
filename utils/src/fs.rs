@@ -1,3 +1,4 @@
+use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use dirs::home_dir;
 use std::{fs, io, process::Command};
@@ -33,7 +34,7 @@ where
     Ok(())
 }
 
-pub fn print_tree<P>(path: P) -> Result<(), failure::Error>
+pub fn print_tree<P>(path: P) -> Result<()>
 where
     P: AsRef<Utf8Path>,
 {

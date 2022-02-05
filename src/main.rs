@@ -1,5 +1,5 @@
+extern crate anyhow;
 extern crate camino;
-extern crate failure;
 extern crate tempfile;
 extern crate utils;
 #[macro_use]
