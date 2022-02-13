@@ -1,14 +1,14 @@
 mod subcommand_install {
     use assert_cmd::Command;
-    use test_utils::{AssertableOutput, Fixture, TestDir, TestResult};
+    use test_utils::{AssertableOutput, Fixture, TestManager, TestResult};
 
     #[test]
     fn it_should_display_the_install_plan_but_not_install_if_the_dry_option_is_passed() -> TestResult
     {
-        let test_dir = TestDir::new()?;
+        let manager = TestManager::new()?;
         let fixture = Fixture::ExampleDot;
-        let fixture_path = test_dir.setup_fixture_as_git_repo(&fixture)?;
-        let dots_root = test_dir.dots_root();
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
 
         let mut cmd = Command::cargo_bin("dots")?;
         cmd.arg("add")

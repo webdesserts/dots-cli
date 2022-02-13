@@ -5,41 +5,41 @@ use tempfile::{tempdir, TempDir};
 use utils::fs::copy_dir;
 use utils::git;
 
-pub struct TestDir {
+pub struct TestManager {
     tmpdir: TempDir,
 }
 
-impl TestDir {
+impl TestManager {
     pub fn new() -> Result<Self> {
         let tmpdir = tempdir()?;
-        let test_dir = TestDir { tmpdir };
-        Ok(test_dir)
+        let test_manager = TestManager { tmpdir };
+        Ok(test_manager)
     }
 
     /** The path of the temporary test directory */
-    pub fn path(&self) -> &Utf8Path {
+    pub fn tmp_dir(&self) -> &Utf8Path {
         Utf8Path::from_path(self.tmpdir.path()).unwrap()
     }
 
     /** The path of the directory all fixtures will initialized at once `TestDir::setup_fixture` is called. */
-    pub fn fixtures_root(&self) -> Utf8PathBuf {
-        self.path().join("fixtures")
+    pub fn fixtures_dir(&self) -> Utf8PathBuf {
+        self.tmp_dir().join("fixtures")
     }
 
     /** the path of the directory should be used as the installation root for all dots. */
-    pub fn dots_root(&self) -> Utf8PathBuf {
-        self.path().join("dots")
+    pub fn dots_dir(&self) -> Utf8PathBuf {
+        self.tmp_dir().join("dots")
     }
 
     /** The path of that the given fixture will be located at once initialized. */
-    pub fn fixture_path(&self, fixture: &Fixture) -> Utf8PathBuf {
-        self.fixtures_root().join(fixture.name())
+    pub fn fixture_dir(&self, fixture: &Fixture) -> Utf8PathBuf {
+        self.fixtures_dir().join(fixture.name())
     }
 
     /** Creates a copy of the given fixture in the test directory */
-    fn copy_fixture(&self, fixture: &Fixture) -> Result<Utf8PathBuf> {
+    fn setup_fixture(&self, fixture: &Fixture) -> Result<Utf8PathBuf> {
         let fixture_src = fixture.template_path();
-        let fixture_dest = self.fixture_path(fixture);
+        let fixture_dest = self.fixture_dir(fixture);
 
         copy_dir(&fixture_src, &fixture_dest)
             .expect(format!("Failed to setup fixture {}", fixture_src).as_str());
@@ -49,7 +49,7 @@ impl TestDir {
 
     /** Copies the given fixture to the test directory and then initializes it as a git repository */
     pub fn setup_fixture_as_git_repo(&self, fixture: &Fixture) -> Result<Utf8PathBuf> {
-        let fixture_path = self.copy_fixture(fixture)?;
+        let fixture_path = self.setup_fixture(fixture)?;
         git::init_repo(&fixture_path)?;
 
         git::config(&fixture_path, "user.name", "webdesserts")?;

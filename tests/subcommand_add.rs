@@ -1,15 +1,15 @@
 mod subcommand_add {
     use assert_cmd::Command;
     use std::fs;
-    use test_utils::{AssertableOutput, Fixture, TestDir, TestResult};
+    use test_utils::{AssertableOutput, Fixture, TestManager, TestResult};
     use utils::git::commit_all;
 
     #[test]
     fn it_should_add_a_dot_to_the_dots_folder() -> TestResult {
-        let test_dir = TestDir::new()?;
+        let manager = TestManager::new()?;
         let fixture = Fixture::ExampleDot;
-        let fixture_path = test_dir.setup_fixture_as_git_repo(&fixture)?;
-        let dots_root = test_dir.dots_root();
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
 
         let mut cmd = Command::cargo_bin("dots")?;
 
@@ -35,10 +35,10 @@ mod subcommand_add {
 
     #[test]
     fn it_should_complain_if_there_is_no_dot_toml() -> TestResult {
-        let test_dir = TestDir::new()?;
+        let manager = TestManager::new()?;
         let fixture = Fixture::ExampleDot;
-        let fixture_path = test_dir.setup_fixture_as_git_repo(&fixture)?;
-        let dots_root = test_dir.dots_root();
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
         let dot_toml_path = fixture_path.join("Dot.toml");
 
         // remove Dot.toml from fixture copy
@@ -65,10 +65,10 @@ mod subcommand_add {
 
     #[test]
     fn it_should_fail_if_the_dot_is_already_added() -> TestResult {
-        let test_dir = TestDir::new()?;
+        let manager = TestManager::new()?;
         let fixture = Fixture::ExampleDot;
-        let fixture_path = test_dir.setup_fixture_as_git_repo(&fixture)?;
-        let dots_root = test_dir.dots_root();
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
 
         let mut first_add_cmd = Command::cargo_bin("dots")?;
 
@@ -101,10 +101,10 @@ mod subcommand_add {
 
     #[test]
     fn it_should_succeed_if_the_dot_is_already_added_but_overwrite_is_passed() -> TestResult {
-        let test_dir = TestDir::new()?;
+        let manager = TestManager::new()?;
         let fixture = Fixture::ExampleDot;
-        let fixture_path = test_dir.setup_fixture_as_git_repo(&fixture)?;
-        let dots_root = test_dir.dots_root();
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
 
         let mut first_add_cmd = Command::cargo_bin("dots")?;
 
@@ -138,8 +138,8 @@ mod subcommand_add {
 
     #[test]
     fn it_should_complain_if_no_repo_repo_was_passed() -> TestResult {
-        let test_dir = TestDir::new()?;
-        let dots_root = test_dir.dots_root();
+        let manager = TestManager::new()?;
+        let dots_root = manager.dots_dir();
 
         let mut cmd = Command::cargo_bin("dots")?;
 
@@ -154,8 +154,8 @@ mod subcommand_add {
 
     #[test]
     fn it_should_show_help_when_help_flag_is_passed() -> TestResult {
-        let test_dir = TestDir::new()?;
-        let dots_root = test_dir.dots_root();
+        let manager = TestManager::new()?;
+        let dots_root = manager.dots_dir();
 
         let mut cmd = Command::cargo_bin("dots")?;
 
