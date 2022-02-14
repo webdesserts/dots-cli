@@ -1,8 +1,9 @@
 use anyhow::{anyhow, Result};
 use camino::{Utf8Path, Utf8PathBuf};
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::{self, Read};
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -16,8 +17,8 @@ pub struct DotPackageMeta {
 pub struct DotPackage {
     pub package: DotPackageMeta,
     #[serde(default)]
-    pub execute: HashMap<String, Vec<String>>,
-    pub link: HashMap<Utf8PathBuf, Utf8PathBuf>,
+    pub execute: BTreeMap<String, Vec<String>>,
+    pub link: BTreeMap<Utf8PathBuf, Utf8PathBuf>,
 }
 
 impl DotPackage {

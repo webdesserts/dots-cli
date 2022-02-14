@@ -156,7 +156,7 @@ pub fn find_all(env: &Environment) -> Vec<Dot> {
 #[cfg(test)]
 mod tests {
     mod describe_link_request {
-        use std::collections::HashMap;
+        use std::collections::BTreeMap;
 
         use camino::Utf8PathBuf;
         use test_utils::{Fixture, TestResult};
@@ -184,7 +184,7 @@ mod tests {
         fn it_should_contain_links_from_the_dot_toml() -> TestResult {
             let fixture = Fixture::ExampleDot;
             let dot = Dot::new(fixture.template_path())?;
-            let expected: HashMap<Utf8PathBuf, Utf8PathBuf> =
+            let expected: BTreeMap<Utf8PathBuf, Utf8PathBuf> =
                 vec![("shell/bashrc", "~/.bashrc"), ("shell/zshrc", "~/.zshrc")]
                     .into_iter()
                     .map(|(key, value)| (Utf8PathBuf::from(key), Utf8PathBuf::from(value)))
