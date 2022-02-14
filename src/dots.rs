@@ -53,16 +53,8 @@ impl Default for Environment {
 }
 
 impl Environment {
-    pub fn new<P>(root: Option<P>) -> Self
-    where
-        P: AsRef<Utf8Path>,
-    {
-        match root {
-            Some(path) => Environment {
-                root: path.as_ref().to_owned(),
-            },
-            None => Environment::default(),
-        }
+    pub fn new() -> Self {
+        Environment::default()
     }
 
     pub fn path<P>(&self, path: P) -> Utf8PathBuf

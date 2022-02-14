@@ -12,13 +12,7 @@ mod subcommand_add {
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = manager.dots_dir();
 
-        let output = manager
-            .cmd(BIN)?
-            .arg("add")
-            .arg(&fixture_path)
-            .arg("--dotsPath")
-            .arg(&dots_root)
-            .output()?;
+        let output = manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
         let expected = format!(
             std::include_str!("output/add_success.out"),
@@ -39,20 +33,13 @@ mod subcommand_add {
         let manager = TestManager::new()?;
         let fixture = Fixture::ExampleDot;
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
-        let dots_root = manager.dots_dir();
         let dot_toml_path = fixture_path.join("Dot.toml");
 
         // remove Dot.toml from fixture copy
         fs::remove_file(&dot_toml_path)?;
         commit_all(&fixture_path, "remove Dot.toml")?;
 
-        let output = manager
-            .cmd(BIN)?
-            .arg("add")
-            .arg(&fixture_path)
-            .arg("--dotsPath")
-            .arg(&dots_root)
-            .output()?;
+        let output = manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
         let expected = format!(
             std::include_str!("output/add_fail_with_missing_dot_toml.out"),
@@ -71,21 +58,9 @@ mod subcommand_add {
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = manager.dots_dir();
 
-        manager
-            .cmd(BIN)?
-            .arg("add")
-            .arg(&fixture_path)
-            .arg("--dotsPath")
-            .arg(&dots_root)
-            .output()?;
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
-        let output = manager
-            .cmd(BIN)?
-            .arg("add")
-            .arg(&fixture_path)
-            .arg("--dotsPath")
-            .arg(&dots_root)
-            .output()?;
+        let output = manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
         let expected = format!(
             std::include_str!("output/add_fail_with_overwrite_warning.out"),
@@ -105,21 +80,13 @@ mod subcommand_add {
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = manager.dots_dir();
 
-        manager
-            .cmd(BIN)?
-            .arg("add")
-            .arg(&fixture_path)
-            .arg("--dotsPath")
-            .arg(&dots_root)
-            .output()?;
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
         let output = manager
             .cmd(BIN)?
             .arg("add")
             .arg(&fixture_path)
             .arg("--overwrite")
-            .arg("--dotsPath")
-            .arg(&dots_root)
             .output()?;
 
         let expected = format!(
@@ -134,15 +101,9 @@ mod subcommand_add {
     }
 
     #[test]
-    fn it_should_complain_if_no_repo_repo_was_passed() -> TestResult {
+    fn it_should_complain_if_no_repo_was_passed() -> TestResult {
         let manager = TestManager::new()?;
-        let dots_root = manager.dots_dir();
-        let output = manager
-            .cmd(BIN)?
-            .arg("add")
-            .arg("--dotsPath")
-            .arg(&dots_root)
-            .output()?;
+        let output = manager.cmd(BIN)?.arg("add").output()?;
 
         let expected = std::include_str!("output/add_fail_with_missing_repo.out").to_string();
 
@@ -154,15 +115,8 @@ mod subcommand_add {
     #[test]
     fn it_should_show_help_when_help_flag_is_passed() -> TestResult {
         let manager = TestManager::new()?;
-        let dots_root = manager.dots_dir();
 
-        let output = manager
-            .cmd(BIN)?
-            .arg("add")
-            .arg("--help")
-            .arg("--dotsPath")
-            .arg(&dots_root)
-            .output()?;
+        let output = manager.cmd(BIN)?.arg("add").arg("--help").output()?;
 
         let expected = std::include_str!("output/add_help.out").to_string();
 

@@ -11,21 +11,9 @@ mod subcommand_install {
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = manager.dots_dir();
 
-        manager
-            .cmd(BIN)?
-            .arg("add")
-            .arg(&fixture_path)
-            .arg("--dotsPath")
-            .arg(&dots_root)
-            .output()?;
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
-        let output = manager
-            .cmd(BIN)?
-            .arg("install")
-            .arg("--dry")
-            .arg("--dotsPath")
-            .arg(&dots_root)
-            .output()?;
+        let output = manager.cmd(BIN)?.arg("install").arg("--dry").output()?;
 
         let expected_err = std::include_str!("output/install_success_with_dry.err");
         let expected_out = std::include_str!("output/install_success_with_dry.out");

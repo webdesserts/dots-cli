@@ -3,14 +3,11 @@ Michael Mullins <michael@webdesserts.com>
 A cli for managing all your dot(file)s
 
 USAGE:
-    dots [OPTIONS] [SUBCOMMAND]
+    dots [SUBCOMMAND]
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
-
-OPTIONS:
-        --dotsPath <dots_path>    The location to find and install dots
 
 SUBCOMMANDS:
     add        Downloads the given git repo as a dot

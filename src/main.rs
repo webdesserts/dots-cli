@@ -73,7 +73,6 @@ fn main() {
         (version: crate_version!())
         (about: crate_description!())
         (author: crate_authors!("\n"))
-        (@arg dots_path: --dotsPath +takes_value +global "The location to find and install dots")
         (@subcommand add =>
             (about: "Downloads the given git repo as a dot")
             (@arg REPO: +required "A git url that points to a Dot repo containing all your dotfiles")

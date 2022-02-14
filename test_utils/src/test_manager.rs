@@ -29,7 +29,7 @@ impl TestManager {
 
     /** the path of the directory should be used as the installation root for all dots. */
     pub fn dots_dir(&self) -> Utf8PathBuf {
-        self.tmp_dir().join("dots")
+        self.tmp_dir().join(".dots")
     }
 
     /** The path of that the given fixture will be located at once initialized. */

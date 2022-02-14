@@ -5,16 +5,14 @@ use crate::dots::{self, Environment};
 use crate::plan::Plan;
 
 pub fn add(matches: &ArgMatches) {
-    let dots_path = matches.value_of("dots_path");
-    let env = Environment::new(dots_path);
+    let env = Environment::new();
     let url = matches.value_of("REPO").expect("repo is required");
     let overwrite = matches.is_present("overwrite");
     dots::add(url, overwrite, &env)
 }
 
 pub fn install(matches: &ArgMatches) {
-    let dots_path = matches.value_of("dots_path");
-    let env = Environment::new(dots_path);
+    let env = Environment::new();
     if let Some(url) = matches.value_of("REPO") {
         let overwrite = matches.is_present("overwrite");
         dots::add(url, overwrite, &env);
@@ -52,8 +50,7 @@ pub fn install(matches: &ArgMatches) {
 }
 
 pub fn list(matches: &ArgMatches) {
-    let dots_path = matches.value_of("dots_path");
-    let env = Environment::new(dots_path);
+    let env = Environment::new();
     for dot in dots::find_all(&env) {
         let mut remote = String::new();
         if matches.is_present("origins") {
@@ -65,8 +62,7 @@ pub fn list(matches: &ArgMatches) {
 }
 
 pub fn prefix(matches: &ArgMatches) {
-    let dots_path = matches.value_of("dots_path");
-    let env = Environment::new(dots_path);
+    let env = Environment::new();
     let name = matches.value_of("DOT").expect("Missing Argument <REPO>");
 
     match dots::find_all(&env)
