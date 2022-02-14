@@ -1,6 +1,7 @@
 use crate::Fixture;
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
+use std::process::Command;
 use tempfile::{tempdir, TempDir};
 use utils::fs::copy_dir;
 use utils::git;
@@ -59,4 +60,17 @@ impl TestManager {
 
         Ok(fixture_path)
     }
+
+    pub fn cmd(&self, bin: &'static str) -> Result<Command> {
+        let mut cmd = Command::new(&bin);
+        cmd.env("HOME", self.tmp_dir());
+        Ok(cmd)
+    }
+}
+
+#[macro_export]
+macro_rules! cargo_bin {
+    ($bin:expr) => {
+        env!(concat!("CARGO_BIN_EXE_", $bin))
+    };
 }

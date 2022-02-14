@@ -1,8 +1,9 @@
 mod subcommand_add {
-    use assert_cmd::Command;
     use std::fs;
-    use test_utils::{AssertableOutput, Fixture, TestManager, TestResult};
+    use test_utils::{cargo_bin, AssertableOutput, Fixture, TestManager, TestResult};
     use utils::git::commit_all;
+
+    const BIN: &str = cargo_bin!("dots");
 
     #[test]
     fn it_should_add_a_dot_to_the_dots_folder() -> TestResult {
@@ -11,14 +12,14 @@ mod subcommand_add {
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = manager.dots_dir();
 
-        let mut cmd = Command::cargo_bin("dots")?;
-
-        cmd.arg("add")
+        let output = manager
+            .cmd(BIN)?
+            .arg("add")
             .arg(&fixture_path)
             .arg("--dotsPath")
-            .arg(&dots_root);
+            .arg(&dots_root)
+            .output()?;
 
-        let output = cmd.output()?;
         let expected = format!(
             std::include_str!("output/add_success.out"),
             SRC_PATH = fixture_path,
@@ -45,14 +46,14 @@ mod subcommand_add {
         fs::remove_file(&dot_toml_path)?;
         commit_all(&fixture_path, "remove Dot.toml")?;
 
-        let mut cmd = Command::cargo_bin("dots")?;
-
-        cmd.arg("add")
+        let output = manager
+            .cmd(BIN)?
+            .arg("add")
             .arg(&fixture_path)
             .arg("--dotsPath")
-            .arg(&dots_root);
+            .arg(&dots_root)
+            .output()?;
 
-        let output = cmd.output()?;
         let expected = format!(
             std::include_str!("output/add_fail_with_missing_dot_toml.out"),
             SRC_PATH = fixture_path,
@@ -70,18 +71,16 @@ mod subcommand_add {
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = manager.dots_dir();
 
-        let mut first_add_cmd = Command::cargo_bin("dots")?;
-
-        first_add_cmd
+        manager
+            .cmd(BIN)?
             .arg("add")
             .arg(&fixture_path)
             .arg("--dotsPath")
             .arg(&dots_root)
             .output()?;
 
-        let mut second_add_cmd = Command::cargo_bin("dots")?;
-
-        let output = second_add_cmd
+        let output = manager
+            .cmd(BIN)?
             .arg("add")
             .arg(&fixture_path)
             .arg("--dotsPath")
@@ -106,18 +105,16 @@ mod subcommand_add {
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = manager.dots_dir();
 
-        let mut first_add_cmd = Command::cargo_bin("dots")?;
-
-        first_add_cmd
+        manager
+            .cmd(BIN)?
             .arg("add")
             .arg(&fixture_path)
             .arg("--dotsPath")
             .arg(&dots_root)
             .output()?;
 
-        let mut second_add_cmd = Command::cargo_bin("dots")?;
-
-        let output = second_add_cmd
+        let output = manager
+            .cmd(BIN)?
             .arg("add")
             .arg(&fixture_path)
             .arg("--overwrite")
@@ -140,10 +137,12 @@ mod subcommand_add {
     fn it_should_complain_if_no_repo_repo_was_passed() -> TestResult {
         let manager = TestManager::new()?;
         let dots_root = manager.dots_dir();
-
-        let mut cmd = Command::cargo_bin("dots")?;
-
-        let output = cmd.arg("add").arg("--dotsPath").arg(&dots_root).output()?;
+        let output = manager
+            .cmd(BIN)?
+            .arg("add")
+            .arg("--dotsPath")
+            .arg(&dots_root)
+            .output()?;
 
         let expected = std::include_str!("output/add_fail_with_missing_repo.out").to_string();
 
@@ -157,9 +156,8 @@ mod subcommand_add {
         let manager = TestManager::new()?;
         let dots_root = manager.dots_dir();
 
-        let mut cmd = Command::cargo_bin("dots")?;
-
-        let output = cmd
+        let output = manager
+            .cmd(BIN)?
             .arg("add")
             .arg("--help")
             .arg("--dotsPath")
