@@ -2,6 +2,7 @@ use crate::dots::Dot;
 use crate::plan::links::Link;
 use crate::plan::resolve::{resolve, ResolvedLink};
 use camino::Utf8Path;
+use std::fs;
 use std::{
     fmt::{self, Display},
     io,
@@ -124,30 +125,38 @@ impl Plan {
         }
     }
 
-    pub fn execute(&self, _force: bool) -> io::Result<()> {
-        // for action in &self.actions {
-        //     match *action {
-        //         ResolvedLink { ref src, ref dest } => {
-        //             if dest.path.exists() {
-        //                 let file_type = dest.path.metadata()?.file_type();
-        //                 if file_type.is_symlink() || file_type.is_file() {
-        //                     fs::remove_file(&dest.path)?;
-        //                 } else if file_type.is_dir() {
-        //                     if force {
-        //                         fs::remove_dir_all(&dest.path)?;
-        //                     } else {
-        //                         return Err(io::Error::new(io::ErrorKind::AlreadyExists, "Destination already Exists!"));
-        //                     }
-        //                 };
-        //             };
+    pub fn execute(&self, force: bool) -> io::Result<()> {
+        for request in &self.requests {
+            let src = match &request.link.src.path {
+                Some(path) => path,
+                None => continue,
+            };
+            let dest = match &request.link.dest.path {
+                Some(path) => path,
+                None => continue,
+            };
 
-        //             if let Some(parent) = dest.path.parent() {
-        //                 fs::create_dir_all(parent)?;
-        //             }
-        //             std::os::unix::fs::symlink(&src.path, &dest.path)?;
-        //         }
-        //     }
-        // }
+            if dest.exists() {
+                if dest.is_symlink() || dest.is_file() {
+                    fs::remove_file(&dest)?;
+                } else if dest.is_dir() {
+                    if force {
+                        fs::remove_dir_all(&dest)?;
+                    } else {
+                        return Err(io::Error::new(
+                            io::ErrorKind::AlreadyExists,
+                            "Destination already Exists!",
+                        ));
+                    }
+                };
+            };
+
+            if let Some(parent) = dest.parent() {
+                fs::create_dir_all(parent)?;
+            }
+
+            std::os::unix::fs::symlink(&src, &dest)?;
+        }
         Ok(())
     }
 }

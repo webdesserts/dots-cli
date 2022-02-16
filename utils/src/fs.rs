@@ -39,7 +39,11 @@ where
     P: AsRef<Utf8Path>,
 {
     let path = path.as_ref();
-    Command::new("tree").arg(&path).spawn()?;
+    Command::new("tree")
+        .arg("-a")
+        // .arg("-L").arg("2")
+        .arg(&path)
+        .spawn()?;
     Ok(())
 }
 

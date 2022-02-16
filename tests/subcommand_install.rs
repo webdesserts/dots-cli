@@ -28,4 +28,38 @@ mod subcommand_install {
         assert!(fixture_path.join("Dot.toml").exists());
         Ok(())
     }
+
+    #[test]
+    fn it_should_display_and_install_the_given_plan() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
+        let home_dir = manager.home_dir();
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+        let expected_out = std::include_str!("output/install_success.out");
+        let expected_err = std::include_str!("output/install_success.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq(expected_out)
+            .assert_success();
+
+        let installed_dot_path = dots_root.join(fixture.name());
+
+        assert!(installed_dot_path.is_dir());
+        assert!(installed_dot_path.join("Dot.toml").is_file());
+        assert_eq!(
+            home_dir.join(".bashrc").read_link()?,
+            installed_dot_path.join("shell/bashrc")
+        );
+        assert_eq!(
+            home_dir.join(".zshrc").read_link()?,
+            installed_dot_path.join("shell/zshrc")
+        );
+        Ok(())
+    }
 }

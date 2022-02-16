@@ -3,6 +3,7 @@ use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use std::process::Command;
 use tempfile::{tempdir, TempDir};
+use utils::fs::canonicalize;
 use utils::fs::copy_dir;
 use utils::git;
 
@@ -18,18 +19,19 @@ impl TestManager {
     }
 
     /** The path of the temporary test directory */
-    pub fn tmp_dir(&self) -> &Utf8Path {
-        Utf8Path::from_path(self.tmpdir.path()).unwrap()
+    pub fn home_dir(&self) -> Utf8PathBuf {
+        let path = Utf8Path::from_path(self.tmpdir.path()).unwrap();
+        canonicalize(path).expect("Unable to canonicalize tmp dir")
     }
 
     /** The path of the directory all fixtures will initialized at once `TestDir::setup_fixture` is called. */
     pub fn fixtures_dir(&self) -> Utf8PathBuf {
-        self.tmp_dir().join("fixtures")
+        self.home_dir().join("fixtures")
     }
 
     /** the path of the directory should be used as the installation root for all dots. */
     pub fn dots_dir(&self) -> Utf8PathBuf {
-        self.tmp_dir().join(".dots")
+        self.home_dir().join(".dots")
     }
 
     /** The path of that the given fixture will be located at once initialized. */
@@ -63,7 +65,7 @@ impl TestManager {
 
     pub fn cmd(&self, bin: &'static str) -> Result<Command> {
         let mut cmd = Command::new(&bin);
-        cmd.env("HOME", self.tmp_dir());
+        cmd.env("HOME", self.home_dir());
         Ok(cmd)
     }
 }
