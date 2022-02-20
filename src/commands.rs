@@ -24,7 +24,6 @@ pub fn install(matches: &ArgMatches) {
             plan
         }
         Err(err) => {
-            println!();
             error!("{}", err);
             error!("Currently defined install would fail!");
             process::exit(1)

@@ -1,2 +1,7 @@
+
+[example_dot]
+✔ shell/bashrc => ~/.bashrc
+✔ shell/zshrc => ~/.zshrc
+
 [info] Looks Good! Nothing wrong with the current install plan!
 [info] Install was a success!

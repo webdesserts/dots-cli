@@ -6,9 +6,10 @@ use std::fs;
 use std::{
     fmt::{self, Display},
     io,
-    rc::Rc,
 };
 use utils::stylize::Stylable;
+
+use super::resolve::ResolveIssue;
 
 /*
 ## TODOs
@@ -100,29 +101,65 @@ impl Plan {
 
         for dot in dots {
             let title = format!("[{name}]", name = &dot.package.package.name);
-            println!("\n{title}", title = title.apply_style(styles::TITLE));
+            eprintln!("\n{title}", title = title.apply_style(styles::TITLE));
             let links = dot.package.link.clone();
-            let dot = Rc::new(dot);
 
             for (src, dest) in links {
-                let request = LinkRequest::new(Rc::clone(&dot), src, dest);
+                let mut request = LinkRequest::new(&dot, src, dest);
+                if let Some(resolved_dest) = &request.link.dest.path {
+                    let duplicates = plan.duplicates(resolved_dest);
+                    if !duplicates.is_empty() {
+                        request.link.dest.mark_as_duplicate();
+                    }
+                }
+
                 if request.has_errors() {
                     has_errors = true
                 }
-                println!("{request}");
+
+                eprintln!("{request}");
                 plan.requests.push(request);
             }
         }
 
-        println!();
+        let issues = plan.issues();
+
+        if !issues.is_empty() {
+            eprintln!();
+
+            for issue in plan.issues() {
+                use crate::plan::resolve::ResolveIssueLevel::*;
+                match issue.level() {
+                    Error => error!("{issue}"),
+                    Warning => warn!("{issue}"),
+                }
+            }
+        }
+
+        eprintln!();
+
         if suggest_force {
-            info!("{}", "use --force to overwrite existing directories")
+            info!("use --force to overwrite existing directories")
         }
         if has_errors {
             Err(PlanError::new("Planning failed."))
         } else {
             Ok(plan)
         }
+    }
+
+    fn duplicates(&self, path: &Utf8Path) -> Vec<&LinkRequest> {
+        self.requests
+            .iter()
+            .filter(|&request| request.link.dest.path == Some(path.to_path_buf()))
+            .collect()
+    }
+
+    fn issues(&self) -> Vec<&ResolveIssue> {
+        self.requests
+            .iter()
+            .flat_map(|request| request.link.issues())
+            .collect()
     }
 
     pub fn execute(&self, force: bool) -> io::Result<()> {
@@ -200,11 +237,11 @@ impl Display for LinkRequest {
 }
 
 impl LinkRequest {
-    fn new<P>(dot: Rc<Dot>, src: P, dest: P) -> Self
+    fn new<P>(dot: &Dot, src: P, dest: P) -> Self
     where
         P: AsRef<Utf8Path>,
     {
-        let link = resolve(&dot, Link::new(src, dest));
+        let link = resolve(dot, Link::new(src, dest));
         LinkRequest { link }
     }
 

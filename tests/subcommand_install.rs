@@ -16,11 +16,10 @@ mod subcommand_install {
         let output = manager.cmd(BIN)?.arg("install").arg("--dry").output()?;
 
         let expected_err = std::include_str!("output/install_success_with_dry.err");
-        let expected_out = std::include_str!("output/install_success_with_dry.out");
 
         output
             .assert_stderr_eq(expected_err)
-            .assert_stdout_eq(expected_out)
+            .assert_stdout_eq("")
             .assert_fail_with_code(1);
 
         assert!(dots_root.exists());
@@ -40,12 +39,11 @@ mod subcommand_install {
         manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
         let output = manager.cmd(BIN)?.arg("install").output()?;
-        let expected_out = std::include_str!("output/install_success.out");
         let expected_err = std::include_str!("output/install_success.err");
 
         output
             .assert_stderr_eq(expected_err)
-            .assert_stdout_eq(expected_out)
+            .assert_stdout_eq("")
             .assert_success();
 
         let installed_dot_path = dots_root.join(fixture.name());
@@ -60,6 +58,41 @@ mod subcommand_install {
             home_dir.join(".zshrc").read_link()?,
             installed_dot_path.join("shell/zshrc")
         );
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_fail_if_multiple_dots_have_a_link_the_same_thing() -> TestResult {
+        let manager = TestManager::new()?;
+
+        let main_fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
+        let conflicting_fixture_path =
+            manager.setup_fixture_as_git_repo(&Fixture::ConflictingDot)?;
+
+        let home_dir = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("add")
+            .arg(&main_fixture_path)
+            .output()?;
+
+        manager
+            .cmd(BIN)?
+            .arg("add")
+            .arg(&conflicting_fixture_path)
+            .output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+        let expected_err = std::include_str!("output/install_fail_with_conflicts.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_fail_with_code(1);
+
+        assert!(!home_dir.join(".bashrc").exists());
+        assert!(!home_dir.join(".zshrc").exists());
         Ok(())
     }
 }

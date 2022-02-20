@@ -1,0 +1,12 @@
+
+[example_dot]
+✔ shell/bashrc => ~/.bashrc
+✔ shell/zshrc => ~/.zshrc
+
+[conflicting_dot]
+✖ shell/bashrc => ~/.bashrc
+
+[error] Multiple dots link to the following destination: ~/.bashrc
+
+[error] Plan Error: Planning failed.
+[error] Currently defined install would fail!

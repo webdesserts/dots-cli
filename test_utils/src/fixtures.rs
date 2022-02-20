@@ -4,6 +4,7 @@ use utils::fs::current_dir;
 
 pub enum Fixture {
     ExampleDot,
+    ConflictingDot,
 }
 
 impl Fixture {
@@ -16,6 +17,7 @@ impl Fixture {
     pub fn name(&self) -> &str {
         match self {
             Self::ExampleDot => "example_dot",
+            Self::ConflictingDot => "conflicting_dot",
         }
     }
 

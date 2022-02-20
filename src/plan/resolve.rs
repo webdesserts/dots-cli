@@ -1,8 +1,10 @@
 use crate::dots::Dot;
 use crate::plan::links::{Anchor, AnchorKind, Link};
 use camino::{Utf8Path, Utf8PathBuf};
+
 use std::fmt::Display;
 use std::fs::FileType;
+
 use std::{fmt, fs, io, process};
 
 use crate::utils::fs::{canonicalize, home};
@@ -20,6 +22,15 @@ pub fn resolve(dot: &Dot, link: Link) -> ResolvedLink {
     ResolvedLink {
         src: resolve_src(link.src, dot.path.clone()),
         dest: resolve_dest(link.dest),
+    }
+}
+
+impl ResolvedLink {
+    pub fn issues(&self) -> Vec<&ResolveIssue> {
+        let src_issues = self.src.issues.iter();
+        let dest_issues = self.dest.issues.iter();
+
+        src_issues.chain(dest_issues).collect()
     }
 }
 
@@ -64,6 +75,13 @@ impl ResolvedAnchor {
 
     pub fn max_issue_level(&self) -> Option<ResolveIssueLevel> {
         self.issues.iter().map(|issue| issue.level()).max()
+    }
+
+    pub fn mark_as_duplicate(&mut self) {
+        self.issues.push(ResolveIssue::new(
+            &self.original,
+            ResolveIssueKind::Conflict,
+        ))
     }
 }
 
@@ -162,6 +180,7 @@ pub enum ResolveIssueLevel {
 
 #[derive(Debug)]
 pub enum ResolveIssueKind {
+    Conflict,
     AlreadyExists(fs::FileType),
     InvalidPath(String),
     NotFound,
@@ -181,10 +200,11 @@ impl ResolveIssue {
         Self::new(anchor, ResolveIssueKind::IO(error))
     }
 
-    fn level(&self) -> ResolveIssueLevel {
+    pub fn level(&self) -> ResolveIssueLevel {
         use self::ResolveIssueKind::*;
         use self::ResolveIssueLevel::*;
         match self.kind {
+            Conflict => Error,
             AlreadyExists(_) => Warning,
             InvalidPath(_) => Error,
             NotFound => Error,
@@ -198,6 +218,12 @@ impl Display for ResolveIssue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::ResolveIssueKind::*;
         match self.kind {
+            Conflict => write!(
+                f,
+                "Multiple dots link to the following {}: {}",
+                self.anchor.kind.to_string().to_lowercase(),
+                self.anchor.path
+            ),
             AlreadyExists(ref file_type) => write!(
                 f,
                 "{} already exists as {}: {} ",
