@@ -166,6 +166,20 @@ fn resolve_dest(anchor: Anchor) -> ResolvedAnchor {
 *  Issues  *
 \*========*/
 
+/**
+ * ## Errors & Warnings
+ * There are two types of errors:
+ * Errors resolving the source of a link
+ * Errors resolving the destination of a link
+ *
+ * Warnings – issues that we can resolve, but should require user confirmation.
+ * The install should still be resumable once a warning is confirmed.
+ * (e.g Are you sure you want to overwrite this directory?)
+ *
+ * Errors – issues that we can't control or issues that need to be resolved by
+ * the user. Errors should stop the install in its tracks.
+ */
+
 #[derive(Debug)]
 pub struct ResolveIssue {
     pub kind: ResolveIssueKind,
@@ -226,7 +240,7 @@ impl Display for ResolveIssue {
             ),
             AlreadyExists(ref file_type) => write!(
                 f,
-                "{} already exists as {}: {} ",
+                "{} already exists as {}: {}",
                 self.anchor.kind,
                 file_type_to_str(file_type),
                 self.anchor.path

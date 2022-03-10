@@ -1,6 +1,6 @@
 use crate::dots::Dot;
 use crate::plan::links::Link;
-use crate::plan::resolve::{resolve, ResolvedLink};
+use crate::plan::resolve::{resolve, ResolveIssueKind, ResolvedLink};
 use camino::Utf8Path;
 use std::fs;
 use std::{
@@ -95,9 +95,8 @@ pub struct Plan {
 
 impl Plan {
     pub fn new(dots: Vec<Dot>, _force: bool) -> Result<Plan, PlanError> {
-        let suggest_force = false;
+        let mut suggest_force = false;
         let mut plan = Plan { requests: vec![] };
-        let mut has_errors = false;
 
         for dot in dots {
             let title = format!("[{name}]", name = &dot.package.package.name);
@@ -113,10 +112,6 @@ impl Plan {
                     }
                 }
 
-                if request.has_errors() {
-                    has_errors = true
-                }
-
                 eprintln!("{request}");
                 plan.requests.push(request);
             }
@@ -126,6 +121,9 @@ impl Plan {
 
         if !issues.is_empty() {
             eprintln!();
+            suggest_force = issues
+                .iter()
+                .any(|&issue| matches!(issue.kind, ResolveIssueKind::AlreadyExists(_)));
 
             for issue in plan.issues() {
                 use crate::plan::resolve::ResolveIssueLevel::*;
@@ -139,10 +137,14 @@ impl Plan {
         eprintln!();
 
         if suggest_force {
-            info!("use --force to overwrite existing directories")
+            info!("use --force to overwrite existing directories");
+            eprintln!();
         }
-        if has_errors {
+
+        if plan.has_errors() {
             Err(PlanError::new("Planning failed."))
+        } else if plan.has_warnings() {
+            Err(PlanError::new("Plan has unresolved warnings."))
         } else {
             Ok(plan)
         }
@@ -160,6 +162,14 @@ impl Plan {
             .iter()
             .flat_map(|request| request.link.issues())
             .collect()
+    }
+
+    fn has_errors(&self) -> bool {
+        self.requests.iter().any(|request| request.has_errors())
+    }
+
+    fn has_warnings(&self) -> bool {
+        self.requests.iter().any(|request| request.has_warnings())
     }
 
     pub fn execute(&self, force: bool) -> io::Result<()> {
@@ -247,6 +257,10 @@ impl LinkRequest {
 
     fn has_errors(&self) -> bool {
         self.link.src.has_errors() | self.link.dest.has_errors()
+    }
+
+    fn has_warnings(&self) -> bool {
+        self.link.src.has_errors() | self.link.dest.has_warnings()
     }
 }
 

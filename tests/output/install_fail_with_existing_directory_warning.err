@@ -1,0 +1,11 @@
+
+[example_dot]
+✔ shell/bashrc => ~/.bashrc
+✔ shell/zshrc => ~/.zshrc
+
+[warn] Destination already exists as a directory: ~/.bashrc
+
+[info] use --force to overwrite existing directories
+
+[error] Plan Error: Plan has unresolved warnings.
+[error] Currently defined install would fail!

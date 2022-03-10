@@ -1,4 +1,6 @@
 mod subcommand_install {
+    use std::fs;
+
     use test_utils::{cargo_bin, AssertableOutput, Fixture, TestManager, TestResult};
 
     const BIN: &str = cargo_bin!("dots");
@@ -92,6 +94,30 @@ mod subcommand_install {
             .assert_fail_with_code(1);
 
         assert!(!home_dir.join(".bashrc").exists());
+        assert!(!home_dir.join(".zshrc").exists());
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_fail_if_you_try_to_overwrite_a_dir_and_its_contents() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
+        let home_dir = manager.home_dir();
+
+        fs::create_dir(home_dir.join(".bashrc"))?;
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+        let expected_err =
+            std::include_str!("output/install_fail_with_existing_directory_warning.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_fail_with_code(1);
+
+        assert!(home_dir.join(".bashrc").is_dir());
         assert!(!home_dir.join(".zshrc").exists());
         Ok(())
     }
