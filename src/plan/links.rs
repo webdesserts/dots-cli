@@ -26,7 +26,7 @@ impl Link {
 *  Anchors  *
 \*=========*/
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Anchor {
     pub kind: AnchorKind,
     pub path: Utf8PathBuf,

@@ -121,4 +121,36 @@ mod subcommand_install {
         assert!(!home_dir.join(".zshrc").exists());
         Ok(())
     }
+
+    #[test]
+    fn it_should_succeed_if_you_explicitely_force_an_overwrite_of_an_existing_directory(
+    ) -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
+        let home_dir = manager.home_dir();
+        let dot_dir = manager.dots_dir().join(Fixture::ExampleDot.name());
+
+        fs::create_dir(home_dir.join(".bashrc"))?;
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").arg("--force").output()?;
+        let expected_err =
+            std::include_str!("output/install_success_with_existing_directory_and_force.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_success();
+
+        assert_eq!(
+            home_dir.join(".bashrc").read_link()?,
+            dot_dir.join("shell/bashrc")
+        );
+        assert_eq!(
+            home_dir.join(".zshrc").read_link()?,
+            dot_dir.join("shell/zshrc")
+        );
+        Ok(())
+    }
 }

@@ -180,7 +180,7 @@ fn resolve_dest(anchor: Anchor) -> ResolvedAnchor {
  * the user. Errors should stop the install in its tracks.
  */
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct ResolveIssue {
     pub kind: ResolveIssueKind,
     pub anchor: Anchor,
@@ -200,6 +200,18 @@ pub enum ResolveIssueKind {
     NotFound,
     PermissionDenied,
     IO(io::Error),
+}
+
+impl Eq for ResolveIssueKind {}
+
+impl PartialEq for ResolveIssueKind {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::AlreadyExists(a), Self::AlreadyExists(b)) => a == b,
+            (Self::InvalidPath(a), Self::InvalidPath(b)) => a == b,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
 }
 
 impl ResolveIssue {

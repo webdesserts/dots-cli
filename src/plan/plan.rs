@@ -9,7 +9,7 @@ use std::{
 };
 use utils::stylize::Stylable;
 
-use super::resolve::ResolveIssue;
+use super::resolve::{ResolveIssue, ResolveIssueLevel};
 
 /*
 ## TODOs
@@ -94,9 +94,10 @@ pub struct Plan {
 }
 
 impl Plan {
-    pub fn new(dots: Vec<Dot>, _force: bool) -> Result<Plan, PlanError> {
+    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError> {
         let mut suggest_force = false;
         let mut plan = Plan { requests: vec![] };
+        let mut fixed_issues: Vec<&ResolveIssue> = vec![];
 
         for dot in dots {
             let title = format!("[{name}]", name = &dot.package.package.name);
@@ -120,16 +121,37 @@ impl Plan {
         let issues = plan.issues();
 
         if !issues.is_empty() {
-            eprintln!();
-            suggest_force = issues
-                .iter()
-                .any(|&issue| matches!(issue.kind, ResolveIssueKind::AlreadyExists(_)));
+            let existing_directory_issues: Vec<&ResolveIssue> = plan
+                .issues()
+                .into_iter()
+                .filter(|&issue| matches!(issue.kind, ResolveIssueKind::AlreadyExists(_)))
+                .collect();
 
-            for issue in plan.issues() {
+            let has_existing_directories = !existing_directory_issues.is_empty();
+
+            if force {
+                for issue in existing_directory_issues {
+                    fixed_issues.push(issue);
+                }
+            }
+
+            if !force && has_existing_directories {
+                suggest_force = true;
+            }
+
+            if issues.len() > fixed_issues.len() {
+                eprintln!();
+            }
+
+            for issue in issues {
                 use crate::plan::resolve::ResolveIssueLevel::*;
                 match issue.level() {
                     Error => error!("{issue}"),
-                    Warning => warn!("{issue}"),
+                    Warning => {
+                        if !fixed_issues.contains(&issue) {
+                            warn!("{issue}")
+                        }
+                    }
                 }
             }
         }
@@ -143,7 +165,12 @@ impl Plan {
 
         if plan.has_errors() {
             Err(PlanError::new("Planning failed."))
-        } else if plan.has_warnings() {
+        } else if plan.has_warnings()
+            && plan
+                .warnings()
+                .into_iter()
+                .any(|warning| !fixed_issues.contains(&warning))
+        {
             Err(PlanError::new("Plan has unresolved warnings."))
         } else {
             Ok(plan)
@@ -170,6 +197,20 @@ impl Plan {
 
     fn has_warnings(&self) -> bool {
         self.requests.iter().any(|request| request.has_warnings())
+    }
+
+    fn warnings(&self) -> Vec<&ResolveIssue> {
+        self.issues()
+            .into_iter()
+            .filter(|&issue| matches!(issue.level(), ResolveIssueLevel::Warning))
+            .collect()
+    }
+
+    fn errors(&self) -> Vec<&ResolveIssue> {
+        self.issues()
+            .into_iter()
+            .filter(|&issue| matches!(issue.level(), ResolveIssueLevel::Error))
+            .collect()
     }
 
     pub fn execute(&self, force: bool) -> io::Result<()> {
