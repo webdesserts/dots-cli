@@ -156,14 +156,24 @@ fn resolve_dest(anchor: Anchor) -> ResolvedAnchor {
 
     if let Some(ref path) = dest.path {
         if path.exists() {
+            // We use symlink_metadata here so that we don't follow any symlinks that we run into
             let issue = match path.symlink_metadata() {
                 Ok(metadata) => {
                     let file_type = metadata.file_type();
-                    ResolveIssue::new(&dest.original, ResolveIssueKind::AlreadyExists(file_type))
+                    if file_type.is_symlink() {
+                        None
+                    } else {
+                        Some(ResolveIssue::new(
+                            &dest.original,
+                            ResolveIssueKind::AlreadyExists(file_type),
+                        ))
+                    }
                 }
-                Err(error) => ResolveIssue::io(&dest.original, error),
+                Err(error) => Some(ResolveIssue::io(&dest.original, error)),
             };
-            dest.issues.push(issue)
+            if let Some(issue) = issue {
+                dest.issues.push(issue)
+            }
         }
     }
 

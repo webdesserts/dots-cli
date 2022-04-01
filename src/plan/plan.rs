@@ -3,6 +3,7 @@ use crate::plan::links::Link;
 use crate::plan::resolve::{resolve, ResolveIssueKind, ResolvedLink};
 use camino::Utf8Path;
 use std::fs;
+use std::os::unix;
 use std::{
     fmt::{self, Display},
     io,
@@ -243,7 +244,7 @@ impl Plan {
                 fs::create_dir_all(parent)?;
             }
 
-            std::os::unix::fs::symlink(&src, &dest)?;
+            unix::fs::symlink(&src, &dest)?;
         }
         Ok(())
     }
