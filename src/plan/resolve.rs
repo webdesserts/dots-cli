@@ -13,8 +13,11 @@ use crate::utils::fs::{canonicalize, home};
 *  Resolved Links  *
 \*================*/
 
+/// A Link where both the symlink and dotfile path have been resolved and checked for issues
 pub struct ResolvedLink {
+    /// The resolved anchor for the dotfile
     pub src: ResolvedAnchor,
+    /// The resolved anchor for the symlink
     pub dest: ResolvedAnchor,
 }
 
@@ -38,9 +41,14 @@ impl ResolvedLink {
 *  Resolved Anchors  *
 \*==================*/
 
+/// A ResolvedAnchor is an Anchor whos path has been cannonicalized and checked for potential issues.
+/// Any issues that are found are collected for reporting back to the user.
 pub struct ResolvedAnchor {
+    /// Resolved path. If the path is not a valid FS path it will be `None`
     pub path: Option<Utf8PathBuf>,
+    /// The original unresolved anchor
     pub original: Anchor,
+    /// Issues that were encountered while resolving the path
     pub issues: Vec<ResolveIssue>,
 }
 

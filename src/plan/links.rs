@@ -6,7 +6,9 @@ use std::fmt;
 \*=======*/
 
 pub struct Link {
+    /// The path to the dotfile
     pub src: Anchor,
+    /// The the path to the symlink
     pub dest: Anchor,
 }
 
@@ -28,7 +30,9 @@ impl Link {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Anchor {
+    /// Whether the path to a dotfile or a symlink
     pub kind: AnchorKind,
+    /// The path to that file
     pub path: Utf8PathBuf,
 }
 
@@ -56,7 +60,9 @@ impl Anchor {
 
 #[derive(Eq, PartialEq, Clone, Debug)]
 pub enum AnchorKind {
+    /// An anchor for dotfile path
     Source,
+    /// An anchor for the symlink path
     Destination,
 }
 
