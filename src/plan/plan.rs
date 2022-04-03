@@ -225,7 +225,7 @@ impl Plan {
                 None => continue,
             };
 
-            if dest.exists() {
+            if dest.exists() || dest.is_symlink() {
                 if dest.is_symlink() || dest.is_file() {
                     fs::remove_file(&dest)?;
                 } else if dest.is_dir() {

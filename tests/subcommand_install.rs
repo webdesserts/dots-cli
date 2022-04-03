@@ -130,6 +130,36 @@ mod subcommand_install {
     }
 
     #[test]
+    fn it_should_succeed_if_you_try_to_overwrite_a_broken_symlink() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
+        let home_dir = manager.home_dir();
+        let dot_dir = manager.dots_dir().join(Fixture::ExampleDot.name());
+
+        let old_linked_file_path = home_dir.join("config_bashrc");
+        let old_link_path = home_dir.join(".bashrc");
+
+        unix::fs::symlink(&old_linked_file_path, old_link_path)?;
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+        let expected_err = std::include_str!("output/install_success.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_success();
+
+        assert_eq!(
+            home_dir.join(".bashrc").read_link()?,
+            dot_dir.join("shell/bashrc")
+        );
+        assert!(home_dir.join(".zshrc").is_symlink());
+        Ok(())
+    }
+
+    #[test]
     fn it_should_fail_if_you_try_to_overwrite_a_dir_and_its_contents() -> TestResult {
         let manager = TestManager::new()?;
         let fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
