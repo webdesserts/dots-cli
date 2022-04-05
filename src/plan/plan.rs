@@ -122,16 +122,16 @@ impl Plan {
         let issues = plan.issues();
 
         if !issues.is_empty() {
-            let existing_directory_issues: Vec<&ResolveIssue> = plan
+            let existing_file_issues: Vec<&ResolveIssue> = plan
                 .issues()
                 .into_iter()
                 .filter(|&issue| matches!(issue.kind, ResolveIssueKind::AlreadyExists(_)))
                 .collect();
 
-            let has_existing_directories = !existing_directory_issues.is_empty();
+            let has_existing_directories = !existing_file_issues.is_empty();
 
             if force {
-                for issue in existing_directory_issues {
+                for issue in existing_file_issues {
                     fixed_issues.push(issue);
                 }
             }
@@ -225,20 +225,27 @@ impl Plan {
                 None => continue,
             };
 
-            if dest.exists() || dest.is_symlink() {
-                if dest.is_symlink() || dest.is_file() {
-                    fs::remove_file(&dest)?;
-                } else if dest.is_dir() {
-                    if force {
-                        fs::remove_dir_all(&dest)?;
-                    } else {
-                        return Err(io::Error::new(
-                            io::ErrorKind::AlreadyExists,
-                            "Destination already Exists!",
-                        ));
-                    }
-                };
-            };
+            if dest.is_symlink() {
+                fs::remove_file(&dest)?;
+            } else if dest.is_file() {
+                if !force {
+                    return Err(io::Error::new(
+                        io::ErrorKind::AlreadyExists,
+                        "Destination already Exists!",
+                    ));
+                }
+
+                fs::remove_file(&dest)?;
+            } else if dest.is_dir() {
+                if !force {
+                    return Err(io::Error::new(
+                        io::ErrorKind::AlreadyExists,
+                        "Destination already Exists!",
+                    ));
+                }
+
+                fs::remove_dir_all(&dest)?;
+            }
 
             if let Some(parent) = dest.parent() {
                 fs::create_dir_all(parent)?;

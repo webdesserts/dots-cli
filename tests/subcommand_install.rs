@@ -160,6 +160,66 @@ mod subcommand_install {
     }
 
     #[test]
+    fn it_should_fail_if_you_try_to_overwrite_a_file() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
+        let home_dir = manager.home_dir();
+
+        let bashrc_path = home_dir.join(".bashrc");
+
+        fs::File::create(&bashrc_path)?;
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+        let expected_err = std::include_str!("output/install_fail_with_existing_file_warning.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_fail_with_code(1);
+
+        assert!(bashrc_path.is_file());
+        assert!(!bashrc_path.is_symlink());
+        assert!(!home_dir.join(".zshrc").exists());
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_succeed_if_you_explicitely_force_an_overwrite_of_an_existing_file() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
+        let home_dir = manager.home_dir();
+        let dot_dir = manager.dots_dir().join(Fixture::ExampleDot.name());
+
+        let bashrc_path = home_dir.join(".bashrc");
+
+        fs::File::create(&bashrc_path)?;
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").arg("--force").output()?;
+        let expected_err = std::include_str!("output/install_success.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_success();
+
+        assert!(bashrc_path.is_symlink());
+        assert_eq!(
+            home_dir.join(".bashrc").read_link()?,
+            dot_dir.join("shell/bashrc")
+        );
+        assert!(home_dir.join(".zshrc").is_symlink());
+        assert_eq!(
+            home_dir.join(".zshrc").read_link()?,
+            dot_dir.join("shell/zshrc")
+        );
+        Ok(())
+    }
+
+    #[test]
     fn it_should_fail_if_you_try_to_overwrite_a_dir_and_its_contents() -> TestResult {
         let manager = TestManager::new()?;
         let fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
@@ -196,8 +256,7 @@ mod subcommand_install {
         manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
         let output = manager.cmd(BIN)?.arg("install").arg("--force").output()?;
-        let expected_err =
-            std::include_str!("output/install_success_with_existing_directory_and_force.err");
+        let expected_err = std::include_str!("output/install_success.err");
 
         output
             .assert_stderr_eq(expected_err)
