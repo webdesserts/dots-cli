@@ -5,14 +5,14 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::Path;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct DotPackageMeta {
     pub name: String,
     pub authors: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct DotPackage {
     pub package: DotPackageMeta,

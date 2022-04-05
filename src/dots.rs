@@ -2,9 +2,10 @@ use crate::dot_package::DotPackage;
 use crate::utils::{self, fs::home};
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
-use std::{env, fs, process};
+use std::{env, fs, io, process};
 use tempfile::tempdir;
 
+#[derive(PartialEq, Eq)]
 pub struct Dot {
     pub package: DotPackage,
     pub path: Utf8PathBuf,
@@ -37,6 +38,22 @@ impl Dot {
                 process::exit(1);
             }
         }
+    }
+}
+
+impl Ord for Dot {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let name = &self.package.package.name;
+        let other_name = &other.package.package.name;
+        name.cmp(other_name)
+    }
+}
+
+impl PartialOrd for Dot {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        let name = &self.package.package.name;
+        let other_name = &other.package.package.name;
+        Some(name.cmp(other_name))
     }
 }
 
@@ -116,7 +133,7 @@ pub fn find_all(env: &Environment) -> Vec<Dot> {
     let dir = match env.root.read_dir() {
         Ok(read_dir) => read_dir,
         Err(err) => {
-            use std::io::ErrorKind as Kind;
+            use io::ErrorKind as Kind;
             match err.kind() {
                 Kind::NotFound => return vec![],
                 Kind::PermissionDenied => {
@@ -134,21 +151,31 @@ pub fn find_all(env: &Environment) -> Vec<Dot> {
     let mut dots = Vec::new();
 
     for entry in dir {
-        let maybe_path = entry.map(|entry| entry.path()).ok();
-        let maybe_utf8_path = maybe_path.and_then(|p| Utf8PathBuf::from_path_buf(p).ok());
-
-        let path = match maybe_utf8_path {
-            Some(path) => path,
-            None => {
-                continue;
-            }
+        let path = match entry {
+            Ok(entry) => entry.path(),
+            Err(err) => match err.kind() {
+                io::ErrorKind::PermissionDenied => {
+                    error!("Unable access dots directory:\n{}", err);
+                    process::exit(1);
+                }
+                _ => {
+                    error!("Error while accessing dots directory:\n{}", err);
+                    process::exit(1);
+                }
+            },
         };
 
-        match Dot::new(path) {
-            Ok(dot) => dots.push(dot),
-            Err(_) => {}
+        let utf8_path = Utf8PathBuf::from_path_buf(path).expect("Error parsing path as Utf8");
+
+        if let Ok(dot) = Dot::new(utf8_path) {
+            dots.push(dot)
         }
     }
+
+    /*
+     * @todo add tests for how we sort dots when they're displayed
+     */
+    dots.sort();
 
     dots
 }
