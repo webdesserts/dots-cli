@@ -4,6 +4,7 @@ use utils::fs::current_dir;
 
 pub enum Fixture {
     ExampleDot,
+    ExampleDotWithDirectory,
     ConflictingDot,
 }
 
@@ -16,6 +17,7 @@ impl Fixture {
     /** The name of this fixture's package and containing folder */
     pub fn name(&self) -> &str {
         match self {
+            Self::ExampleDotWithDirectory => "example_dot_with_directory",
             Self::ExampleDot => "example_dot",
             Self::ConflictingDot => "conflicting_dot",
         }
