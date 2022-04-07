@@ -277,7 +277,16 @@ impl Display for LinkRequest {
             "✔".apply_style(styles::OK)
         };
 
-        let src_path = src.original.path.to_string();
+        let mut src_path = src.original.path.to_string();
+        let is_directory = match &src.path {
+            Some(path) => path.is_dir(),
+            _ => false,
+        };
+
+        if is_directory {
+            src_path += "/"
+        }
+
         let src_msg = match src.max_issue_level() {
             Some(Error) => src_path.apply_style(styles::ERROR_PATH).to_string(),
             Some(Warning) => src_path.apply_style(styles::WARN_PATH).to_string(),
