@@ -280,10 +280,10 @@ impl Display for ResolveIssue {
                 "{} is not a valid path. {}: {}",
                 self.anchor.kind, msg, self.anchor.path
             ),
-            NotFound => write!(f, "Can't find {}: {} ", self.anchor.kind, self.anchor.path),
+            NotFound => write!(f, "Can't find {}: {}", self.anchor.kind, self.anchor.path),
             PermissionDenied => write!(
                 f,
-                "Permission denied to {}: {} ",
+                "Permission denied to {}: {}",
                 self.anchor.kind, self.anchor.path
             ),
             IO(ref err) => write!(

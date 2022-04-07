@@ -1,6 +1,7 @@
 mod subcommand_install {
     use std::{fs, os::unix};
     use test_utils::{cargo_bin, AssertableOutput, Fixture, TestManager, TestResult};
+    use utils::git::commit_all;
 
     const BIN: &str = cargo_bin!("dots");
 
@@ -91,6 +92,37 @@ mod subcommand_install {
         assert!(fixture_path.join("Dot.toml").exists());
         Ok(())
     }
+
+    #[test]
+    fn it_should_fail_if_a_linked_dotfile_is_missing() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
+        let home_dir = manager.home_dir();
+
+        fs::remove_file(fixture_path.join("shell/bashrc"))?;
+        commit_all(&fixture_path, "Remove bashrc")?;
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+        let expected_err = std::include_str!("output/install_fail_with_missing_dotfile.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_fail_with_code(1);
+
+        let installed_dot_path = dots_root.join(fixture.name());
+
+        assert!(installed_dot_path.exists());
+        assert!(!home_dir.join(".bashrc").exists());
+        assert!(!home_dir.join(".zshrc").exists());
+
+        Ok(())
+    }
+
     #[test]
     fn it_should_fail_if_multiple_dots_have_a_link_the_same_thing() -> TestResult {
         let manager = TestManager::new()?;
