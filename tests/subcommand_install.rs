@@ -45,6 +45,7 @@ mod subcommand_install {
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = manager.dots_dir();
         let home_dir = manager.home_dir();
+        let dot_path = dots_root.join(fixture.name());
 
         manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
@@ -56,16 +57,11 @@ mod subcommand_install {
             .assert_stdout_eq("")
             .assert_success();
 
-        let installed_dot_path = dots_root.join(fixture.name());
-
-        assert!(installed_dot_path.is_dir());
-        assert!(installed_dot_path.join("Dot.toml").is_file());
+        assert!(dot_path.is_dir());
+        assert!(dot_path.join("Dot.toml").is_file());
         assert!(home_dir.join("bin").is_symlink());
         assert!(home_dir.join("bin").is_dir());
-        assert_eq!(
-            home_dir.join("bin").read_link()?,
-            installed_dot_path.join("bin")
-        );
+        assert_eq!(home_dir.join("bin").read_link()?, dot_path.join("bin"));
         Ok(())
     }
     #[test]
@@ -75,6 +71,7 @@ mod subcommand_install {
         let fixture = Fixture::ExampleDot;
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = manager.dots_dir();
+        let dot_path = dots_root.join(fixture.name());
 
         manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
@@ -88,8 +85,8 @@ mod subcommand_install {
             .assert_fail_with_code(1);
 
         assert!(dots_root.exists());
-        assert!(fixture_path.exists());
-        assert!(fixture_path.join("Dot.toml").exists());
+        assert!(dot_path.exists());
+        assert!(dot_path.join("Dot.toml").exists());
         Ok(())
     }
 
@@ -100,6 +97,7 @@ mod subcommand_install {
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
         let dots_root = manager.dots_dir();
         let home_dir = manager.home_dir();
+        let dot_path = dots_root.join(fixture.name());
 
         fs::remove_file(fixture_path.join("shell/bashrc"))?;
         commit_all(&fixture_path, "Remove bashrc")?;
@@ -114,9 +112,6 @@ mod subcommand_install {
             .assert_stdout_eq("")
             .assert_fail_with_code(1);
 
-        let installed_dot_path = dots_root.join(fixture.name());
-
-        assert!(installed_dot_path.exists());
         assert!(!home_dir.join(".bashrc").exists());
         assert!(!home_dir.join(".zshrc").exists());
 
@@ -126,11 +121,9 @@ mod subcommand_install {
     #[test]
     fn it_should_fail_if_multiple_dots_have_a_link_the_same_thing() -> TestResult {
         let manager = TestManager::new()?;
-
         let main_fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
         let conflicting_fixture_path =
             manager.setup_fixture_as_git_repo(&Fixture::ConflictingDot)?;
-
         let home_dir = manager.home_dir();
 
         manager
