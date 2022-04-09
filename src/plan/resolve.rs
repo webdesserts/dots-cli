@@ -5,6 +5,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use std::fmt::Display;
 use std::fs::FileType;
 
+use std::path::PathBuf;
 use std::{fmt, fs, io, process};
 
 use crate::utils::fs::{canonicalize, home};
@@ -22,10 +23,9 @@ pub struct ResolvedLink {
 }
 
 pub fn resolve(dot: &Dot, link: Link) -> ResolvedLink {
-    ResolvedLink {
-        src: resolve_src(link.src, dot.path.clone()),
-        dest: resolve_dest(link.dest),
-    }
+    let src = resolve_src(link.src, &dot.path);
+    let dest = resolve_dest(link.dest, &src);
+    ResolvedLink { src, dest }
 }
 
 impl ResolvedLink {
@@ -134,7 +134,7 @@ where
     src
 }
 
-fn resolve_dest(anchor: Anchor) -> ResolvedAnchor {
+fn resolve_dest(anchor: Anchor, src: &ResolvedAnchor) -> ResolvedAnchor {
     if anchor.kind != AnchorKind::Destination {
         error!("Invalid AnchorKind passed to resolve_dest");
         process::exit(1);
@@ -161,7 +161,20 @@ fn resolve_dest(anchor: Anchor) -> ResolvedAnchor {
                 Ok(metadata) => {
                     let file_type = metadata.file_type();
                     if file_type.is_symlink() {
-                        None
+                        let src_path: Option<PathBuf> = src.path.as_ref().map(|path| path.into());
+                        match path.read_link() {
+                            Ok(linked_path) => {
+                                if Some(linked_path) == src_path {
+                                    None
+                                } else {
+                                    Some(ResolveIssue::new(
+                                        &dest.original,
+                                        ResolveIssueKind::AlreadyExists(file_type),
+                                    ))
+                                }
+                            }
+                            Err(_) => None,
+                        }
                     } else {
                         Some(ResolveIssue::new(
                             &dest.original,
@@ -268,13 +281,19 @@ impl Display for ResolveIssue {
                 self.anchor.kind.to_string().to_lowercase(),
                 self.anchor.path
             ),
-            AlreadyExists(ref file_type) => write!(
-                f,
-                "{} already exists as {}: {}",
-                self.anchor.kind,
-                file_type_to_str(file_type),
-                self.anchor.path
-            ),
+            AlreadyExists(ref file_type) => {
+                let kind = &self.anchor.kind;
+                let file_type_str = file_type_to_str(file_type);
+                let path = &self.anchor.path;
+                if self.anchor.kind == AnchorKind::Destination && file_type.is_symlink() {
+                    write!(
+                        f,
+                        "{kind} already exists as {file_type_str} to another file: {path}",
+                    )
+                } else {
+                    write!(f, "{kind} already exists as {file_type_str}: {path}",)
+                }
+            }
             InvalidPath(ref msg) => write!(
                 f,
                 "{} is not a valid path. {}: {}",

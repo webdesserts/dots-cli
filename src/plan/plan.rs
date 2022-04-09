@@ -128,7 +128,7 @@ impl Plan {
                 .filter(|&issue| matches!(issue.kind, ResolveIssueKind::AlreadyExists(_)))
                 .collect();
 
-            let has_existing_directories = !existing_file_issues.is_empty();
+            let has_existing_files = !existing_file_issues.is_empty();
 
             if force {
                 for issue in existing_file_issues {
@@ -136,7 +136,7 @@ impl Plan {
                 }
             }
 
-            if !force && has_existing_directories {
+            if !force && has_existing_files {
                 suggest_force = true;
             }
 

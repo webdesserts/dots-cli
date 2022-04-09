@@ -152,18 +152,16 @@ mod subcommand_install {
     }
 
     #[test]
-    fn it_should_succeed_if_you_try_to_overwrite_a_symlink() -> TestResult {
+    fn it_should_succeed_if_you_try_to_overwrite_a_symlink_to_the_same_file() -> TestResult {
         let manager = TestManager::new()?;
         let fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
         let home_dir = manager.home_dir();
         let dot_dir = manager.dots_dir().join(Fixture::ExampleDot.name());
 
-        let old_linked_file_path = home_dir.join("config_bashrc");
-        let old_link_path = home_dir.join(".bashrc");
+        let old_linked_file_path = dot_dir.join("shell/bashrc");
+        let link_path = home_dir.join(".bashrc");
 
-        fs::File::create(&old_linked_file_path)?;
-
-        unix::fs::symlink(&old_linked_file_path, old_link_path)?;
+        unix::fs::symlink(&old_linked_file_path, link_path)?;
 
         manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
@@ -180,6 +178,71 @@ mod subcommand_install {
             dot_dir.join("shell/bashrc")
         );
         assert!(home_dir.join(".zshrc").is_symlink());
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_fail_if_you_try_to_overwrite_a_symlink_to_a_different_file() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
+        let home_dir = manager.home_dir();
+
+        let old_linked_file_path = home_dir.join("config_bashrc");
+        let link_path = home_dir.join(".bashrc");
+
+        fs::File::create(&old_linked_file_path)?;
+
+        unix::fs::symlink(&old_linked_file_path, &link_path)?;
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+        let expected_err = std::include_str!("output/install_fail_with_existing_link_warning.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_fail_with_code(1);
+
+        assert!(link_path.is_symlink());
+        assert_eq!(link_path.read_link()?, old_linked_file_path);
+        assert!(!home_dir.join(".zshrc").exists());
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_succeed_if_you_try_to_overwrite_a_symlink_to_a_different_file_with_force(
+    ) -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture_path = manager.setup_fixture_as_git_repo(&Fixture::ExampleDot)?;
+        let home_dir = manager.home_dir();
+        let dot_dir = manager.dots_dir().join(Fixture::ExampleDot.name());
+
+        let old_linked_file_path = home_dir.join("config_bashrc");
+        let link_path = home_dir.join(".bashrc");
+
+        fs::File::create(&old_linked_file_path)?;
+
+        unix::fs::symlink(&old_linked_file_path, &link_path)?;
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").arg("--force").output()?;
+        let expected_err = std::include_str!("output/install_success.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_success();
+
+        assert!(link_path.is_symlink());
+        assert_eq!(link_path.read_link()?, dot_dir.join("shell/bashrc"));
+
+        assert!(home_dir.join(".zshrc").is_symlink());
+        assert_eq!(
+            home_dir.join(".zshrc").read_link()?,
+            dot_dir.join("shell/zshrc")
+        );
         Ok(())
     }
 
