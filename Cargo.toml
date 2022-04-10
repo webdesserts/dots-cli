@@ -7,7 +7,7 @@ authors = ["Michael Mullins <michael@webdesserts.com>"]
 edition = "2021"
 
 [dependencies]
-utils = { path = "utils" }
+utils = { package = "dots_internal_utils", path = "packages/utils" }
 
 # paths & io
 camino = { version = "^1.0.5", features = ['serde1'] }
@@ -33,4 +33,4 @@ tempfile = "^3.2.0"
 # testing
 walkdir = "^2.3.2"
 pretty_assertions = "^1.0.0"
-test_utils = { path = "test_utils" }
+test_utils = { path = "packages/test_utils" }
