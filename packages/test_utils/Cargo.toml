@@ -1,6 +1,6 @@
 [package]
 name = "test_utils"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -10,7 +10,7 @@ camino = "1.0.5"
 similar = { version = "2.1.0", features = ["inline"] }
 tempfile = "3.2.0"
 walkdir = "2.3.2"
-utils = { package = "dots_internal_utils", path = "../utils" }
+utils = { package = "dots_internal_utils", version = "^0.3.0", path = "../utils" }
 anyhow = "1.0.53"
 
 [features]

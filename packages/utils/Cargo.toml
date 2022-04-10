@@ -1,6 +1,6 @@
 [package]
 name = "dots_internal_utils"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT"
 description = "A set of utility modules intended to be used internally by the dots crate"
