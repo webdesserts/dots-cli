@@ -1,38 +1,53 @@
+extern crate anyhow;
+extern crate camino;
+extern crate tempfile;
+extern crate utils;
 #[macro_use]
 extern crate clap;
 extern crate dirs;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
-extern crate colored;
-
 #[macro_use]
 extern crate serde_derive;
 extern crate toml;
 
 mod commands;
 mod dot_package;
-mod dots;
-mod plan;
-mod utils;
+pub mod dots;
+pub mod plan;
 
-use env_logger::LogBuilder;
-use log::{LogLevelFilter, LogRecord};
+use std::io::Write;
+
+use env_logger::fmt::Formatter;
+use env_logger::Builder;
+use utils::stylize::Stylable;
+
+mod styles {
+    use utils::{style, stylize::Style};
+
+    const LOG: Style = style! { Bold };
+
+    pub const DEBUG_LOG: Style = LOG;
+    pub const INFO_LOG: Style = LOG.blue();
+    pub const WARN_LOG: Style = LOG.yellow();
+    pub const ERROR_LOG: Style = LOG.red();
+    pub const TRACE_LOG: Style = LOG;
+}
 
 fn main() {
-    let mut builder = LogBuilder::new();
+    let mut builder = Builder::new();
 
-    let log_format = |record: &LogRecord| {
-        use colored::*;
-        use log::LogLevel::*;
+    let log_format = |buf: &mut Formatter, record: &log::Record| -> Result<(), std::io::Error> {
+        use log::Level::*;
         let level = match record.level() {
-            Debug => "[debug]".bold(),
-            Info => "[info]".blue().bold(),
-            Warn => "[warn]".yellow().bold(),
-            Error => "[error]".red().bold(),
-            Trace => "[trace]".bold(),
+            Debug => "[debug]".apply_style(styles::DEBUG_LOG),
+            Info => "[info]".apply_style(styles::INFO_LOG),
+            Warn => "[warn]".apply_style(styles::WARN_LOG),
+            Error => "[error]".apply_style(styles::ERROR_LOG),
+            Trace => "[trace]".apply_style(styles::TRACE_LOG),
         };
-        let string = format!("{}", record.args());
+        let string = format!("{}", args = record.args());
         let indented = string
             .lines()
             .enumerate()
@@ -43,17 +58,16 @@ fn main() {
                     indent = "  ";
                     new_line = "\n"
                 }
-                format!("{}{} {}{}", new_line, level, indent, line)
+                format!("{new_line}{level} {indent}{line}")
             })
             .collect::<String>();
-        format!("{}", indented)
+        writeln!(buf, "{}", indented)
     };
 
     builder
         .format(log_format)
-        .filter(None, LogLevelFilter::Info)
-        .init()
-        .unwrap();
+        .filter(None, log::LevelFilter::Info)
+        .init();
 
     let app = clap_app!((crate_name!()) =>
         (version: crate_version!())

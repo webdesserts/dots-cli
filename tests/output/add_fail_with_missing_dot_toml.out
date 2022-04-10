@@ -1,0 +1,5 @@
+[info] Adding {SRC_PATH}
+[info] Cloning...
+[error] Error reading Dot.toml:
+[error]   No such file or directory (os error 2)
+[error] Repo does not appear to be a Dot

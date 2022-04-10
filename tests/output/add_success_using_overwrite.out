@@ -1,0 +1,6 @@
+[info] Adding {SRC_PATH}
+[info] Cloning...
+[warn] Overwriting pre-existing Dot
+[warn]   {DEST_PATH}
+[info] Copying to {DEST_PATH}
+[info] Done!

@@ -1,28 +1,29 @@
 use clap::ArgMatches;
 use std::process;
 
-use dots;
-use plan::Plan;
+use crate::dots::{self, Environment};
+use crate::plan::Plan;
 
 pub fn add(matches: &ArgMatches) {
+    let env = Environment::new();
     let url = matches.value_of("REPO").expect("repo is required");
     let overwrite = matches.is_present("overwrite");
-    dots::add(url, overwrite)
+    dots::add(url, overwrite, &env)
 }
 
 pub fn install(matches: &ArgMatches) {
+    let env = Environment::new();
     if let Some(url) = matches.value_of("REPO") {
         let overwrite = matches.is_present("overwrite");
-        dots::add(url, overwrite);
+        dots::add(url, overwrite, &env);
     };
 
-    let plan = match Plan::new(dots::find_all(), matches.is_present("force")) {
+    let plan = match Plan::new(dots::find_all(&env), matches.is_present("force")) {
         Ok(plan) => {
             info!("Looks Good! Nothing wrong with the current install plan!");
             plan
         }
         Err(err) => {
-            println!();
             error!("{}", err);
             error!("Currently defined install would fail!");
             process::exit(1)
@@ -48,26 +49,26 @@ pub fn install(matches: &ArgMatches) {
 }
 
 pub fn list(matches: &ArgMatches) {
-    for dot in dots::find_all() {
+    let env = Environment::new();
+    for dot in dots::find_all(&env) {
         let mut remote = String::new();
         if matches.is_present("origins") {
-            remote = dot
-                .origin()
-                .map_or(remote, |origin| format!(" => {}", origin.trim()));
+            remote = dot.origin()
         };
 
-        println!("{}{}", dot.package.package.name, remote)
+        println!("{name}{remote}", name = dot.package.package.name)
     }
 }
 
 pub fn prefix(matches: &ArgMatches) {
+    let env = Environment::new();
     let name = matches.value_of("DOT").expect("Missing Argument <REPO>");
 
-    match dots::find_all()
+    match dots::find_all(&env)
         .iter()
         .find(|dot| dot.package.package.name == name)
     {
-        Some(dot) => println!("{}", dot.path.to_str().unwrap()),
+        Some(dot) => println!("{}", path = dot.path),
         None => process::exit(1),
     }
 }

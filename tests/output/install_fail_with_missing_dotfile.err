@@ -1,0 +1,9 @@
+
+[example_dot]
+✖ shell/bashrc => ~/.bashrc
+✔ shell/zshrc => ~/.zshrc
+
+[error] Can't find Source: shell/bashrc
+
+[error] Plan Error: Planning failed.
+[error] Currently defined install would fail!
