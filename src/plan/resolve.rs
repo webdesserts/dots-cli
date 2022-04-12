@@ -1,6 +1,7 @@
 use crate::dots::Dot;
 use crate::plan::links::{Anchor, AnchorKind, Link};
 use camino::{Utf8Path, Utf8PathBuf};
+use utils::stylize::Stylable;
 
 use std::fmt::Display;
 use std::fs::FileType;
@@ -10,87 +11,21 @@ use std::{fmt, fs, io, process};
 
 use crate::utils::fs::{canonicalize, home};
 
-/*================*\
-*  Resolved Links  *
-\*================*/
+mod styles {
+    use utils::{style, stylize::Style};
 
-/// A Link where both the symlink and dotfile path have been resolved and checked for issues
-pub struct ResolvedLink {
-    /// The resolved anchor for the dotfile
-    pub src: ResolvedAnchor,
-    /// The resolved anchor for the symlink
-    pub dest: ResolvedAnchor,
+    pub const OK: Style = style! { color: Green };
+    pub const ERROR: Style = style! { color: Red };
+    pub const WARN: Style = style! { color: Yellow };
+
+    pub const WARN_PATH: Style = WARN.underlined();
+    pub const ERROR_PATH: Style = ERROR.italic();
 }
 
 pub fn resolve(dot: &Dot, link: Link) -> ResolvedLink {
     let src = resolve_src(link.src, &dot.path);
     let dest = resolve_dest(link.dest, &src);
     ResolvedLink { src, dest }
-}
-
-impl ResolvedLink {
-    pub fn issues(&self) -> Vec<&ResolveIssue> {
-        let src_issues = self.src.issues.iter();
-        let dest_issues = self.dest.issues.iter();
-
-        src_issues.chain(dest_issues).collect()
-    }
-}
-
-/*==================*\
-*  Resolved Anchors  *
-\*==================*/
-
-/// A ResolvedAnchor is an Anchor whos path has been cannonicalized and checked for potential issues.
-/// Any issues that are found are collected for reporting back to the user.
-pub struct ResolvedAnchor {
-    /// Resolved path. If the path is not a valid FS path it will be `None`
-    pub path: Option<Utf8PathBuf>,
-    /// The original unresolved anchor
-    pub original: Anchor,
-    /// Issues that were encountered while resolving the path
-    pub issues: Vec<ResolveIssue>,
-}
-
-impl ResolvedAnchor {
-    fn new(original: Anchor) -> Self {
-        ResolvedAnchor {
-            path: None,
-            original,
-            issues: vec![],
-        }
-    }
-
-    pub fn kind(&self) -> &AnchorKind {
-        &self.original.kind
-    }
-
-    pub fn has_errors(&self) -> bool {
-        self.issues
-            .iter()
-            .any(|issue| issue.level() == ResolveIssueLevel::Error)
-    }
-
-    pub fn has_warnings(&self) -> bool {
-        self.issues
-            .iter()
-            .any(|issue| issue.level() == ResolveIssueLevel::Warning)
-    }
-
-    pub fn has_issues(&self) -> bool {
-        !self.issues.is_empty()
-    }
-
-    pub fn max_issue_level(&self) -> Option<ResolveIssueLevel> {
-        self.issues.iter().map(|issue| issue.level()).max()
-    }
-
-    pub fn mark_as_duplicate(&mut self) {
-        self.issues.push(ResolveIssue::new(
-            &self.original,
-            ResolveIssueKind::Conflict,
-        ))
-    }
 }
 
 fn resolve_src<P>(anchor: Anchor, root: P) -> ResolvedAnchor
@@ -191,6 +126,130 @@ fn resolve_dest(anchor: Anchor, src: &ResolvedAnchor) -> ResolvedAnchor {
     }
 
     dest
+}
+
+/*================*\
+*  Resolved Links  *
+\*================*/
+
+/// A Link where both the symlink and dotfile path have been resolved and checked for issues
+pub struct ResolvedLink {
+    /// The resolved anchor for the dotfile
+    pub src: ResolvedAnchor,
+    /// The resolved anchor for the symlink
+    pub dest: ResolvedAnchor,
+}
+
+impl ResolvedLink {
+    pub fn issues(&self) -> Vec<&ResolveIssue> {
+        let src_issues = self.src.issues.iter();
+        let dest_issues = self.dest.issues.iter();
+
+        src_issues.chain(dest_issues).collect()
+    }
+
+    pub fn has_errors(&self) -> bool {
+        self.src.has_errors() | self.dest.has_errors()
+    }
+
+    pub fn has_warnings(&self) -> bool {
+        self.src.has_errors() | self.dest.has_warnings()
+    }
+}
+
+impl Display for ResolvedLink {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use crate::plan::resolve::ResolveIssueLevel::*;
+        let src = &self.src;
+        let dest = &self.dest;
+
+        let statusmark = if src.has_errors() | dest.has_errors() {
+            "✖".apply_style(styles::ERROR)
+        } else {
+            "✔".apply_style(styles::OK)
+        };
+
+        let mut src_path = src.original.path.to_string();
+        let is_directory = match &src.path {
+            Some(path) => path.is_dir(),
+            _ => false,
+        };
+
+        if is_directory {
+            src_path += "/"
+        }
+
+        let src_msg = match src.max_issue_level() {
+            Some(Error) => src_path.apply_style(styles::ERROR_PATH).to_string(),
+            Some(Warning) => src_path.apply_style(styles::WARN_PATH).to_string(),
+            None => src_path,
+        };
+
+        let dest_path = dest.original.path.to_string();
+        let dest_msg = match dest.max_issue_level() {
+            Some(Error) => dest_path.apply_style(styles::ERROR_PATH).to_string(),
+            Some(Warning) => dest_path.apply_style(styles::WARN_PATH).to_string(),
+            None => dest_path,
+        };
+
+        write!(f, "{} {} => {}", statusmark, src_msg, dest_msg)
+    }
+}
+
+/*==================*\
+*  Resolved Anchors  *
+\*==================*/
+
+/// A ResolvedAnchor is an Anchor whos path has been cannonicalized and checked for potential issues.
+/// Any issues that are found are collected for reporting back to the user.
+pub struct ResolvedAnchor {
+    /// Resolved path. If the path is not a valid FS path it will be `None`
+    pub path: Option<Utf8PathBuf>,
+    /// The original unresolved anchor
+    pub original: Anchor,
+    /// Issues that were encountered while resolving the path
+    pub issues: Vec<ResolveIssue>,
+}
+
+impl ResolvedAnchor {
+    fn new(original: Anchor) -> Self {
+        ResolvedAnchor {
+            path: None,
+            original,
+            issues: vec![],
+        }
+    }
+
+    pub fn kind(&self) -> &AnchorKind {
+        &self.original.kind
+    }
+
+    pub fn has_errors(&self) -> bool {
+        self.issues
+            .iter()
+            .any(|issue| issue.level() == ResolveIssueLevel::Error)
+    }
+
+    pub fn has_warnings(&self) -> bool {
+        self.issues
+            .iter()
+            .any(|issue| issue.level() == ResolveIssueLevel::Warning)
+    }
+
+    pub fn has_issues(&self) -> bool {
+        !self.issues.is_empty()
+    }
+
+    pub fn max_issue_level(&self) -> Option<ResolveIssueLevel> {
+        self.issues.iter().map(|issue| issue.level()).max()
+    }
+
+    pub fn mark_as_duplicate(&mut self) {
+        self.issues.push(ResolveIssue::new(
+            &self.original,
+            ResolveIssueKind::Conflict,
+        ))
+    }
 }
 
 /*========*\
