@@ -51,13 +51,6 @@ We always want to return an Array of Errors & Warnings even if it's empty
 mod styles {
     use utils::{style, stylize::Style};
 
-    pub const OK: Style = style! { color: Green };
-    pub const ERROR: Style = style! { color: Red };
-    pub const WARN: Style = style! { color: Yellow };
-
-    pub const WARN_PATH: Style = WARN.underlined();
-    pub const ERROR_PATH: Style = ERROR.italic();
-
     pub const TITLE: Style = style! { Bold };
 }
 
@@ -91,13 +84,13 @@ impl std::error::Error for PlanError {
 \*======*/
 
 pub struct Plan {
-    pub requests: Vec<LinkRequest>,
+    pub links: Vec<ResolvedLink>,
 }
 
 impl Plan {
     pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError> {
         let mut suggest_force = false;
-        let mut plan = Plan { requests: vec![] };
+        let mut plan = Plan { links: vec![] };
         let mut fixed_issues: Vec<&ResolveIssue> = vec![];
 
         for dot in dots {
@@ -106,16 +99,17 @@ impl Plan {
             let links = dot.package.link.clone();
 
             for (src, dest) in links {
-                let mut request = LinkRequest::new(&dot, src, dest);
-                if let Some(resolved_dest) = &request.link.dest.path {
+                let link = Link::new(src, dest);
+                let mut resolved_link = resolve(&dot, link);
+                if let Some(resolved_dest) = &resolved_link.dest.path {
                     let duplicates = plan.duplicates(resolved_dest);
                     if !duplicates.is_empty() {
-                        request.link.dest.mark_as_duplicate();
+                        resolved_link.dest.mark_as_duplicate();
                     }
                 }
 
-                eprintln!("{request}");
-                plan.requests.push(request);
+                eprintln!("{resolved_link}");
+                plan.links.push(resolved_link);
             }
         }
 
@@ -178,26 +172,23 @@ impl Plan {
         }
     }
 
-    fn duplicates(&self, path: &Utf8Path) -> Vec<&LinkRequest> {
-        self.requests
+    fn duplicates(&self, path: &Utf8Path) -> Vec<&ResolvedLink> {
+        self.links
             .iter()
-            .filter(|&request| request.link.dest.path == Some(path.to_path_buf()))
+            .filter(|&link| link.dest.path == Some(path.to_path_buf()))
             .collect()
     }
 
     fn issues(&self) -> Vec<&ResolveIssue> {
-        self.requests
-            .iter()
-            .flat_map(|request| request.link.issues())
-            .collect()
+        self.links.iter().flat_map(|link| link.issues()).collect()
     }
 
     fn has_errors(&self) -> bool {
-        self.requests.iter().any(|request| request.has_errors())
+        self.links.iter().any(|link| link.has_errors())
     }
 
     fn has_warnings(&self) -> bool {
-        self.requests.iter().any(|request| request.has_warnings())
+        self.links.iter().any(|link| link.has_warnings())
     }
 
     fn warnings(&self) -> Vec<&ResolveIssue> {
@@ -215,12 +206,12 @@ impl Plan {
     }
 
     pub fn execute(&self, force: bool) -> io::Result<()> {
-        for request in &self.requests {
-            let src = match &request.link.src.path {
+        for link in &self.links {
+            let src = match &link.src.path {
                 Some(path) => path,
                 None => continue,
             };
-            let dest = match &request.link.dest.path {
+            let dest = match &link.dest.path {
                 Some(path) => path,
                 None => continue,
             };
@@ -254,88 +245,5 @@ impl Plan {
             unix::fs::symlink(&src, &dest)?;
         }
         Ok(())
-    }
-}
-
-/*===============*\
-*  Link Requests  *
-\*===============*/
-
-pub struct LinkRequest {
-    link: ResolvedLink,
-}
-
-impl Display for LinkRequest {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use crate::plan::resolve::ResolveIssueLevel::*;
-        let src = &self.link.src;
-        let dest = &self.link.dest;
-
-        let statusmark = if src.has_errors() | dest.has_errors() {
-            "✖".apply_style(styles::ERROR)
-        } else {
-            "✔".apply_style(styles::OK)
-        };
-
-        let mut src_path = src.original.path.to_string();
-        let is_directory = match &src.path {
-            Some(path) => path.is_dir(),
-            _ => false,
-        };
-
-        if is_directory {
-            src_path += "/"
-        }
-
-        let src_msg = match src.max_issue_level() {
-            Some(Error) => src_path.apply_style(styles::ERROR_PATH).to_string(),
-            Some(Warning) => src_path.apply_style(styles::WARN_PATH).to_string(),
-            None => src_path,
-        };
-
-        let dest_path = dest.original.path.to_string();
-        let dest_msg = match dest.max_issue_level() {
-            Some(Error) => dest_path.apply_style(styles::ERROR_PATH).to_string(),
-            Some(Warning) => dest_path.apply_style(styles::WARN_PATH).to_string(),
-            None => dest_path,
-        };
-
-        write!(f, "{} {} => {}", statusmark, src_msg, dest_msg)
-    }
-}
-
-impl LinkRequest {
-    fn new<P>(dot: &Dot, src: P, dest: P) -> Self
-    where
-        P: AsRef<Utf8Path>,
-    {
-        let link = resolve(dot, Link::new(src, dest));
-        LinkRequest { link }
-    }
-
-    fn has_errors(&self) -> bool {
-        self.link.src.has_errors() | self.link.dest.has_errors()
-    }
-
-    fn has_warnings(&self) -> bool {
-        self.link.src.has_errors() | self.link.dest.has_warnings()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    mod link_request {
-        use test_utils::{Fixture, TestResult};
-
-        use crate::dots::Dot;
-
-        #[test]
-        fn it_should_display_correctly() -> TestResult {
-            let fixture = Fixture::ExampleDot;
-            let dot = Dot::new(fixture.template_path())?;
-            assert_eq!(dot.path, fixture.template_path());
-            assert_eq!(dot.package.package.name, fixture.name());
-            Ok(())
-        }
     }
 }

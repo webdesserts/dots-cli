@@ -1,6 +1,7 @@
 use crate::dots::Dot;
 use crate::plan::links::{Anchor, AnchorKind, Link};
 use camino::{Utf8Path, Utf8PathBuf};
+use utils::stylize::Stylable;
 
 use std::fmt::Display;
 use std::fs::FileType;
@@ -9,6 +10,17 @@ use std::path::PathBuf;
 use std::{fmt, fs, io, process};
 
 use crate::utils::fs::{canonicalize, home};
+
+mod styles {
+    use utils::{style, stylize::Style};
+
+    pub const OK: Style = style! { color: Green };
+    pub const ERROR: Style = style! { color: Red };
+    pub const WARN: Style = style! { color: Yellow };
+
+    pub const WARN_PATH: Style = WARN.underlined();
+    pub const ERROR_PATH: Style = ERROR.italic();
+}
 
 /*================*\
 *  Resolved Links  *
@@ -34,6 +46,53 @@ impl ResolvedLink {
         let dest_issues = self.dest.issues.iter();
 
         src_issues.chain(dest_issues).collect()
+    }
+
+    pub fn has_errors(&self) -> bool {
+        self.src.has_errors() | self.dest.has_errors()
+    }
+
+    pub fn has_warnings(&self) -> bool {
+        self.src.has_errors() | self.dest.has_warnings()
+    }
+}
+
+impl Display for ResolvedLink {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use crate::plan::resolve::ResolveIssueLevel::*;
+        let src = &self.src;
+        let dest = &self.dest;
+
+        let statusmark = if src.has_errors() | dest.has_errors() {
+            "✖".apply_style(styles::ERROR)
+        } else {
+            "✔".apply_style(styles::OK)
+        };
+
+        let mut src_path = src.original.path.to_string();
+        let is_directory = match &src.path {
+            Some(path) => path.is_dir(),
+            _ => false,
+        };
+
+        if is_directory {
+            src_path += "/"
+        }
+
+        let src_msg = match src.max_issue_level() {
+            Some(Error) => src_path.apply_style(styles::ERROR_PATH).to_string(),
+            Some(Warning) => src_path.apply_style(styles::WARN_PATH).to_string(),
+            None => src_path,
+        };
+
+        let dest_path = dest.original.path.to_string();
+        let dest_msg = match dest.max_issue_level() {
+            Some(Error) => dest_path.apply_style(styles::ERROR_PATH).to_string(),
+            Some(Warning) => dest_path.apply_style(styles::WARN_PATH).to_string(),
+            None => dest_path,
+        };
+
+        write!(f, "{} {} => {}", statusmark, src_msg, dest_msg)
     }
 }
 
