@@ -22,6 +22,112 @@ mod styles {
     pub const ERROR_PATH: Style = ERROR.italic();
 }
 
+pub fn resolve(dot: &Dot, link: Link) -> ResolvedLink {
+    let src = resolve_src(link.src, &dot.path);
+    let dest = resolve_dest(link.dest, &src);
+    ResolvedLink { src, dest }
+}
+
+fn resolve_src<P>(anchor: Anchor, root: P) -> ResolvedAnchor
+where
+    P: AsRef<Utf8Path>,
+{
+    if anchor.kind != AnchorKind::Source {
+        error!("Invalid AnchorKind passed to resolve_src");
+        process::exit(1);
+    }
+
+    let root = root.as_ref();
+    let mut src = ResolvedAnchor::new(anchor);
+    if src.original.path.is_absolute() {
+        src.issues.push(ResolveIssue::new(
+            &src.original,
+            ResolveIssueKind::InvalidPath(String::from("Expected it to be a relative path.")),
+        ));
+
+        return src;
+    }
+
+    let absolute_path = root.join(&src.original.path);
+
+    match canonicalize(absolute_path) {
+        Ok(path) => src.path = Some(path),
+        Err(err) => {
+            use self::ResolveIssueKind as link;
+            use std::io::ErrorKind as io;
+            let issue_kind = match err.kind() {
+                io::NotFound => link::NotFound,
+                io::PermissionDenied => link::PermissionDenied,
+                _ => link::IO(err),
+            };
+
+            let issue = ResolveIssue::new(&src.original, issue_kind);
+            src.issues.push(issue);
+        }
+    };
+
+    src
+}
+
+fn resolve_dest(anchor: Anchor, src: &ResolvedAnchor) -> ResolvedAnchor {
+    if anchor.kind != AnchorKind::Destination {
+        error!("Invalid AnchorKind passed to resolve_dest");
+        process::exit(1);
+    }
+
+    let mut dest = ResolvedAnchor::new(anchor);
+
+    // if the path is relative assume they want you to link to the home directory
+    if dest.original.path.is_relative() {
+        let home = home();
+        let mut relative = dest.original.path.to_string();
+        // check to see if they already supplied ~/ as the root. If they did, remove it
+        if dest.original.path.starts_with("~/") {
+            relative = relative.replace("~/", "");
+        };
+        // then use join the relative path to the home directory
+        dest.path = Some(home.join(relative));
+    }
+
+    if let Some(ref path) = dest.path {
+        if path.exists() {
+            // We use symlink_metadata here so that we don't follow any symlinks that we run into
+            let issue = match path.symlink_metadata() {
+                Ok(metadata) => {
+                    let file_type = metadata.file_type();
+                    if file_type.is_symlink() {
+                        let src_path: Option<PathBuf> = src.path.as_ref().map(|path| path.into());
+                        match path.read_link() {
+                            Ok(linked_path) => {
+                                if Some(linked_path) == src_path {
+                                    None
+                                } else {
+                                    Some(ResolveIssue::new(
+                                        &dest.original,
+                                        ResolveIssueKind::AlreadyExists(file_type),
+                                    ))
+                                }
+                            }
+                            Err(_) => None,
+                        }
+                    } else {
+                        Some(ResolveIssue::new(
+                            &dest.original,
+                            ResolveIssueKind::AlreadyExists(file_type),
+                        ))
+                    }
+                }
+                Err(error) => Some(ResolveIssue::io(&dest.original, error)),
+            };
+            if let Some(issue) = issue {
+                dest.issues.push(issue)
+            }
+        }
+    }
+
+    dest
+}
+
 /*================*\
 *  Resolved Links  *
 \*================*/
@@ -32,12 +138,6 @@ pub struct ResolvedLink {
     pub src: ResolvedAnchor,
     /// The resolved anchor for the symlink
     pub dest: ResolvedAnchor,
-}
-
-pub fn resolve(dot: &Dot, link: Link) -> ResolvedLink {
-    let src = resolve_src(link.src, &dot.path);
-    let dest = resolve_dest(link.dest, &src);
-    ResolvedLink { src, dest }
 }
 
 impl ResolvedLink {
@@ -150,106 +250,6 @@ impl ResolvedAnchor {
             ResolveIssueKind::Conflict,
         ))
     }
-}
-
-fn resolve_src<P>(anchor: Anchor, root: P) -> ResolvedAnchor
-where
-    P: AsRef<Utf8Path>,
-{
-    if anchor.kind != AnchorKind::Source {
-        error!("Invalid AnchorKind passed to resolve_src");
-        process::exit(1);
-    }
-
-    let root = root.as_ref();
-    let mut src = ResolvedAnchor::new(anchor);
-    if src.original.path.is_absolute() {
-        src.issues.push(ResolveIssue::new(
-            &src.original,
-            ResolveIssueKind::InvalidPath(String::from("Expected it to be a relative path.")),
-        ));
-
-        return src;
-    }
-
-    let absolute_path = root.join(&src.original.path);
-
-    match canonicalize(absolute_path) {
-        Ok(path) => src.path = Some(path),
-        Err(err) => {
-            use self::ResolveIssueKind as link;
-            use std::io::ErrorKind as io;
-            let issue_kind = match err.kind() {
-                io::NotFound => link::NotFound,
-                io::PermissionDenied => link::PermissionDenied,
-                _ => link::IO(err),
-            };
-
-            let issue = ResolveIssue::new(&src.original, issue_kind);
-            src.issues.push(issue);
-        }
-    };
-
-    src
-}
-
-fn resolve_dest(anchor: Anchor, src: &ResolvedAnchor) -> ResolvedAnchor {
-    if anchor.kind != AnchorKind::Destination {
-        error!("Invalid AnchorKind passed to resolve_dest");
-        process::exit(1);
-    }
-
-    let mut dest = ResolvedAnchor::new(anchor);
-
-    // if the path is relative assume they want you to link to the home directory
-    if dest.original.path.is_relative() {
-        let home = home();
-        let mut relative = dest.original.path.to_string();
-        // check to see if they already supplied ~/ as the root. If they did, remove it
-        if dest.original.path.starts_with("~/") {
-            relative = relative.replace("~/", "");
-        };
-        // then use join the relative path to the home directory
-        dest.path = Some(home.join(relative));
-    }
-
-    if let Some(ref path) = dest.path {
-        if path.exists() {
-            // We use symlink_metadata here so that we don't follow any symlinks that we run into
-            let issue = match path.symlink_metadata() {
-                Ok(metadata) => {
-                    let file_type = metadata.file_type();
-                    if file_type.is_symlink() {
-                        let src_path: Option<PathBuf> = src.path.as_ref().map(|path| path.into());
-                        match path.read_link() {
-                            Ok(linked_path) => {
-                                if Some(linked_path) == src_path {
-                                    None
-                                } else {
-                                    Some(ResolveIssue::new(
-                                        &dest.original,
-                                        ResolveIssueKind::AlreadyExists(file_type),
-                                    ))
-                                }
-                            }
-                            Err(_) => None,
-                        }
-                    } else {
-                        Some(ResolveIssue::new(
-                            &dest.original,
-                            ResolveIssueKind::AlreadyExists(file_type),
-                        ))
-                    }
-                }
-                Err(error) => Some(ResolveIssue::io(&dest.original, error)),
-            };
-            if let Some(issue) = issue {
-                dest.issues.push(issue)
-            }
-        }
-    }
-
-    dest
 }
 
 /*========*\
