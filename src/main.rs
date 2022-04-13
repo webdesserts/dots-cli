@@ -83,10 +83,10 @@ fn main() {
             (@arg REPO: "An optional git url that points to a Dot repo that you want to add before installing")
             (@arg overwrite: --overwrite "Will remove pre-existing dots of the same name")
             (@arg force: -f --force "Will remove pre-existing directories when creating symlinks")
-            (@arg dry: --dry "run through the install plan without actually making any changes")
+            (@arg dry: --dry "Run through the install plan without actually making any changes")
         )
         (@subcommand list =>
-            (@arg origins: --origins "list the git origin of each dot")
+            (@arg origins: --origins "List the git origin of each dot")
             (alias: "ls")
             (about: "List the names of all installed dots and the repos they link to")
         )
