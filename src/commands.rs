@@ -60,7 +60,7 @@ pub fn list(matches: &ArgMatches) {
     }
 }
 
-pub fn prefix(matches: &ArgMatches) {
+pub fn path(matches: &ArgMatches) {
     let env = Environment::new();
     let name = matches.value_of("DOT").expect("Missing Argument <REPO>");
 
@@ -68,7 +68,7 @@ pub fn prefix(matches: &ArgMatches) {
         .iter()
         .find(|dot| dot.package.package.name == name)
     {
-        Some(dot) => println!("{}", path = dot.path),
+        Some(dot) => print!("{}", path = dot.path),
         None => process::exit(1),
     }
 }
