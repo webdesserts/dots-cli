@@ -83,33 +83,17 @@ fn main() {
             (@arg REPO: "An optional git url that points to a Dot repo that you want to add before installing")
             (@arg overwrite: --overwrite "Will remove pre-existing dots of the same name")
             (@arg force: -f --force "Will remove pre-existing directories when creating symlinks")
-            (@arg dry: --dry "run through the install plan without actually making any changes")
+            (@arg dry: --dry "Run through the install plan without actually making any changes")
         )
-        /*
-        (@subcommand remove =>
-            (about: "Removes a dot with the given name")
-        )
-        (@subcommand uninstall =>
-            (about: "Removes a dot with the given name and re-installs all dots")
-        )
-        (@subcommand update =>
-            (about: "Updates all dots")
-        )
-        */
         (@subcommand list =>
-            (@arg origins: --origins "list the git origin of each dot")
+            (@arg origins: --origins "List the git origin of each dot")
             (alias: "ls")
             (about: "List the names of all installed dots and the repos they link to")
         )
-        (@subcommand prefix =>
+        (@subcommand path =>
             (@arg DOT: +required "The dot package name that you would like to search for")
-            (about: "returns the installed location of a given dot")
+            (about: "Returns the installed location of a given dot")
         )
-        /*
-        (@subcommand doctor =>
-            (about: "Checks to make sure that the previous install's symlinks still work")
-        )
-        */
     );
 
     let matches = app.get_matches();
@@ -118,7 +102,7 @@ fn main() {
         ("add", Some(sub_matches)) => commands::add(sub_matches),
         ("install", Some(sub_matches)) => commands::install(sub_matches),
         ("list", Some(sub_matches)) => commands::list(sub_matches),
-        ("prefix", Some(sub_matches)) => commands::prefix(sub_matches),
+        ("path", Some(sub_matches)) => commands::path(sub_matches),
         _ => {
             println!("{}", matches.usage())
         }
