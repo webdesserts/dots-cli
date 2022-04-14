@@ -88,7 +88,7 @@ fn main() {
         (@subcommand list =>
             (@arg origins: --origins "List the git origin of each dot")
             (alias: "ls")
-            (about: "List the names of all installed dots and the repos they link to")
+            (about: "List the names of all installed dots")
         )
         (@subcommand path =>
             (@arg DOT: +required "The dot package name that you would like to search for")

@@ -50,14 +50,18 @@ pub fn install(matches: &ArgMatches) {
 
 pub fn list(matches: &ArgMatches) {
     let env = Environment::new();
+    let mut lines = vec![];
     for dot in dots::find_all(&env) {
         let mut remote = String::new();
         if matches.is_present("origins") {
-            remote = dot.origin()
+            remote = format!(" => {}", dot.origin())
         };
 
-        println!("{name}{remote}", name = dot.package.package.name)
+        let line = format!("{name}{remote}", name = dot.package.package.name);
+        lines.push(line);
     }
+
+    print!("{}", lines.join("\n"));
 }
 
 pub fn path(matches: &ArgMatches) {

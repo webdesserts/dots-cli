@@ -125,7 +125,7 @@ pub fn get_origin() -> Result<String, GitError> {
 
     let string = String::from_utf8(output.stdout).expect("unable to convert origin output to utf8");
 
-    Ok(string)
+    Ok(string.trim().to_string())
 }
 
 fn map_result(result: Result<Output, io::Error>) -> Result<Output, GitError> {
