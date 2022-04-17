@@ -6,6 +6,19 @@ mod subcommand_install {
     const BIN: &str = cargo_bin!("dots");
 
     #[test]
+    fn it_should_print_help_text_when_the_help_flag_is_passed() -> TestResult {
+        let manager = TestManager::new()?;
+        let output = manager.cmd(BIN)?.arg("--help").output()?;
+
+        output
+            .assert_stderr_eq("")
+            .assert_stdout_eq(include_str!("output/install_help.out"))
+            .assert_success();
+
+        Ok(())
+    }
+
+    #[test]
     fn it_should_display_and_install_the_given_plan() -> TestResult {
         let manager = TestManager::new()?;
         let fixture = Fixture::ExampleDot;
