@@ -37,5 +37,4 @@ tempfile = "^3.2.0"
 [dev-dependencies]
 # testing
 walkdir = "^2.3.2"
-pretty_assertions = "^1.0.0"
 test_utils = { path = "packages/test_utils" }
