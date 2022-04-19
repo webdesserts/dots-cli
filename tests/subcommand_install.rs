@@ -8,7 +8,7 @@ mod subcommand_install {
     #[test]
     fn it_should_print_help_text_when_the_help_flag_is_passed() -> TestResult {
         let manager = TestManager::new()?;
-        let output = manager.cmd(BIN)?.arg("--help").output()?;
+        let output = manager.cmd(BIN)?.arg("install").arg("--help").output()?;
 
         output
             .assert_stderr_eq("")
