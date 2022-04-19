@@ -4,9 +4,8 @@ Returns the installed location of a given dot
 USAGE:
     dots path <DOT>
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
-
 ARGS:
     <DOT>    The dot package name that you would like to search for
+
+OPTIONS:
+    -h, --help    Print help information

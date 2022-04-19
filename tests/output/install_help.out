@@ -5,13 +5,13 @@ A cli for managing all your dot(file)s
 USAGE:
     dots [SUBCOMMAND]
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+OPTIONS:
+    -h, --help       Print help information
+    -V, --version    Print version information
 
 SUBCOMMANDS:
     add        Downloads the given git repo as a dot
-    help       Prints this message or the help of the given subcommand(s)
+    help       Print this message or the help of the given subcommand(s)
     install    Installs all Dots
     list       List the names of all installed dots
     path       Returns the installed location of a given dot

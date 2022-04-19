@@ -19,6 +19,7 @@ pub mod plan;
 
 use std::io::Write;
 
+use clap::{crate_name, Command};
 use env_logger::fmt::Formatter;
 use env_logger::Builder;
 use utils::stylize::Stylable;
@@ -69,42 +70,42 @@ fn main() {
         .filter(None, log::LevelFilter::Info)
         .init();
 
-    let app = clap_app!((crate_name!()) =>
-        (version: crate_version!())
-        (about: crate_description!())
-        (author: crate_authors!("\n"))
-        (@subcommand add =>
-            (about: "Downloads the given git repo as a dot")
-            (@arg REPO: +required "A git url that points to a Dot repo containing all your dotfiles")
-            (@arg overwrite: --overwrite "Will remove pre-existing packages of the same name")
+    let mut app = command!()
+        .name(crate_name!())
+        .version(crate_version!())
+        .about(crate_description!())
+        .author(crate_authors!("\n"))
+        .subcommand(
+            Command::new("add").about("Downloads the given git repo as a dot").arg(
+                arg!(REPO: "A git url that points to a Dot repo containing all your dotfiles")
+                    .required(true),
+            ).arg(arg!(overwrite: --overwrite "Will remove pre-existing packages of the same name")),
         )
-        (@subcommand install =>
-            (about: "Installs all Dots")
-            (@arg REPO: "An optional git url that points to a Dot repo that you want to add before installing")
-            (@arg overwrite: --overwrite "Will remove pre-existing dots of the same name")
-            (@arg force: -f --force "Will remove pre-existing directories when creating symlinks")
-            (@arg dry: --dry "Run through the install plan without actually making any changes")
+        .subcommand(Command::new("install")
+            .about("Installs all Dots")
+            .arg(arg!(REPO: "An optional git url that points to a Dot repo that you want to add before installing"))
+            .arg(arg!(overwrite: --overwrite "Will remove pre-existing dots of the same name"))
+            .arg(arg!(force: -f --force "Will remove pre-existing directories when creating symlinks"))
+            .arg(arg!(dry: --dry "Run through the install plan without actually making any changes"))
         )
-        (@subcommand list =>
-            (@arg origins: --origins "List the git origin of each dot")
-            (alias: "ls")
-            (about: "List the names of all installed dots")
-        )
-        (@subcommand path =>
-            (@arg DOT: +required "The dot package name that you would like to search for")
-            (about: "Returns the installed location of a given dot")
-        )
-    );
+        .subcommand(Command::new("list")
+            .alias("ls")
+            .about("List the names of all installed dots")
+            .arg(arg!(origins: --origins "List the git origin of each dot"))
+       )
+        .subcommand(Command::new("path")
+            .about("Returns the installed location of a given dot")
+            .arg(arg!(DOT: "The dot package name that you would like to search for").required(true))
+       );
 
+    let usage = app.render_usage();
     let matches = app.get_matches();
 
     match matches.subcommand() {
-        ("add", Some(sub_matches)) => commands::add(sub_matches),
-        ("install", Some(sub_matches)) => commands::install(sub_matches),
-        ("list", Some(sub_matches)) => commands::list(sub_matches),
-        ("path", Some(sub_matches)) => commands::path(sub_matches),
-        _ => {
-            println!("{}", matches.usage())
-        }
+        Some(("add", sub_matches)) => commands::add(sub_matches),
+        Some(("install", sub_matches)) => commands::install(sub_matches),
+        Some(("list", sub_matches)) => commands::list(sub_matches),
+        Some(("path", sub_matches)) => commands::path(sub_matches),
+        _ => println!("{}", usage),
     }
 }
