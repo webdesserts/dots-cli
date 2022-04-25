@@ -2,9 +2,8 @@ dots-list
 List the names of all installed dots
 
 USAGE:
-    dots list [FLAGS]
+    dots list [OPTIONS]
 
-FLAGS:
-    -h, --help       Prints help information
+OPTIONS:
+    -h, --help       Print help information
         --origins    List the git origin of each dot
-    -V, --version    Prints version information

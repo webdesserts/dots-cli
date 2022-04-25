@@ -2,6 +2,6 @@ error: The following required arguments were not provided:
     <REPO>
 
 USAGE:
-    dots add [FLAGS] <REPO>
+    dots add [OPTIONS] <REPO>
 
 For more information try --help

@@ -88,7 +88,7 @@ pub struct Plan {
 }
 
 impl Plan {
-    pub fn new(dots: Vec<Dot>, force: bool) -> Result<Plan, PlanError> {
+    pub fn new(dots: Vec<Dot>, force: &bool) -> Result<Plan, PlanError> {
         let mut suggest_force = false;
         let mut plan = Plan { links: vec![] };
         let mut fixed_issues: Vec<&ResolveIssue> = vec![];
@@ -124,13 +124,13 @@ impl Plan {
 
             let has_existing_files = !existing_file_issues.is_empty();
 
-            if force {
+            if *force {
                 for issue in existing_file_issues {
                     fixed_issues.push(issue);
                 }
             }
 
-            if !force && has_existing_files {
+            if !*force && has_existing_files {
                 suggest_force = true;
             }
 
@@ -205,7 +205,7 @@ impl Plan {
             .collect()
     }
 
-    pub fn execute(&self, force: bool) -> io::Result<()> {
+    pub fn execute(&self, force: &bool) -> io::Result<()> {
         for link in &self.links {
             let src = match &link.src.path {
                 Some(path) => path,

@@ -23,7 +23,7 @@ mod subcommand_path {
         output
             .assert_stderr_eq(include_str!("output/path_fail_with_missing_dot.out"))
             .assert_stdout_eq("")
-            .assert_fail_with_code(1);
+            .assert_fail_with_code(2);
         Ok(())
     }
 

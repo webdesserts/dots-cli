@@ -2,12 +2,11 @@ dots-add
 Downloads the given git repo as a dot
 
 USAGE:
-    dots add [FLAGS] <REPO>
-
-FLAGS:
-    -h, --help         Prints help information
-        --overwrite    Will remove pre-existing packages of the same name
-    -V, --version      Prints version information
+    dots add [OPTIONS] <REPO>
 
 ARGS:
     <REPO>    A git url that points to a Dot repo containing all your dotfiles
+
+OPTIONS:
+    -h, --help         Print help information
+        --overwrite    Will remove pre-existing packages of the same name

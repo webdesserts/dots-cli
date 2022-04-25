@@ -1,17 +1,15 @@
-dots 0.3.0
-Michael Mullins <michael@webdesserts.com>
-A cli for managing all your dot(file)s
+dots-install 
+Installs all Dots
 
 USAGE:
-    dots [SUBCOMMAND]
+    dots install [OPTIONS] [REPO]
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+ARGS:
+    <REPO>    An optional git url that points to a Dot repo that you want to add before
+              installing
 
-SUBCOMMANDS:
-    add        Downloads the given git repo as a dot
-    help       Prints this message or the help of the given subcommand(s)
-    install    Installs all Dots
-    list       List the names of all installed dots
-    path       Returns the installed location of a given dot
+OPTIONS:
+        --dry          Run through the install plan without actually making any changes
+    -f, --force        Will remove pre-existing directories when creating symlinks
+    -h, --help         Print help information
+        --overwrite    Will remove pre-existing dots of the same name
