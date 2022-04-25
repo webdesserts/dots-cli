@@ -19,7 +19,7 @@ pub mod plan;
 
 use std::io::Write;
 
-use clap::{crate_name, Command};
+use clap::Parser;
 use env_logger::fmt::Formatter;
 use env_logger::Builder;
 use utils::stylize::Stylable;
@@ -34,6 +34,57 @@ mod styles {
     pub const WARN_LOG: Style = LOG.yellow();
     pub const ERROR_LOG: Style = LOG.red();
     pub const TRACE_LOG: Style = LOG;
+}
+
+#[derive(Parser)]
+#[clap(author, version, about, long_about = None)]
+struct Cli {
+    #[clap(subcommand)]
+    commands: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Downloads the given git repo as a dot
+    Add {
+        /// A git url that points to a Dot repo containing all your dotfiles
+        repo: String,
+        /// Will remove pre-existing packages of the same name
+        #[clap(long)]
+        overwrite: bool,
+    },
+
+    /// Installs all Dots
+    Install {
+        /// An optional git url that points to a Dot repo that you want to add before installing
+        repo: Option<String>,
+
+        /// Will remove pre-existing dots of the same name
+        #[clap(long)]
+        overwrite: bool,
+
+        /// Will remove pre-existing directories when creating symlinks
+        #[clap(short, long)]
+        force: bool,
+
+        /// Run through the install plan without actually making any changes
+        #[clap(long)]
+        dry: bool,
+    },
+
+    /// List the names of all installed dots
+    #[clap(alias = "ls")]
+    List {
+        /// List the git origin of each dot
+        #[clap(long)]
+        origins: bool,
+    },
+
+    /// Returns the installed location of a given dot
+    Path {
+        /// The dot package name that you would like to search for
+        dot: String,
+    },
 }
 
 fn main() {
@@ -70,42 +121,20 @@ fn main() {
         .filter(None, log::LevelFilter::Info)
         .init();
 
-    let mut app = command!()
-        .name(crate_name!())
-        .version(crate_version!())
-        .about(crate_description!())
-        .author(crate_authors!("\n"))
-        .subcommand(
-            Command::new("add").about("Downloads the given git repo as a dot").arg(
-                arg!(REPO: "A git url that points to a Dot repo containing all your dotfiles")
-                    .required(true),
-            ).arg(arg!(overwrite: --overwrite "Will remove pre-existing packages of the same name")),
-        )
-        .subcommand(Command::new("install")
-            .about("Installs all Dots")
-            .arg(arg!(REPO: "An optional git url that points to a Dot repo that you want to add before installing"))
-            .arg(arg!(overwrite: --overwrite "Will remove pre-existing dots of the same name"))
-            .arg(arg!(force: -f --force "Will remove pre-existing directories when creating symlinks"))
-            .arg(arg!(dry: --dry "Run through the install plan without actually making any changes"))
-        )
-        .subcommand(Command::new("list")
-            .alias("ls")
-            .about("List the names of all installed dots")
-            .arg(arg!(origins: --origins "List the git origin of each dot"))
-       )
-        .subcommand(Command::new("path")
-            .about("Returns the installed location of a given dot")
-            .arg(arg!(DOT: "The dot package name that you would like to search for").required(true))
-       );
+    let cli = Cli::parse();
 
-    let usage = app.render_usage();
-    let matches = app.get_matches();
-
-    match matches.subcommand() {
-        Some(("add", sub_matches)) => commands::add(sub_matches),
-        Some(("install", sub_matches)) => commands::install(sub_matches),
-        Some(("list", sub_matches)) => commands::list(sub_matches),
-        Some(("path", sub_matches)) => commands::path(sub_matches),
-        _ => println!("{}", usage),
+    match &cli.commands {
+        Some(Commands::Add { repo, overwrite }) => commands::add(repo, overwrite),
+        Some(Commands::Install {
+            repo,
+            overwrite,
+            force,
+            dry,
+        }) => commands::install(repo, overwrite, force, dry),
+        Some(Commands::List { origins }) => commands::list(origins),
+        Some(Commands::Path { dot }) => commands::path(dot),
+        _ => {
+            println!("USAGE:\n    dots [SUBCOMMAND]")
+        }
     }
 }

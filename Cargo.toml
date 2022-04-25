@@ -18,7 +18,7 @@ utils = { package = "dots_internal_utils", version = "^0.3.0", path = "packages/
 camino = { version = "^1.0.5", features = ['serde1'] }
 
 # terminal
-clap = { version = "^3.1.8", features = ["cargo"] }
+clap = { version = "^3.1.8", features = ["cargo", "derive"] }
 dirs = "^4.0.0"
 
 # logging
