@@ -1,0 +1,11 @@
+dots-path 
+Returns the installed location of a given dot
+
+USAGE:
+    dots path <DOT>
+
+ARGS:
+    <DOT>    The dot package name that you would like to search for
+
+OPTIONS:
+    -h, --help    Print help information

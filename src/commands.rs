@@ -1,24 +1,20 @@
-use clap::ArgMatches;
 use std::process;
 
 use crate::dots::{self, Environment};
 use crate::plan::Plan;
 
-pub fn add(matches: &ArgMatches) {
+pub fn add(url: &str, overwrite: &bool) {
     let env = Environment::new();
-    let url = matches.value_of("REPO").expect("repo is required");
-    let overwrite = matches.is_present("overwrite");
     dots::add(url, overwrite, &env)
 }
 
-pub fn install(matches: &ArgMatches) {
+pub fn install(repo: &Option<String>, overwrite: &bool, force: &bool, dry: &bool) {
     let env = Environment::new();
-    if let Some(url) = matches.value_of("REPO") {
-        let overwrite = matches.is_present("overwrite");
+    if let Some(url) = repo {
         dots::add(url, overwrite, &env);
     };
 
-    let plan = match Plan::new(dots::find_all(&env), matches.is_present("force")) {
+    let plan = match Plan::new(dots::find_all(&env), force) {
         Ok(plan) => {
             info!("Looks Good! Nothing wrong with the current install plan!");
             plan
@@ -30,10 +26,10 @@ pub fn install(matches: &ArgMatches) {
         }
     };
 
-    if matches.is_present("dry") {
+    if *dry {
         process::exit(1)
     } else {
-        match plan.execute(matches.is_present("force")) {
+        match plan.execute(force) {
             Ok(_) => {
                 info!("Install was a success!");
                 process::exit(0)
@@ -48,27 +44,30 @@ pub fn install(matches: &ArgMatches) {
     }
 }
 
-pub fn list(matches: &ArgMatches) {
+pub fn list(origins: &bool) {
     let env = Environment::new();
+    let mut lines = vec![];
     for dot in dots::find_all(&env) {
         let mut remote = String::new();
-        if matches.is_present("origins") {
-            remote = dot.origin()
+        if *origins {
+            remote = format!(" => {}", dot.origin())
         };
 
-        println!("{name}{remote}", name = dot.package.package.name)
+        let line = format!("{name}{remote}", name = dot.package.package.name);
+        lines.push(line);
     }
+
+    print!("{}", lines.join("\n"));
 }
 
-pub fn prefix(matches: &ArgMatches) {
+pub fn path(name: &str) {
     let env = Environment::new();
-    let name = matches.value_of("DOT").expect("Missing Argument <REPO>");
 
     match dots::find_all(&env)
         .iter()
         .find(|dot| dot.package.package.name == name)
     {
-        Some(dot) => println!("{}", path = dot.path),
+        Some(dot) => print!("{}", path = dot.path),
         None => process::exit(1),
     }
 }

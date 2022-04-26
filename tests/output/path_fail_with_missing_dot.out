@@ -1,7 +1,7 @@
 error: The following required arguments were not provided:
-    <REPO>
+    <DOT>
 
 USAGE:
-    dots add [OPTIONS] <REPO>
+    dots path <DOT>
 
 For more information try --help

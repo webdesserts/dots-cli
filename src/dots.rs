@@ -86,7 +86,7 @@ impl Environment {
     }
 }
 
-pub fn add(url: &str, overwrite: bool, env: &Environment) {
+pub fn add(url: &str, overwrite: &bool, env: &Environment) {
     info!("Adding {url}");
     let tmp = tempdir().expect("Unable to create temporary directory");
     let tmp_path = Utf8Path::from_path(tmp.path()).unwrap().join("dot");
@@ -108,7 +108,7 @@ pub fn add(url: &str, overwrite: bool, env: &Environment) {
     let target_dir = env.package_path(&dot);
 
     if target_dir.exists() {
-        if overwrite {
+        if *overwrite {
             warn!("Overwriting pre-existing Dot\n{}", target_dir);
             utils::fs::clean(&target_dir);
         } else {

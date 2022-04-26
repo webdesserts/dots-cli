@@ -1,0 +1,9 @@
+dots-list 
+List the names of all installed dots
+
+USAGE:
+    dots list [OPTIONS]
+
+OPTIONS:
+    -h, --help       Print help information
+        --origins    List the git origin of each dot

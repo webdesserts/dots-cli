@@ -107,7 +107,7 @@ mod subcommand_add {
 
         let expected = std::include_str!("output/add_fail_with_missing_repo.out").to_string();
 
-        output.assert_stderr_eq(expected).assert_fail_with_code(1);
+        output.assert_stderr_eq(expected).assert_fail_with_code(2);
 
         Ok(())
     }

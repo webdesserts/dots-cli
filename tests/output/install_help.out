@@ -1,0 +1,15 @@
+dots-install 
+Installs all Dots
+
+USAGE:
+    dots install [OPTIONS] [REPO]
+
+ARGS:
+    <REPO>    An optional git url that points to a Dot repo that you want to add before
+              installing
+
+OPTIONS:
+        --dry          Run through the install plan without actually making any changes
+    -f, --force        Will remove pre-existing directories when creating symlinks
+    -h, --help         Print help information
+        --overwrite    Will remove pre-existing dots of the same name

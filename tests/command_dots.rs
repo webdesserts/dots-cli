@@ -14,7 +14,7 @@ mod command_dots {
     }
 
     #[test]
-    fn it_should_print_help_if_the_help_command_is_passed() -> TestResult {
+    fn it_should_print_help_if_the_help_flag_is_passed() -> TestResult {
         let manager = TestManager::new()?;
         let output = manager.cmd(BIN)?.arg("--help").output()?;
         let expected = format!(include_str!("output/help.out"), VERSION = crate_version!());
