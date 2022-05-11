@@ -29,7 +29,7 @@ pub fn install(repo: &Option<String>, overwrite: &bool, force: &bool, dry: &bool
     if *dry {
         process::exit(1)
     } else {
-        match plan.execute(force) {
+        match plan.execute(&env, force) {
             Ok(_) => {
                 info!("Install was a success!");
                 process::exit(0)

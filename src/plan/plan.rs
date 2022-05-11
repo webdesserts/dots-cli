@@ -1,9 +1,10 @@
-use crate::dots::Dot;
+use crate::dots::{Dot, Environment};
+use crate::fs_manager::FSManager;
 use crate::plan::links::Link;
 use crate::plan::resolve::{resolve, ResolveIssueKind, ResolvedLink};
+use anyhow::Result;
 use camino::Utf8Path;
 use std::fs;
-use std::os::unix;
 use std::{
     fmt::{self, Display},
     io,
@@ -169,7 +170,8 @@ impl Plan {
             .collect()
     }
 
-    pub fn execute(&self, force: &bool) -> io::Result<()> {
+    pub fn execute(&self, env: &Environment, force: &bool) -> Result<()> {
+        let mut fs_manager = FSManager::init(env);
         for link in &self.links {
             let src = match &link.src.path {
                 Some(path) => path,
@@ -181,22 +183,22 @@ impl Plan {
             };
 
             if dest.is_symlink() {
-                fs::remove_file(&dest)?;
+                fs_manager.remove_symlink(src, dest)?;
             } else if dest.is_file() {
                 if !force {
-                    return Err(io::Error::new(
+                    return Err(anyhow::Error::new(io::Error::new(
                         io::ErrorKind::AlreadyExists,
                         "Destination already Exists!",
-                    ));
+                    )));
                 }
 
                 fs::remove_file(&dest)?;
             } else if dest.is_dir() {
                 if !force {
-                    return Err(io::Error::new(
+                    return Err(anyhow::Error::new(io::Error::new(
                         io::ErrorKind::AlreadyExists,
                         "Destination already Exists!",
-                    ));
+                    )));
                 }
 
                 fs::remove_dir_all(&dest)?;
@@ -206,7 +208,7 @@ impl Plan {
                 fs::create_dir_all(parent)?;
             }
 
-            unix::fs::symlink(&src, &dest)?;
+            fs_manager.create_symlink(src, dest)?;
         }
         Ok(())
     }

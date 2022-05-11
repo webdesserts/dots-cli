@@ -84,6 +84,10 @@ impl Environment {
     pub fn package_path(&self, dot: &Dot) -> Utf8PathBuf {
         self.path(&dot.package.package.name)
     }
+
+    pub fn footprint_path(&self) -> Utf8PathBuf {
+        self.path("dot-footprint.toml")
+    }
 }
 
 pub fn add(url: &str, overwrite: &bool, env: &Environment) {

@@ -1,6 +1,8 @@
 mod subcommand_install {
     use std::{fs, os::unix};
-    use test_utils::{cargo_bin, AssertableOutput, Fixture, TestManager, TestResult};
+    use test_utils::{
+        cargo_bin, pretty_assert, AssertableOutput, Fixture, TestManager, TestResult,
+    };
     use utils::git::commit_all;
 
     const BIN: &str = cargo_bin!("dots");
@@ -401,6 +403,96 @@ mod subcommand_install {
             home_dir.join(".zshrc").read_link()?,
             dot_dir.join("shell/zshrc")
         );
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_write_the_installed_links_to_a_dot_footprint() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let footprint_path = manager.footprint_path();
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        assert!(footprint_path.exists());
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot.toml"),
+                HOME = &home_path
+            ),
+            manager.read_footprint()?,
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn it_should_update_the_footprint_when_adding_a_link_and_a_footprint_already_existed(
+    ) -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture1 = Fixture::ExampleDot;
+        let fixture2 = Fixture::ExampleDotWithLinkAdded;
+        let fixture1_path = manager.setup_fixture_as_git_repo(&fixture1)?;
+        let footprint_path = manager.footprint_path();
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture1_path)
+            .output()?;
+
+        manager.overwrite_dot(&fixture1, &fixture2)?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        assert!(footprint_path.exists());
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot_with_link_added.toml"),
+                HOME = &home_path
+            ),
+            manager.read_footprint()?,
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn it_should_remove_a_link_from_the_footprint_when_a_symlink_is_removed_from_the_fs(
+    ) -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture1 = Fixture::ExampleDotWithLinkAdded;
+        let fixture2 = Fixture::ExampleDot;
+        let fixture1_path = manager.setup_fixture_as_git_repo(&fixture1)?;
+        let footprint_path = manager.footprint_path();
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture1_path)
+            .output()?;
+
+        manager.overwrite_dot(&fixture1, &fixture2)?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        assert!(footprint_path.exists());
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot.toml"),
+                HOME = &home_path
+            ),
+            manager.read_footprint()?,
+        );
+
         Ok(())
     }
 }

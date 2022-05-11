@@ -15,6 +15,8 @@ extern crate toml;
 mod commands;
 mod dot_package;
 pub mod dots;
+mod footprint;
+mod fs_manager;
 pub mod plan;
 
 use std::io::Write;
