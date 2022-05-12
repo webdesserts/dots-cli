@@ -1,12 +1,7 @@
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use dirs::home_dir;
-use std::fmt::Write;
-use std::{
-    fs::{self, read_dir, FileType},
-    io,
-    process::Command,
-};
+use std::{fs, io};
 use walkdir::WalkDir;
 
 pub fn copy_dir<S, D>(source: S, destination: D) -> Result<(), io::Error>
@@ -21,7 +16,7 @@ where
         let entry = entry?;
         let file_type = entry.file_type();
 
-        let from = Utf8Path::from_path(&entry.path()).unwrap();
+        let from = Utf8Path::from_path(entry.path()).unwrap();
         let relative = from.strip_prefix(&source).unwrap();
         let to = destination.join(&relative);
 
@@ -29,39 +24,14 @@ where
             // We're explicitely avoiding using `fs::copy` here as it sends `cargo watch` into an infinite loop
             fs::read(&from)
                 .and_then(|file| fs::write(&to, &file))
-                .expect(format!("Failed to copy file from {from} to {to}").as_str());
+                .unwrap_or_else(|_| panic!("Failed to copy file from {from} to {to}"));
         }
         if file_type.is_dir() {
             fs::create_dir_all(&to)
-                .expect(format!("Failed to copy dir from {from} to {to}").as_str());
+                .unwrap_or_else(|_| panic!("Failed to copy dir from {from} to {to}"));
         }
     }
     Ok(())
-}
-
-pub fn print_tree<P>(path: P) -> Result<()>
-where
-    P: AsRef<Utf8Path>,
-{
-    let path = path.as_ref();
-    Command::new("tree")
-        .arg("-a")
-        // .arg("-L").arg("2")
-        .arg(&path)
-        .spawn()?;
-    Ok(())
-}
-
-pub fn list_dir(path: &Utf8Path) -> Result<String> {
-    let mut lines = String::new();
-    for entry in fs::read_dir(&path)? {
-        let entry = entry?;
-        let path = Utf8PathBuf::try_from(entry.path())?;
-        if let Some(path) = path.file_name() {
-            writeln!(lines, "{}", path)?;
-        }
-    }
-    Ok(lines)
 }
 
 pub fn current_dir() -> Utf8PathBuf {

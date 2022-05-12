@@ -47,13 +47,17 @@ impl TestManager {
         self.fixtures_dir().join(fixture.name())
     }
 
+    pub fn expected_dot_path(&self, fixture: &Fixture) -> Utf8PathBuf {
+        self.dots_dir().join(fixture.name())
+    }
+
     /** Creates a copy of the given fixture in the test directory */
     fn setup_fixture(&self, fixture: &Fixture) -> Result<Utf8PathBuf> {
         let fixture_src = fixture.template_path();
         let fixture_dest = self.fixture_dir(fixture);
 
         copy_dir(&fixture_src, &fixture_dest)
-            .expect(format!("Failed to setup fixture {}", fixture_src).as_str());
+            .unwrap_or_else(|_| panic!("Failed to setup fixture {}", fixture_src));
 
         Ok(fixture_dest)
     }
@@ -73,7 +77,7 @@ impl TestManager {
 
     /** Creates a copy of the given fixture in the test directory */
     pub fn overwrite_dot(&self, fixture1: &Fixture, fixture2: &Fixture) -> Result<()> {
-        let path = self.dots_dir().join(&fixture1.name());
+        let path = self.expected_dot_path(fixture1);
         empty_git_directory(&path)?;
         copy_dir(fixture2.template_path(), &path)?;
         println!("{}{}", &path, fixture2.template_path());

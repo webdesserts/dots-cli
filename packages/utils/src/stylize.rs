@@ -59,6 +59,7 @@ impl Style {
         Style { ..DEFAULT }
     }
 
+    #[must_use]
     pub const fn color(&self, color: Color) -> Style {
         self.merge(&Self {
             color: Some(color),
@@ -66,6 +67,7 @@ impl Style {
         })
     }
 
+    #[must_use]
     pub const fn background(&self, background: Color) -> Style {
         self.merge(&Self {
             background: Some(background),
@@ -73,6 +75,7 @@ impl Style {
         })
     }
 
+    #[must_use]
     pub const fn attr(&self, attribute: Attribute) -> Style {
         let mut style = Style::new();
 
@@ -89,84 +92,110 @@ impl Style {
         self.merge(&style)
     }
 
+    #[must_use]
     pub const fn black(&self) -> Style {
         self.color(Color::Black)
     }
+    #[must_use]
     pub const fn red(&self) -> Style {
         self.color(Color::Red)
     }
+    #[must_use]
     pub const fn green(&self) -> Style {
         self.color(Color::Green)
     }
+    #[must_use]
     pub const fn yellow(&self) -> Style {
         self.color(Color::Yellow)
     }
+    #[must_use]
     pub const fn blue(&self) -> Style {
         self.color(Color::Blue)
     }
+    #[must_use]
     pub const fn magenta(&self) -> Style {
         self.color(Color::Magenta)
     }
+    #[must_use]
     pub const fn cyan(&self) -> Style {
         self.color(Color::Cyan)
     }
+    #[must_use]
     pub const fn white(&self) -> Style {
         self.color(Color::White)
     }
+    #[must_use]
     pub const fn color256(&self, x: u8) -> Style {
         self.color(Color::Color256(x))
     }
 
+    #[must_use]
     pub const fn on_black(&self) -> Style {
         self.background(Color::Black)
     }
+    #[must_use]
     pub const fn on_red(&self) -> Style {
         self.background(Color::Red)
     }
+    #[must_use]
     pub const fn on_green(&self) -> Style {
         self.background(Color::Green)
     }
+    #[must_use]
     pub const fn on_yellow(&self) -> Style {
         self.background(Color::Yellow)
     }
+    #[must_use]
     pub const fn on_blue(&self) -> Style {
         self.background(Color::Blue)
     }
+    #[must_use]
     pub const fn on_magenta(&self) -> Style {
         self.background(Color::Magenta)
     }
+    #[must_use]
     pub const fn on_cyan(&self) -> Style {
         self.background(Color::Cyan)
     }
+    #[must_use]
     pub const fn on_white(&self) -> Style {
         self.background(Color::White)
     }
+    #[must_use]
     pub const fn on_color256(&self, x: u8) -> Style {
         self.background(Color::Color256(x))
     }
 
+    #[must_use]
     pub const fn bold(&self) -> Style {
         self.attr(Attribute::Bold)
     }
+    #[must_use]
     pub const fn dim(&self) -> Style {
         self.attr(Attribute::Dim)
     }
+    #[must_use]
     pub const fn italic(&self) -> Style {
         self.attr(Attribute::Italic)
     }
+    #[must_use]
     pub const fn underlined(&self) -> Style {
         self.attr(Attribute::Underlined)
     }
+    #[must_use]
     pub const fn blink(&self) -> Style {
         self.attr(Attribute::Blink)
     }
+    #[must_use]
     pub const fn reverse(&self) -> Style {
         self.attr(Attribute::Reverse)
     }
+    #[must_use]
     pub const fn hidden(&self) -> Style {
         self.attr(Attribute::Hidden)
     }
 
+    #[must_use]
     pub const fn merge(&self, style: &Style) -> Style {
         Style {
             color: match style.color {
@@ -187,10 +216,12 @@ impl Style {
         }
     }
 
+    #[must_use]
     pub fn apply<D>(&self, val: D) -> console::StyledObject<D> {
         self.to_console_style().apply_to(val)
     }
 
+    #[must_use]
     pub fn to_console_style(&self) -> console::Style {
         let mut style = console::Style::new();
 
@@ -232,16 +263,19 @@ pub trait Stylable
 where
     Self: Sized,
 {
+    #[must_use]
     fn apply_style(self, style: Style) -> console::StyledObject<Self>;
 }
 
 impl<'a> Stylable for &'a str {
+    #[must_use]
     fn apply_style(self, style: Style) -> console::StyledObject<Self> {
         style.apply(self)
     }
 }
 
 impl Stylable for String {
+    #[must_use]
     fn apply_style(self, style: Style) -> console::StyledObject<Self> {
         style.apply(self)
     }
@@ -284,7 +318,7 @@ mod tests {
     #[test]
     fn style_macro_should_accept_an_attribute() {
         let style = style! { Bold; Underlined; };
-        assert_eq!(style.bold, true);
-        assert_eq!(style.underlined, true);
+        assert!(style.bold);
+        assert!(style.underlined);
     }
 }
