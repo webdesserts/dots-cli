@@ -16,8 +16,6 @@ pub struct DotPackageMeta {
 #[serde(deny_unknown_fields)]
 pub struct DotPackage {
     pub package: DotPackageMeta,
-    #[serde(default)]
-    pub execute: BTreeMap<String, Vec<String>>,
     pub link: BTreeMap<Utf8PathBuf, Utf8PathBuf>,
 }
 
