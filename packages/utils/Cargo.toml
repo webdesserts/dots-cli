@@ -12,6 +12,6 @@ repository = "https://github.com/webdesserts/dots-cli"
 [dependencies]
 anyhow = "1.0.53"
 camino = "1.0.5"
-console = "0.15.0"
 dirs = "4.0.0"
 walkdir = "2.3.2"
+owo-colors = "^3"
