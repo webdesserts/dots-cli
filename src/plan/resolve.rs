@@ -1,15 +1,11 @@
-use crate::dots::Dot;
 use crate::plan::links::{Anchor, AnchorKind, Link};
+use crate::utils::fs::{canonicalize, home};
 use camino::{Utf8Path, Utf8PathBuf};
-use utils::stylize::Stylable;
-
 use std::fmt::Display;
 use std::fs::FileType;
-
 use std::path::PathBuf;
 use std::{fmt, fs, io, process};
-
-use crate::utils::fs::{canonicalize, home};
+use utils::stylize::Stylable;
 
 mod styles {
     use utils::{style, stylize::Style};
@@ -22,8 +18,11 @@ mod styles {
     pub const ERROR_PATH: Style = ERROR.italic();
 }
 
-pub fn resolve(dot: &Dot, link: Link) -> ResolvedLink {
-    let src = resolve_src(link.src, &dot.path);
+pub fn resolve<P>(root: P, link: Link) -> ResolvedLink
+where
+    P: AsRef<Utf8Path>,
+{
+    let src = resolve_src(link.src, &root);
     let dest = resolve_dest(link.dest, &src);
     ResolvedLink { src, dest }
 }
@@ -133,6 +132,7 @@ fn resolve_dest(anchor: Anchor, src: &ResolvedAnchor) -> ResolvedAnchor {
 \*================*/
 
 /// A Link where both the symlink and dotfile path have been resolved and checked for issues
+#[derive(PartialEq, Eq)]
 pub struct ResolvedLink {
     /// The resolved anchor for the dotfile
     pub src: ResolvedAnchor,
@@ -202,6 +202,7 @@ impl Display for ResolvedLink {
 
 /// A ResolvedAnchor is an Anchor whos path has been cannonicalized and checked for potential issues.
 /// Any issues that are found are collected for reporting back to the user.
+#[derive(PartialEq, Eq)]
 pub struct ResolvedAnchor {
     /// Resolved path. If the path is not a valid FS path it will be `None`
     pub path: Option<Utf8PathBuf>,

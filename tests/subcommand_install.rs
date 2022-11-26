@@ -495,4 +495,76 @@ mod subcommand_install {
 
         Ok(())
     }
+
+    #[test]
+    pub fn it_should_clean_up_footprint_links_whos_symlink_is_missing() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        manager.write_footprint(format!(
+            include_str!("footprints/example_dot_with_link_added.toml"),
+            HOME = home_path
+        ))?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        let footprint = manager.read_footprint()?;
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot.toml"),
+                HOME = home_path
+            ),
+            footprint,
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn it_should_clean_up_footprint_links_whos_symlinks_are_pointing_to_files_outside_the_dots_dir(
+    ) -> TestResult {
+        // expect footprint link to be removed
+        // expect symlink NOT to be removed
+
+        // What's the use case for this test?
+        // Is this for the case where the dot folder has been changed?
+        todo!()
+    }
+
+    #[test]
+    pub fn it_should_clean_up_footprint_links_whos_symlinks_are_pointing_to_a_missing_file_in_the_dots_dir(
+    ) -> TestResult {
+        // expect footprint link to be removed
+        // expect symlink to be removed from filesystem
+
+        // Use Case: When you install a dot and one of the dot's links has been removed.
+        todo!();
+    }
+
+    #[test]
+    pub fn it_should_clean_up_footprint_links_whos_symlinks_are_not_present_in_any_dot_toml(
+    ) -> TestResult {
+        // expect footprint link to be removed
+        // expect the symlink to be removed from the filesystem
+
+        // Use Case: The link was removed from the dot.toml, but maybe the file is still there
+        todo!();
+    }
+
+    #[test]
+    pub fn it_should_should_not_remove_a_footprint_link_if_we_dont_have_permission_to_remove_the_given_symlink(
+    ) -> TestResult {
+        // expect footprint link NOT to be removed
+
+        // Use Case: We don't end up removing anything so we shouldn't forget the link
+        todo!();
+    }
 }

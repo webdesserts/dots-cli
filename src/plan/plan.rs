@@ -1,7 +1,6 @@
 use crate::dots::{Dot, Environment};
 use crate::fs_manager::FSManager;
-use crate::plan::links::Link;
-use crate::plan::resolve::{resolve, ResolveIssueKind, ResolvedLink};
+use crate::plan::resolve::{ResolveIssueKind, ResolvedLink};
 use anyhow::Result;
 use camino::Utf8Path;
 use std::fs;
@@ -49,39 +48,54 @@ impl std::error::Error for PlanError {
 \*======*/
 
 pub struct Plan {
-    pub links: Vec<ResolvedLink>,
+    force: bool,
+    links: Vec<ResolvedLink>,
 }
 
+/**
+ * What questions do I have?
+ *
+ * - When do we resolve? On new() or on validate()?
+ * - If we need the persist a reference to a Dot over the course of the entire plan,
+ *   where do we store it?
+ *   - Reintroduce LinkRequest?
+ *   - How do we associate a &dot with each link?
+ * - What information do we want available whether we validate or not?
+ */
+
 impl Plan {
-    pub fn new(dots: Vec<Dot>, force: &bool) -> Result<Plan, PlanError> {
+    pub fn new(force: &bool) -> Plan {
+        Plan {
+            force: *force,
+            links: vec![],
+        }
+    }
+
+    pub fn validate(&mut self, dots: Vec<Dot>) -> Result<(), PlanError> {
         let mut suggest_force = false;
-        let mut plan = Plan { links: vec![] };
         let mut fixed_issues: Vec<&ResolveIssue> = vec![];
-
         for dot in dots {
-            let title = format!("[{name}]", name = &dot.package.package.name);
+            let title = format!("[{name}]", name = &dot.package.name);
             eprintln!("\n{title}", title = title.apply_style(styles::TITLE));
-            let links = dot.package.link.clone();
+            let links = dot.links;
 
-            for (src, dest) in links {
-                let link = Link::new(src, dest);
-                let mut resolved_link = resolve(&dot, link);
-                if let Some(resolved_dest) = &resolved_link.dest.path {
-                    let duplicates = plan.duplicates(resolved_dest);
+            for mut link in links {
+                if let Some(resolved_dest) = &link.dest.path {
+                    let duplicates = self.duplicates(resolved_dest);
                     if !duplicates.is_empty() {
-                        resolved_link.dest.mark_as_duplicate();
+                        link.dest.mark_as_duplicate();
                     }
                 }
 
-                eprintln!("{resolved_link}");
-                plan.links.push(resolved_link);
+                eprintln!("{link}");
+                self.links.push(link);
             }
         }
 
-        let issues = plan.issues();
+        let issues = self.issues();
 
         if !issues.is_empty() {
-            let existing_file_issues: Vec<&ResolveIssue> = plan
+            let existing_file_issues: Vec<&ResolveIssue> = self
                 .issues()
                 .into_iter()
                 .filter(|&issue| matches!(issue.kind, ResolveIssueKind::AlreadyExists(_)))
@@ -89,13 +103,13 @@ impl Plan {
 
             let has_existing_files = !existing_file_issues.is_empty();
 
-            if *force {
+            if self.force {
                 for issue in existing_file_issues {
                     fixed_issues.push(issue);
                 }
             }
 
-            if !*force && has_existing_files {
+            if !self.force && has_existing_files {
                 suggest_force = true;
             }
 
@@ -123,51 +137,18 @@ impl Plan {
             eprintln!();
         }
 
-        if plan.has_errors() {
+        if self.has_errors() {
             Err(PlanError::new("Planning failed."))
-        } else if plan.has_warnings()
-            && plan
+        } else if self.has_warnings()
+            && self
                 .warnings()
                 .into_iter()
                 .any(|warning| !fixed_issues.contains(&warning))
         {
             Err(PlanError::new("Plan has unresolved warnings."))
         } else {
-            Ok(plan)
+            Ok(())
         }
-    }
-
-    fn duplicates(&self, path: &Utf8Path) -> Vec<&ResolvedLink> {
-        self.links
-            .iter()
-            .filter(|&link| link.dest.path == Some(path.to_path_buf()))
-            .collect()
-    }
-
-    fn issues(&self) -> Vec<&ResolveIssue> {
-        self.links.iter().flat_map(|link| link.issues()).collect()
-    }
-
-    fn has_errors(&self) -> bool {
-        self.links.iter().any(|link| link.has_errors())
-    }
-
-    fn has_warnings(&self) -> bool {
-        self.links.iter().any(|link| link.has_warnings())
-    }
-
-    fn warnings(&self) -> Vec<&ResolveIssue> {
-        self.issues()
-            .into_iter()
-            .filter(|&issue| matches!(issue.level(), ResolveIssueLevel::Warning))
-            .collect()
-    }
-
-    fn errors(&self) -> Vec<&ResolveIssue> {
-        self.issues()
-            .into_iter()
-            .filter(|&issue| matches!(issue.level(), ResolveIssueLevel::Error))
-            .collect()
     }
 
     pub fn execute(&self, env: &Environment, force: &bool) -> Result<()> {
@@ -211,5 +192,38 @@ impl Plan {
             fs_manager.create_symlink(src, dest)?;
         }
         Ok(())
+    }
+
+    fn duplicates(&self, path: &Utf8Path) -> Vec<&ResolvedLink> {
+        self.links
+            .iter()
+            .filter(|&link| link.dest.path == Some(path.to_path_buf()))
+            .collect()
+    }
+
+    fn issues(&self) -> Vec<&ResolveIssue> {
+        self.links.iter().flat_map(|link| link.issues()).collect()
+    }
+
+    fn has_errors(&self) -> bool {
+        self.links.iter().any(|link| link.has_errors())
+    }
+
+    fn has_warnings(&self) -> bool {
+        self.links.iter().any(|link| link.has_warnings())
+    }
+
+    fn warnings(&self) -> Vec<&ResolveIssue> {
+        self.issues()
+            .into_iter()
+            .filter(|&issue| matches!(issue.level(), ResolveIssueLevel::Warning))
+            .collect()
+    }
+
+    fn errors(&self) -> Vec<&ResolveIssue> {
+        self.issues()
+            .into_iter()
+            .filter(|&issue| matches!(issue.level(), ResolveIssueLevel::Error))
+            .collect()
     }
 }

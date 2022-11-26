@@ -97,6 +97,12 @@ impl TestManager {
         file.read_to_string(&mut contents)?;
         Ok(contents)
     }
+
+    pub fn write_footprint<T: AsRef<str>>(&self, contents: T) -> Result<()> {
+        let contents = contents.as_ref();
+        fs::write(self.footprint_path(), contents)?;
+        Ok(())
+    }
 }
 
 #[macro_export]

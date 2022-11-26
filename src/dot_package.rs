@@ -14,13 +14,13 @@ pub struct DotPackageMeta {
 
 #[derive(Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-pub struct DotPackage {
+pub struct DotPackageConfig {
     pub package: DotPackageMeta,
     pub link: BTreeMap<Utf8PathBuf, Utf8PathBuf>,
 }
 
-impl DotPackage {
-    pub fn new<P>(path: P) -> Result<DotPackage>
+impl DotPackageConfig {
+    pub fn read_and_parse<P>(path: P) -> Result<DotPackageConfig>
     where
         P: AsRef<Utf8Path>,
     {
@@ -55,7 +55,7 @@ where
     Ok(contents)
 }
 
-fn parse_package<S>(contents: S) -> Result<DotPackage, toml::de::Error>
+fn parse_package<S>(contents: S) -> Result<DotPackageConfig, toml::de::Error>
 where
     S: AsRef<str>,
 {

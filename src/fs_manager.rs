@@ -22,11 +22,19 @@ impl FSManager {
         }
     }
 
+    /**
+     * Removes the given symlink from fs
+     *
+     * @todo should we take the src into account here and not remove the symlink if the source
+     * doesn't match?
+     *
+     */
     pub fn remove_symlink(&self, src: &Utf8Path, dest: &Utf8Path) -> io::Result<()> {
         fs::remove_file(dest)?;
         Ok(())
     }
 
+    /** Creates the given symlink and tracks that link in the dot footprint */
     pub fn create_symlink(&mut self, src: &Utf8Path, dest: &Utf8Path) -> Result<()> {
         unix::fs::symlink(src, dest)?;
         self.footprint.links.push(footprint::FootprintLink {
@@ -34,9 +42,15 @@ impl FSManager {
             dest: dest.to_path_buf(),
         });
 
+        self.write_footprint()?;
+
+        Ok(())
+    }
+
+    /** Write the given contents to the the dot footprint */
+    fn write_footprint(&self) -> Result<()> {
         let contents = toml::to_string(&self.footprint)?;
         fs::write(&self.footprint_path, contents)?;
-
         Ok(())
     }
 }

@@ -1,4 +1,6 @@
-use crate::dot_package::DotPackage;
+use crate::dot_package::{DotPackageConfig, DotPackageMeta};
+use crate::plan::links::Link;
+use crate::plan::resolve::{resolve, ResolvedLink};
 use crate::utils::{self, fs::home};
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
@@ -7,7 +9,8 @@ use tempfile::tempdir;
 
 #[derive(PartialEq, Eq)]
 pub struct Dot {
-    pub package: DotPackage,
+    pub package: DotPackageMeta,
+    pub links: Vec<ResolvedLink>,
     pub path: Utf8PathBuf,
 }
 
@@ -17,10 +20,17 @@ impl Dot {
         P: AsRef<Utf8Path>,
     {
         let path = path.as_ref();
-        let package = DotPackage::new(path)?;
+        let config = DotPackageConfig::read_and_parse(path)?;
+        let links = config
+            .link
+            .iter()
+            .map(|(src, dest)| resolve(path, Link::new(src, dest)))
+            .collect();
+
         Ok(Dot {
-            package,
-            path: path.to_owned(),
+            package: config.package,
+            links,
+            path: path.to_path_buf(),
         })
     }
 
@@ -43,16 +53,16 @@ impl Dot {
 
 impl Ord for Dot {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let name = &self.package.package.name;
-        let other_name = &other.package.package.name;
+        let name = &self.package.name;
+        let other_name = &other.package.name;
         name.cmp(other_name)
     }
 }
 
 impl PartialOrd for Dot {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        let name = &self.package.package.name;
-        let other_name = &other.package.package.name;
+        let name = &self.package.name;
+        let other_name = &other.package.name;
         Some(name.cmp(other_name))
     }
 }
@@ -82,7 +92,7 @@ impl Environment {
     }
 
     pub fn package_path(&self, dot: &Dot) -> Utf8PathBuf {
-        self.path(&dot.package.package.name)
+        self.path(&dot.package.name)
     }
 
     pub fn footprint_path(&self) -> Utf8PathBuf {
@@ -182,47 +192,4 @@ pub fn find_all(env: &Environment) -> Vec<Dot> {
     dots.sort();
 
     dots
-}
-
-#[cfg(test)]
-mod tests {
-    mod describe_link_request {
-        use std::collections::BTreeMap;
-
-        use camino::Utf8PathBuf;
-        use test_utils::{Fixture, TestResult};
-
-        use crate::dots::Dot;
-
-        #[test]
-        fn it_should_contain_the_original_path() -> TestResult {
-            let fixture = Fixture::ExampleDot;
-            let dot = Dot::new(fixture.template_path())?;
-            assert_eq!(dot.path, fixture.template_path());
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_contain_package_details_from_the_dot_toml() -> TestResult {
-            let fixture = Fixture::ExampleDot;
-            let dot = Dot::new(fixture.template_path())?;
-            assert_eq!(dot.package.package.name, fixture.name());
-            assert_eq!(dot.package.package.authors, vec!["Michael Mullins"]);
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_contain_links_from_the_dot_toml() -> TestResult {
-            let fixture = Fixture::ExampleDot;
-            let dot = Dot::new(fixture.template_path())?;
-            let expected: BTreeMap<Utf8PathBuf, Utf8PathBuf> =
-                vec![("shell/bashrc", "~/.bashrc"), ("shell/zshrc", "~/.zshrc")]
-                    .into_iter()
-                    .map(|(key, value)| (Utf8PathBuf::from(key), Utf8PathBuf::from(value)))
-                    .collect();
-
-            assert_eq!(dot.package.link, expected);
-            Ok(())
-        }
-    }
 }

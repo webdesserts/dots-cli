@@ -13,8 +13,14 @@ pub fn install(repo: &Option<String>, overwrite: &bool, force: &bool, dry: &bool
     if let Some(url) = repo {
         dots::add(url, overwrite, &env);
     };
+    let dots = dots::find_all(&env);
 
-    let plan = match Plan::new(dots::find_all(&env), force) {
+    /* @todo read footprint */
+    /* @todo run cleanup step to clean up broken symlinks */
+    let mut plan = Plan::new(force);
+
+    /* Validate whether the plan passes or fails */
+    match plan.validate(dots) {
         Ok(plan) => {
             info!("Looks Good! Nothing wrong with the current install plan!");
             plan
@@ -24,8 +30,9 @@ pub fn install(repo: &Option<String>, overwrite: &bool, force: &bool, dry: &bool
             error!("Currently defined install would fail!");
             process::exit(1)
         }
-    };
+    }
 
+    /* @todo can I just say if !dry? */
     if *dry {
         process::exit(1)
     } else {
@@ -53,7 +60,7 @@ pub fn list(origins: &bool) {
             remote = format!(" => {}", dot.origin())
         };
 
-        let line = format!("{name}{remote}", name = dot.package.package.name);
+        let line = format!("{name}{remote}", name = dot.package.name);
         lines.push(line);
     }
 
@@ -65,7 +72,7 @@ pub fn path(name: &str) {
 
     match dots::find_all(&env)
         .iter()
-        .find(|dot| dot.package.package.name == name)
+        .find(|dot| dot.package.name == name)
     {
         Some(dot) => print!("{}", path = dot.path),
         None => process::exit(1),
