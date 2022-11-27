@@ -3,7 +3,7 @@ mod subcommand_install {
     use test_utils::{
         cargo_bin, pretty_assert, AssertableOutput, Fixture, TestManager, TestResult,
     };
-    use utils::git::commit_all;
+    use utils::{fs::soft_link, git::commit_all};
 
     const BIN: &str = cargo_bin!("dots");
 
@@ -531,12 +531,39 @@ mod subcommand_install {
     #[test]
     pub fn it_should_clean_up_footprint_links_whos_symlinks_are_pointing_to_files_outside_the_dots_dir(
     ) -> TestResult {
-        // expect footprint link to be removed
-        // expect symlink NOT to be removed
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let home_path = manager.home_dir();
 
-        // What's the use case for this test?
-        // Is this for the case where the dot folder has been changed?
-        todo!()
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        manager.write_footprint(format!(
+            include_str!("footprints/example_dot_with_invalid_link.toml"),
+            HOME = home_path
+        ))?;
+
+        soft_link(home_path.join(".bash_profile"), home_path.join(".bashrc"))?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        // symlink should be left alone
+        assert!(home_path.join(".bash_profile").is_symlink());
+
+        // footprint link should be removed
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot.toml"),
+                HOME = home_path
+            ),
+            manager.read_footprint()?,
+        );
+
+        Ok(())
     }
 
     #[test]

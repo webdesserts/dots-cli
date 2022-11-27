@@ -1,7 +1,7 @@
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use dirs::home_dir;
-use std::{fs, io};
+use std::{fs, io, os};
 use walkdir::WalkDir;
 
 pub fn copy_dir<S, D>(source: S, destination: D) -> Result<(), io::Error>
@@ -67,6 +67,16 @@ pub fn empty_git_directory(path: &Utf8Path) -> anyhow::Result<()> {
         }
     }
 
+    Ok(())
+}
+
+pub fn soft_link<P>(from: P, to: P) -> Result<(), io::Error>
+where
+    P: AsRef<Utf8Path>,
+{
+    let from = from.as_ref();
+    let to = to.as_ref();
+    os::unix::fs::symlink(to, from)?;
     Ok(())
 }
 
