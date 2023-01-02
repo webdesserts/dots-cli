@@ -502,7 +502,6 @@ mod subcommand_install {
     pub fn it_should_clean_up_footprint_links_whos_symlink_removed_from_the_fs() -> TestResult {
         let manager = TestManager::new()?;
         let fixture1 = Fixture::ExampleDot;
-        let fixture2 = Fixture::ExampleDotWithUnlinkedFile;
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture1)?;
         let home_path = manager.home_dir();
 
@@ -572,20 +571,48 @@ mod subcommand_install {
     #[test]
     pub fn it_should_clean_up_footprint_links_whos_symlinks_are_pointing_to_a_missing_file_in_the_dots_dir(
     ) -> TestResult {
+        // Use Case: When you install a dot and one of the dot's links has been removed.
         // expect footprint link to be removed
         // expect symlink to be removed from filesystem
 
-        // Use Case: When you install a dot and one of the dot's links has been removed.
-        todo!();
+        let manager = TestManager::new()?;
+        let fixture1 = Fixture::ExampleDot;
+        let fixture2 = Fixture::ExampleDotWithUnlinkedFile;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture1)?;
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        manager.overwrite_dot(&fixture1, &fixture2)?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        // symlink should be removed
+        assert!(!home_path.join(".bashrc").exists());
+
+        // footprint link should be removed
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot_with_unlinked_file.toml"),
+                HOME = home_path
+            ),
+            manager.read_footprint()?,
+        );
+
+        Ok(())
     }
 
     #[test]
     pub fn it_should_clean_up_footprint_links_whos_symlinks_are_not_present_in_any_dot_toml(
     ) -> TestResult {
+        // Use Case: The link was removed from the dot.toml, but maybe the file is still there
         // expect footprint link to be removed
         // expect the symlink to be removed from the filesystem
 
-        // Use Case: The link was removed from the dot.toml, but maybe the file is still there
         todo!();
     }
 }
