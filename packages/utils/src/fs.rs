@@ -70,13 +70,13 @@ pub fn empty_git_directory(path: &Utf8Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn soft_link<P>(from: P, to: P) -> Result<(), io::Error>
+pub fn soft_link<P>(link_path: P, file_path: P) -> Result<(), io::Error>
 where
     P: AsRef<Utf8Path>,
 {
-    let from = from.as_ref();
-    let to = to.as_ref();
-    os::unix::fs::symlink(to, from)?;
+    let link_path = link_path.as_ref();
+    let file_path = file_path.as_ref();
+    os::unix::fs::symlink(file_path, link_path)?;
     Ok(())
 }
 
