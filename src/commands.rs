@@ -3,12 +3,12 @@ use std::process;
 use crate::dots::{self, Environment};
 use crate::plan::Plan;
 
-pub fn add(url: &str, overwrite: &bool) {
+pub fn add(url: &str, overwrite: bool) {
     let env = Environment::new();
     dots::add(url, overwrite, &env)
 }
 
-pub fn install(repo: &Option<String>, overwrite: &bool, force: &bool, dry: &bool) {
+pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
     let env = Environment::new();
     if let Some(url) = repo {
         dots::add(url, overwrite, &env);
@@ -32,8 +32,7 @@ pub fn install(repo: &Option<String>, overwrite: &bool, force: &bool, dry: &bool
         }
     }
 
-    /* @todo can I just say if !dry? */
-    if *dry {
+    if dry {
         process::exit(1)
     } else {
         match plan.execute(&env, force) {
@@ -51,12 +50,12 @@ pub fn install(repo: &Option<String>, overwrite: &bool, force: &bool, dry: &bool
     }
 }
 
-pub fn list(origins: &bool) {
+pub fn list(origins: bool) {
     let env = Environment::new();
     let mut lines = vec![];
     for dot in dots::find_all(&env) {
         let mut remote = String::new();
-        if *origins {
+        if origins {
             remote = format!(" => {}", dot.origin())
         };
 
@@ -74,7 +73,7 @@ pub fn path(name: &str) {
         .iter()
         .find(|dot| dot.package.name == name)
     {
-        Some(dot) => print!("{}", path = dot.path),
+        Some(dot) => print!("{path}", path = dot.path),
         None => process::exit(1),
     }
 }

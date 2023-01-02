@@ -126,14 +126,14 @@ fn main() {
     let cli = Cli::parse();
 
     match &cli.commands {
-        Some(Commands::Add { repo, overwrite }) => commands::add(repo, overwrite),
+        Some(Commands::Add { repo, overwrite }) => commands::add(repo, overwrite.clone()),
         Some(Commands::Install {
             repo,
             overwrite,
             force,
             dry,
-        }) => commands::install(repo, overwrite, force, dry),
-        Some(Commands::List { origins }) => commands::list(origins),
+        }) => commands::install(repo, overwrite.clone(), force.clone(), dry.clone()),
+        Some(Commands::List { origins }) => commands::list(origins.clone()),
         Some(Commands::Path { dot }) => commands::path(dot),
         _ => {
             println!("USAGE:\n    dots [SUBCOMMAND]")

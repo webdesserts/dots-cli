@@ -64,9 +64,9 @@ pub struct Plan {
  */
 
 impl Plan {
-    pub fn new(force: &bool) -> Plan {
+    pub fn new(force: bool) -> Plan {
         Plan {
-            force: *force,
+            force,
             links: vec![],
         }
     }
@@ -151,7 +151,7 @@ impl Plan {
         }
     }
 
-    pub fn execute(&self, env: &Environment, force: &bool) -> Result<()> {
+    pub fn execute(&self, env: &Environment, force: bool) -> Result<()> {
         let mut fs_manager = FSManager::init(env);
         for link in &self.links {
             let src = match &link.src.path {
