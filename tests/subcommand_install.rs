@@ -465,8 +465,8 @@ mod subcommand_install {
     }
 
     #[test]
-    pub fn it_should_remove_a_link_from_the_footprint_when_a_symlink_is_removed_from_the_fs(
-    ) -> TestResult {
+    pub fn it_should_remove_a_link_from_the_footprint_when_the_dot_link_was_removed() -> TestResult
+    {
         let manager = TestManager::new()?;
         let fixture1 = Fixture::ExampleDotWithLinkAdded;
         let fixture2 = Fixture::ExampleDot;
@@ -496,11 +496,14 @@ mod subcommand_install {
         Ok(())
     }
 
+    /// This can happen if the symlink was manually removed from both the fs
+    /// and the dot.toml (but maybe not the file?).
     #[test]
-    pub fn it_should_clean_up_footprint_links_whos_symlink_is_missing() -> TestResult {
+    pub fn it_should_clean_up_footprint_links_whos_symlink_removed_from_the_fs() -> TestResult {
         let manager = TestManager::new()?;
-        let fixture = Fixture::ExampleDot;
-        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let fixture1 = Fixture::ExampleDot;
+        let fixture2 = Fixture::ExampleDotWithUnlinkedFile;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture1)?;
         let home_path = manager.home_dir();
 
         manager
@@ -583,15 +586,6 @@ mod subcommand_install {
         // expect the symlink to be removed from the filesystem
 
         // Use Case: The link was removed from the dot.toml, but maybe the file is still there
-        todo!();
-    }
-
-    #[test]
-    pub fn it_should_should_not_remove_a_footprint_link_if_we_dont_have_permission_to_remove_the_given_symlink(
-    ) -> TestResult {
-        // expect footprint link NOT to be removed
-
-        // Use Case: We don't end up removing anything so we shouldn't forget the link
         todo!();
     }
 }
