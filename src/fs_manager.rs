@@ -39,7 +39,7 @@ impl FSManager {
             }
         }
         self.footprint = next_footprint;
-        self.write_footprint()?;
+        self.save_footprint()?;
         Ok(())
     }
 
@@ -58,13 +58,13 @@ impl FSManager {
     pub fn create_symlink(&mut self, src: &Utf8Path, dest: &Utf8Path) -> Result<()> {
         unix::fs::symlink(src, dest)?;
         self.footprint.links.insert(Link::new(src, dest));
-        self.write_footprint()?;
+        self.save_footprint()?;
 
         Ok(())
     }
 
     /** Write the given contents to the the dot footprint */
-    fn write_footprint(&self) -> Result<()> {
+    fn save_footprint(&self) -> Result<()> {
         let contents = toml::to_string(&self.footprint)?;
         fs::write(&self.footprint_path, contents)?;
         Ok(())
