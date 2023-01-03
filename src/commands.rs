@@ -17,8 +17,6 @@ pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
     };
     let dots = dots::find_all(&env);
 
-    /* @todo read footprint */
-    /* @todo run cleanup step to clean up broken symlinks */
     let mut plan = Plan::new(force);
 
     plan.clean(&dots, &env);
