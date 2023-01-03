@@ -10,6 +10,7 @@ use std::{
 };
 use utils::stylize::Stylable;
 
+use super::links::Link;
 use super::resolve::{ResolveIssue, ResolveIssueLevel};
 
 mod styles {
@@ -69,6 +70,17 @@ impl Plan {
             force,
             links: vec![],
         }
+    }
+
+    pub fn clean(&self, dots: &Vec<Dot>, env: &Environment) -> Result<()> {
+        let mut fs_manager = FSManager::init(env)?;
+        let links: Vec<Link> = dots
+            .iter()
+            .flat_map(|dot| &dot.links)
+            .filter_map(|resolved_link| resolved_link.as_link())
+            .collect();
+        fs_manager.clean(&links)?;
+        Ok(())
     }
 
     pub fn validate(&mut self, dots: Vec<Dot>) -> Result<(), PlanError> {
@@ -152,7 +164,7 @@ impl Plan {
     }
 
     pub fn execute(&self, env: &Environment, force: bool) -> Result<()> {
-        let mut fs_manager = FSManager::init(env);
+        let mut fs_manager = FSManager::init(env)?;
         for link in &self.links {
             let src = match &link.src.path {
                 Some(path) => path,

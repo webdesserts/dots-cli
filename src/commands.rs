@@ -1,6 +1,8 @@
 use std::process;
 
 use crate::dots::{self, Environment};
+use crate::fs_manager::FSManager;
+use crate::plan::resolve::ResolvedLink;
 use crate::plan::Plan;
 
 pub fn add(url: &str, overwrite: bool) {
@@ -18,6 +20,8 @@ pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
     /* @todo read footprint */
     /* @todo run cleanup step to clean up broken symlinks */
     let mut plan = Plan::new(force);
+
+    plan.clean(&dots, &env);
 
     /* Validate whether the plan passes or fails */
     match plan.validate(dots) {

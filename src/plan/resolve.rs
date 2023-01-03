@@ -155,6 +155,15 @@ impl ResolvedLink {
     pub fn has_warnings(&self) -> bool {
         self.src.has_errors() | self.dest.has_warnings()
     }
+    /// Returns a simplified link if all paths are valid
+    pub fn as_link(&self) -> Option<Link> {
+        let Some(src) = &self.src.path else { return None };
+        let Some(dest) = &self.dest.path else { return None };
+        Some(Link {
+            src: Anchor::new_src(src),
+            dest: Anchor::new_dest(dest),
+        })
+    }
 }
 
 impl Display for ResolvedLink {
