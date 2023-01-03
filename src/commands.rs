@@ -19,7 +19,13 @@ pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
 
     let mut plan = Plan::new(force);
 
-    plan.clean(&dots, &env);
+    let mut fs_manager = FSManager::init(&env);
+    plan.clean(&env, &mut fs_manager, &dots)
+        .unwrap_or_else(|err| {
+            error!("failed to clean current install:");
+            error!("{}", err);
+            process::exit(1);
+        });
 
     /* Validate whether the plan passes or fails */
     match plan.validate(dots) {
@@ -37,7 +43,7 @@ pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
     if dry {
         process::exit(1)
     } else {
-        match plan.execute(&env, force) {
+        match plan.execute(&mut fs_manager, force) {
             Ok(_) => {
                 info!("Install was a success!");
                 process::exit(0)

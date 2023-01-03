@@ -72,8 +72,12 @@ impl Plan {
         }
     }
 
-    pub fn clean(&self, dots: &Vec<Dot>, env: &Environment) -> Result<()> {
-        let mut fs_manager = FSManager::init(env)?;
+    pub fn clean(
+        &self,
+        env: &Environment,
+        fs_manager: &mut FSManager,
+        dots: &Vec<Dot>,
+    ) -> Result<()> {
         let links: Vec<Link> = dots
             .iter()
             .flat_map(|dot| &dot.links)
@@ -163,8 +167,7 @@ impl Plan {
         }
     }
 
-    pub fn execute(&self, env: &Environment, force: bool) -> Result<()> {
-        let mut fs_manager = FSManager::init(env)?;
+    pub fn execute(&self, fs_manager: &mut FSManager, force: bool) -> Result<()> {
         for link in &self.links {
             let src = match &link.src.path {
                 Some(path) => path,

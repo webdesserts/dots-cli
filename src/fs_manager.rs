@@ -2,11 +2,7 @@ use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use std::{fs, io, os::unix};
 
-use crate::{
-    dots::Environment,
-    footprint::Footprint,
-    plan::links::{Anchor, Link},
-};
+use crate::{dots::Environment, footprint::Footprint, plan::links::Link};
 
 pub struct FSManager {
     footprint_path: Utf8PathBuf,
@@ -14,14 +10,14 @@ pub struct FSManager {
 }
 
 impl FSManager {
-    pub fn init(env: &Environment) -> Result<FSManager> {
+    pub fn init(env: &Environment) -> FSManager {
         let footprint_path = env.footprint_path();
-        let footprint = FSManager::read_and_parse_footprint(&footprint_path)?;
+        let footprint = FSManager::read_and_parse_footprint(&footprint_path);
 
-        Ok(FSManager {
+        FSManager {
             footprint_path,
             footprint,
-        })
+        }
     }
 
     /**
@@ -98,13 +94,13 @@ impl FSManager {
         Ok(())
     }
 
-    fn read_and_parse_footprint(footprint_path: &Utf8PathBuf) -> Result<Footprint> {
+    fn read_and_parse_footprint(footprint_path: &Utf8PathBuf) -> Footprint {
         let Ok(string) = fs::read_to_string(footprint_path) else {
-            return Ok(Footprint::default())
+            return Footprint::default()
         };
-        return toml::from_str(string.as_ref()).or_else(|err| {
+        return toml::from_str(string.as_ref()).unwrap_or_else(|err| {
             warn!("Error parsing {footprint_path}:\n{err}");
-            Ok(Footprint::default())
+            Footprint::default()
         });
     }
 }
