@@ -79,7 +79,7 @@ impl Plan {
             .flat_map(|dot| &dot.links)
             .filter_map(|resolved_link| resolved_link.as_link())
             .collect();
-        fs_manager.clean(&links)?;
+        fs_manager.clean(&links, env)?;
         Ok(())
     }
 

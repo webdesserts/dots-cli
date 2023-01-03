@@ -1,5 +1,5 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use std::fmt;
+use std::{fmt, fs};
 
 /*=======*\
 *  Links  *
@@ -22,6 +22,17 @@ impl Link {
             src: Anchor::new_src(src),
             dest: Anchor::new_dest(dest),
         }
+    }
+
+    pub fn exists(&self) -> bool {
+        let Ok(path) = fs::read_link(&self.dest.path) else { return false };
+        return path == self.src.path;
+    }
+}
+
+impl fmt::Debug for Link {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} => {}", self.dest.path, self.src.path)
     }
 }
 

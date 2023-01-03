@@ -2,7 +2,11 @@ use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use std::{fs, io, os::unix};
 
-use crate::{dots::Environment, footprint::Footprint, plan::links::Link};
+use crate::{
+    dots::Environment,
+    footprint::Footprint,
+    plan::links::{Anchor, Link},
+};
 
 pub struct FSManager {
     footprint_path: Utf8PathBuf,
@@ -24,18 +28,37 @@ impl FSManager {
      * This method does three things:
      *
      * 1. removes any footprint links that DO NOT have corresponding symlinks on the fs
-     * 2. removes any footprint links that DO have corresponding symlinks on the fs, but
+     * 2. removes any footprint links that DO have corresponding symlinks on the fs, but those symlinks
+     *    do no point to the correct source.
+     * 3. removes the symlink for footprint links that DO NOT have corresponding links in any Dot.toml
      */
-    pub fn clean(&mut self, valid_links: &Vec<Link>) -> Result<()> {
+    pub fn clean(&mut self, valid_links: &Vec<Link>, env: &Environment) -> Result<()> {
         let mut next_footprint = self.footprint.clone();
+        debug!("VALID LINKS");
+        for link in valid_links {
+            debug!("  {link:?}")
+        }
+        debug!("FOOTPRINT LINKS");
         for link in &self.footprint.links {
-            let link_exists =
-                link.dest.path.is_symlink() && (link.src.path.is_file() || link.src.path.is_dir());
-            if !link_exists {
+            let symlink_exists = link.dest.path.is_symlink();
+            debug!("  {link:?}");
+            debug!("    link is on fs: {}", link.exists());
+            debug!("    link is in dots: {}", valid_links.contains(link));
+            if !symlink_exists {
+                next_footprint.links.remove(link);
+                debug!("    no symlink detected, removing footprint link");
+            } else if !link.exists() {
+                debug!("    symlink detected, but pointing to wrong dest, removing footprint link");
+                next_footprint.links.remove(link);
+            } else if !link.src.path.starts_with(env.root()) {
+                debug!("    symlink exists, but source is outside of dots dir, removing footprint link");
                 next_footprint.links.remove(link);
             } else if !valid_links.contains(link) {
                 self.remove_symlink(&link.src.path, &link.dest.path)?;
                 next_footprint.links.remove(link);
+                debug!("    link is on fs but is no longer present in dot files, removing symlink & footprint link");
+            } else {
+                debug!("    leaving link alone")
             }
         }
         self.footprint = next_footprint;

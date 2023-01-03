@@ -84,6 +84,10 @@ impl Environment {
         Environment::default()
     }
 
+    pub fn root(&self) -> Utf8PathBuf {
+        self.root.clone()
+    }
+
     pub fn path<P>(&self, path: P) -> Utf8PathBuf
     where
         P: AsRef<Utf8Path>,
