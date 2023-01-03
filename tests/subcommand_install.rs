@@ -630,7 +630,6 @@ mod subcommand_install {
         assert!(!home_path.join(".bashrc").is_symlink());
         assert!(!home_path.join(".zshrc").is_symlink());
 
-        println!("footprint: {}", manager.read_footprint()?);
         pretty_assert(
             include_str!("footprints/empty_footprint.toml"),
             manager.read_footprint()?,
