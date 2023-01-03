@@ -84,6 +84,12 @@ impl TestManager {
         Ok(())
     }
 
+    pub fn remove_dot(&self, fixture: &Fixture) -> Result<()> {
+        let path = self.expected_dot_path(fixture);
+        fs::remove_dir_all(&path)?;
+        Ok(())
+    }
+
     pub fn cmd(&self, bin: &'static str) -> Result<Command> {
         let mut cmd = Command::new(&bin);
         cmd.env("HOME", self.home_dir());

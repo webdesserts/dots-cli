@@ -609,10 +609,33 @@ mod subcommand_install {
     #[test]
     pub fn it_should_clean_up_footprint_links_whos_symlinks_are_not_present_in_any_dot_toml(
     ) -> TestResult {
-        // Use Case: The link was removed from the dot.toml, but maybe the file is still there
         // expect footprint link to be removed
         // expect the symlink to be removed from the filesystem
 
-        todo!();
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        manager.remove_dot(&fixture)?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        assert!(!home_path.join(".bashrc").is_symlink());
+        assert!(!home_path.join(".zshrc").is_symlink());
+
+        println!("footprint: {}", manager.read_footprint()?);
+        pretty_assert(
+            include_str!("footprints/empty_footprint.toml"),
+            manager.read_footprint()?,
+        );
+
+        Ok(())
     }
 }
