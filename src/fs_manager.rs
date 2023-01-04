@@ -69,11 +69,8 @@ impl FSManager {
 
     /**
      * Removes the given symlink from fs
-     *
-     * @todo should we take the src into account here and not remove the symlink if the source
-     * doesn't match?
      */
-    pub fn remove_symlink(&self, src: &Utf8Path, dest: &Utf8Path) -> io::Result<()> {
+    pub fn remove_symlink(&self, dest: &Utf8Path) -> io::Result<()> {
         fs::remove_file(dest)?;
         Ok(())
     }
