@@ -7,11 +7,11 @@ use crate::indent;
 
 mod styles {
     use utils::{style, stylize::Style};
-    pub const PATH: Style = style! { Dim };
+    pub const PATH: Style = style! { Dimmed };
     pub const DIR: Style = style! { Bold };
-    pub const LINK: Style = style! { Underlined };
+    pub const LINK: Style = style! { Underline };
 
-    pub const EOF: Style = style! { Dim };
+    pub const EOF: Style = style! { Dimmed };
 }
 
 pub fn ls<P: AsRef<Utf8Path>>(path: P) -> Result<()> {

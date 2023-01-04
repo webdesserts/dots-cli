@@ -1,4 +1,4 @@
-pub use console::{Attribute, Color};
+pub use owo_colors::{AnsiColors, Effect, Styled};
 
 const DEFAULT: Style = Style {
     color: None,
@@ -8,14 +8,16 @@ const DEFAULT: Style = Style {
     italic: false,
     underlined: false,
     blink: false,
+    blink_fast: false,
     reverse: false,
     hidden: false,
+    strikethrough: false,
 };
 
 #[derive(Clone, Copy)]
 pub struct Style {
-    color: Option<Color>,
-    background: Option<Color>,
+    color: Option<AnsiColors>,
+    background: Option<AnsiColors>,
     bold: bool,
     dim: bool,
     italic: bool,
@@ -23,6 +25,8 @@ pub struct Style {
     blink: bool,
     reverse: bool,
     hidden: bool,
+    blink_fast: bool,
+    strikethrough: bool,
 }
 
 #[macro_export]
@@ -31,19 +35,19 @@ macro_rules! style {
     (@props () -> ($style:expr)) => { $style };
     /* Adds a color to the style */
     (@props (color: $fg:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.color($crate::stylize::Color::$fg)))
+        style!(@props ($($rest)*) -> ($style.color($crate::stylize::AnsiColors::$fg)))
     };
     /* Adds a background to the style */
     (@props (background: $bg:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.background($crate::stylize::Color::$bg)))
+        style!(@props ($($rest)*) -> ($style.background($crate::stylize::AnsiColors::$bg)))
     };
     /* Adds a color and matching background to the style */
     (@props (color: $fg:ident on $bg:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.color($crate::stylize::Color::$fg).background($crate::stylize::Color::$bg)))
+        style!(@props ($($rest)*) -> ($style.color($crate::stylize::AnsiColors::$fg).background($crate::stylize::AnsiColors::$bg)))
     };
     /* Adds an attribute to the style */
     (@props ($attr:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.attr($crate::stylize::Attribute::$attr)))
+        style!(@props ($($rest)*) -> ($style.attr($crate::stylize::Effect::$attr)))
     };
     (@props ($($rest:tt)*) -> ($style:expr)) => {
         style!(@props ($($rest)*;) -> ($style))
@@ -60,7 +64,7 @@ impl Style {
     }
 
     #[must_use]
-    pub const fn color(&self, color: Color) -> Style {
+    pub const fn color(&self, color: AnsiColors) -> Style {
         self.merge(&Self {
             color: Some(color),
             ..DEFAULT
@@ -68,7 +72,7 @@ impl Style {
     }
 
     #[must_use]
-    pub const fn background(&self, background: Color) -> Style {
+    pub const fn background(&self, background: AnsiColors) -> Style {
         self.merge(&Self {
             background: Some(background),
             ..DEFAULT
@@ -76,17 +80,19 @@ impl Style {
     }
 
     #[must_use]
-    pub const fn attr(&self, attribute: Attribute) -> Style {
+    pub const fn attr(&self, attribute: Effect) -> Style {
         let mut style = Style::new();
 
         match attribute {
-            Attribute::Bold => style.bold = true,
-            Attribute::Dim => style.dim = true,
-            Attribute::Italic => style.italic = true,
-            Attribute::Underlined => style.underlined = true,
-            Attribute::Blink => style.blink = true,
-            Attribute::Reverse => style.reverse = true,
-            Attribute::Hidden => style.hidden = true,
+            Effect::Bold => style.bold = true,
+            Effect::Dimmed => style.dim = true,
+            Effect::Italic => style.italic = true,
+            Effect::Underline => style.underlined = true,
+            Effect::Blink => style.blink = true,
+            Effect::Reversed => style.reverse = true,
+            Effect::Hidden => style.hidden = true,
+            Effect::BlinkFast => style.blink_fast = true,
+            Effect::Strikethrough => style.strikethrough = true,
         }
 
         self.merge(&style)
@@ -94,105 +100,97 @@ impl Style {
 
     #[must_use]
     pub const fn black(&self) -> Style {
-        self.color(Color::Black)
+        self.color(AnsiColors::Black)
     }
     #[must_use]
     pub const fn red(&self) -> Style {
-        self.color(Color::Red)
+        self.color(AnsiColors::Red)
     }
     #[must_use]
     pub const fn green(&self) -> Style {
-        self.color(Color::Green)
+        self.color(AnsiColors::Green)
     }
     #[must_use]
     pub const fn yellow(&self) -> Style {
-        self.color(Color::Yellow)
+        self.color(AnsiColors::Yellow)
     }
     #[must_use]
     pub const fn blue(&self) -> Style {
-        self.color(Color::Blue)
+        self.color(AnsiColors::Blue)
     }
     #[must_use]
     pub const fn magenta(&self) -> Style {
-        self.color(Color::Magenta)
+        self.color(AnsiColors::Magenta)
     }
     #[must_use]
     pub const fn cyan(&self) -> Style {
-        self.color(Color::Cyan)
+        self.color(AnsiColors::Cyan)
     }
     #[must_use]
     pub const fn white(&self) -> Style {
-        self.color(Color::White)
-    }
-    #[must_use]
-    pub const fn color256(&self, x: u8) -> Style {
-        self.color(Color::Color256(x))
+        self.color(AnsiColors::White)
     }
 
     #[must_use]
     pub const fn on_black(&self) -> Style {
-        self.background(Color::Black)
+        self.background(AnsiColors::Black)
     }
     #[must_use]
     pub const fn on_red(&self) -> Style {
-        self.background(Color::Red)
+        self.background(AnsiColors::Red)
     }
     #[must_use]
     pub const fn on_green(&self) -> Style {
-        self.background(Color::Green)
+        self.background(AnsiColors::Green)
     }
     #[must_use]
     pub const fn on_yellow(&self) -> Style {
-        self.background(Color::Yellow)
+        self.background(AnsiColors::Yellow)
     }
     #[must_use]
     pub const fn on_blue(&self) -> Style {
-        self.background(Color::Blue)
+        self.background(AnsiColors::Blue)
     }
     #[must_use]
     pub const fn on_magenta(&self) -> Style {
-        self.background(Color::Magenta)
+        self.background(AnsiColors::Magenta)
     }
     #[must_use]
     pub const fn on_cyan(&self) -> Style {
-        self.background(Color::Cyan)
+        self.background(AnsiColors::Cyan)
     }
     #[must_use]
     pub const fn on_white(&self) -> Style {
-        self.background(Color::White)
-    }
-    #[must_use]
-    pub const fn on_color256(&self, x: u8) -> Style {
-        self.background(Color::Color256(x))
+        self.background(AnsiColors::White)
     }
 
     #[must_use]
     pub const fn bold(&self) -> Style {
-        self.attr(Attribute::Bold)
+        self.attr(Effect::Bold)
     }
     #[must_use]
     pub const fn dim(&self) -> Style {
-        self.attr(Attribute::Dim)
+        self.attr(Effect::Dimmed)
     }
     #[must_use]
     pub const fn italic(&self) -> Style {
-        self.attr(Attribute::Italic)
+        self.attr(Effect::Italic)
     }
     #[must_use]
     pub const fn underlined(&self) -> Style {
-        self.attr(Attribute::Underlined)
+        self.attr(Effect::Underline)
     }
     #[must_use]
     pub const fn blink(&self) -> Style {
-        self.attr(Attribute::Blink)
+        self.attr(Effect::Blink)
     }
     #[must_use]
     pub const fn reverse(&self) -> Style {
-        self.attr(Attribute::Reverse)
+        self.attr(Effect::Reversed)
     }
     #[must_use]
     pub const fn hidden(&self) -> Style {
-        self.attr(Attribute::Hidden)
+        self.attr(Effect::Hidden)
     }
 
     #[must_use]
@@ -213,46 +211,54 @@ impl Style {
             blink: style.blink || self.blink,
             reverse: style.reverse || self.reverse,
             hidden: style.hidden || self.hidden,
+            blink_fast: style.blink_fast || self.blink_fast,
+            strikethrough: style.strikethrough || self.strikethrough,
         }
     }
 
     #[must_use]
-    pub fn apply<D>(&self, val: D) -> console::StyledObject<D> {
-        self.to_console_style().apply_to(val)
+    pub fn apply<D>(&self, val: D) -> Styled<D> {
+        self.to_owo_style().style(val)
     }
 
     #[must_use]
-    pub fn to_console_style(&self) -> console::Style {
-        let mut style = console::Style::new();
+    fn to_owo_style(&self) -> owo_colors::Style {
+        let mut style = owo_colors::Style::new();
 
         if let Some(fg) = self.color {
-            style = style.fg(fg);
+            style = style.color(fg);
         };
 
         if let Some(bg) = self.background {
-            style = style.bg(bg);
+            style = style.on_color(bg);
         };
 
         if self.bold {
             style = style.bold()
         }
         if self.dim {
-            style = style.dim()
+            style = style.dimmed()
         }
         if self.italic {
             style = style.italic()
         }
         if self.underlined {
-            style = style.underlined()
+            style = style.underline()
         }
         if self.blink {
             style = style.blink()
         }
         if self.reverse {
-            style = style.reverse()
+            style = style.reversed()
         }
         if self.hidden {
             style = style.hidden()
+        }
+        if self.blink_fast {
+            style = style.blink_fast()
+        }
+        if self.strikethrough {
+            style = style.strikethrough()
         }
 
         style
@@ -264,19 +270,19 @@ where
     Self: Sized,
 {
     #[must_use]
-    fn apply_style(self, style: Style) -> console::StyledObject<Self>;
+    fn apply_style(self, style: Style) -> Styled<Self>;
 }
 
 impl<'a> Stylable for &'a str {
     #[must_use]
-    fn apply_style(self, style: Style) -> console::StyledObject<Self> {
+    fn apply_style(self, style: Style) -> Styled<Self> {
         style.apply(self)
     }
 }
 
 impl Stylable for String {
     #[must_use]
-    fn apply_style(self, style: Style) -> console::StyledObject<Self> {
+    fn apply_style(self, style: Style) -> Styled<Self> {
         style.apply(self)
     }
 }
@@ -286,18 +292,18 @@ mod tests {
     // #![feature(trace_macros)]
     // trace_macros!(true);
 
-    use console::Color;
+    use owo_colors::AnsiColors;
 
     #[test]
     fn style_macro_should_accept_a_color() {
         let style = style! { color: White };
-        assert_eq!(style.color, Some(Color::White))
+        assert_eq!(style.color, Some(AnsiColors::White))
     }
 
     #[test]
     fn style_macro_should_allow_a_trailing_comma() {
         let style = style! { color: White; };
-        assert_eq!(style.color, Some(Color::White));
+        assert_eq!(style.color, Some(AnsiColors::White));
         assert_eq!(style.background, None);
     }
 
@@ -305,19 +311,19 @@ mod tests {
     fn style_macro_should_accept_a_background_color() {
         let style = style! { background: Black; };
         assert_eq!(style.color, None);
-        assert_eq!(style.background, Some(Color::Black));
+        assert_eq!(style.background, Some(AnsiColors::Black));
     }
 
     #[test]
     fn style_macro_should_accept_a_color_with_background_with_on_keyword() {
         let style = style! { color: White on Black; };
-        assert_eq!(style.color, Some(Color::White));
-        assert_eq!(style.background, Some(Color::Black))
+        assert_eq!(style.color, Some(AnsiColors::White));
+        assert_eq!(style.background, Some(AnsiColors::Black))
     }
 
     #[test]
     fn style_macro_should_accept_an_attribute() {
-        let style = style! { Bold; Underlined; };
+        let style = style! { Bold; Underline; };
         assert!(style.bold);
         assert!(style.underlined);
     }

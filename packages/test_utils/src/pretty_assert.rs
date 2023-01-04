@@ -8,11 +8,11 @@ mod styles {
     pub const EXPECTED: Style = style! { color: Green };
     pub const RECEIVED: Style = style! { color: Red };
 
-    pub const NORMAL: Style = style! { Dim };
-    pub const EMPHASIS: Style = style! { Reverse; Bold };
+    pub const NORMAL: Style = style! { Dimmed };
+    pub const EMPHASIS: Style = style! { Reversed; Bold };
 
     pub const SIGN: Style = style! { Bold };
-    pub const SEPARATOR: Style = style! { Italic; Dim };
+    pub const SEPARATOR: Style = style! { Italic; Dimmed };
 }
 
 pub fn pretty_assert<E, A>(expected: E, actual: A)
