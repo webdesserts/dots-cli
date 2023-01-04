@@ -101,7 +101,7 @@ fn main() {
             Error => "[error]".apply_style(styles::ERROR_LOG),
             Trace => "[trace]".apply_style(styles::TRACE_LOG),
         };
-        let string = format!("{}", args = record.args());
+        let string = format!("{args}", args = record.args());
         let indented = string
             .lines()
             .enumerate()
@@ -126,14 +126,14 @@ fn main() {
     let cli = Cli::parse();
 
     match &cli.commands {
-        Some(Commands::Add { repo, overwrite }) => commands::add(repo, overwrite.clone()),
+        Some(Commands::Add { repo, overwrite }) => commands::add(repo, *overwrite),
         Some(Commands::Install {
             repo,
             overwrite,
             force,
             dry,
-        }) => commands::install(repo, overwrite.clone(), force.clone(), dry.clone()),
-        Some(Commands::List { origins }) => commands::list(origins.clone()),
+        }) => commands::install(repo, *overwrite, *force, *dry),
+        Some(Commands::List { origins }) => commands::list(*origins),
         Some(Commands::Path { dot }) => commands::path(dot),
         _ => {
             println!("USAGE:\n    dots [SUBCOMMAND]")

@@ -33,7 +33,7 @@ impl DotPackageConfig {
             }
         };
 
-        let package = match parse_package(&contents) {
+        let package = match parse_package(contents) {
             Ok(package) => package,
             Err(err) => {
                 error!("Error parsing Dot.toml:\n{}", err);

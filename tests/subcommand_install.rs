@@ -110,9 +110,7 @@ mod subcommand_install {
         let manager = TestManager::new()?;
         let fixture = Fixture::ExampleDot;
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
-        let dots_root = manager.dots_dir();
         let home_dir = manager.home_dir();
-        let dot_path = dots_root.join(fixture.name());
 
         fs::remove_file(fixture_path.join("shell/bashrc"))?;
         commit_all(&fixture_path, "Remove bashrc")?;

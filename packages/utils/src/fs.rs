@@ -17,13 +17,13 @@ where
         let file_type = entry.file_type();
 
         let from = Utf8Path::from_path(entry.path()).unwrap();
-        let relative = from.strip_prefix(&source).unwrap();
-        let to = destination.join(&relative);
+        let relative = from.strip_prefix(source).unwrap();
+        let to = destination.join(relative);
 
         if file_type.is_file() {
             // We're explicitely avoiding using `fs::copy` here as it sends `cargo watch` into an infinite loop
-            fs::read(&from)
-                .and_then(|file| fs::write(&to, &file))
+            fs::read(from)
+                .and_then(|file| fs::write(&to, file))
                 .unwrap_or_else(|_| panic!("Failed to copy file from {from} to {to}"));
         }
         if file_type.is_dir() {
@@ -51,7 +51,7 @@ pub fn clean(path: &Utf8Path) {
 }
 
 pub fn empty_git_directory(path: &Utf8Path) -> anyhow::Result<()> {
-    let read_dir = fs::read_dir(&path)?;
+    let read_dir = fs::read_dir(path)?;
 
     for entry in read_dir {
         let entry = entry?;

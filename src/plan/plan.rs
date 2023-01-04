@@ -61,12 +61,7 @@ impl Plan {
         }
     }
 
-    pub fn clean(
-        &self,
-        env: &Environment,
-        fs_manager: &mut FSManager,
-        dots: &Vec<Dot>,
-    ) -> Result<()> {
+    pub fn clean(&self, env: &Environment, fs_manager: &mut FSManager, dots: &[Dot]) -> Result<()> {
         let links: Vec<Link> = dots
             .iter()
             .flat_map(|dot| &dot.links)
@@ -177,7 +172,7 @@ impl Plan {
                     )));
                 }
 
-                fs::remove_file(&dest)?;
+                fs::remove_file(dest)?;
             } else if dest.is_dir() {
                 if !force {
                     return Err(anyhow::Error::new(io::Error::new(
@@ -186,7 +181,7 @@ impl Plan {
                     )));
                 }
 
-                fs::remove_dir_all(&dest)?;
+                fs::remove_dir_all(dest)?;
             }
 
             if let Some(parent) = dest.parent() {
