@@ -163,7 +163,7 @@ impl Plan {
             };
 
             if dest.is_symlink() {
-                fs_manager.remove_symlink(src, dest)?;
+                fs_manager.remove_symlink(dest)?;
             } else if dest.is_file() {
                 if !force {
                     return Err(anyhow::Error::new(io::Error::new(

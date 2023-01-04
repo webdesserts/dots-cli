@@ -51,7 +51,7 @@ impl FSManager {
                 self.remove_footprint_link(link)?;
             } else if !valid_links.contains(link) {
                 debug!("    link is on fs but is no longer present in dot files, removing symlink & footprint link");
-                self.remove_symlink(&link.src.path, &link.dest.path)?;
+                self.remove_symlink(&link.dest.path)?;
                 self.remove_footprint_link(link)?;
             } else {
                 debug!("    leaving link alone")
