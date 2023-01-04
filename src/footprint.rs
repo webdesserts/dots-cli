@@ -34,11 +34,20 @@ impl From<&Link> for FootprintLink {
     }
 }
 
-impl Into<Link> for FootprintLink {
-    fn into(self) -> Link {
+impl From<FootprintLink> for Link {
+    fn from(link: FootprintLink) -> Self {
         Link {
-            src: Anchor::new_src(self.src),
-            dest: Anchor::new_dest(self.dest),
+            src: Anchor::new_src(link.src),
+            dest: Anchor::new_dest(link.dest),
+        }
+    }
+}
+
+impl From<&FootprintLink> for Link {
+    fn from(link: &FootprintLink) -> Self {
+        Link {
+            src: Anchor::new_src(link.src.clone()),
+            dest: Anchor::new_dest(link.dest.clone()),
         }
     }
 }
