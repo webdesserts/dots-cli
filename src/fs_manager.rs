@@ -84,7 +84,7 @@ impl FSManager {
         Ok(())
     }
 
-    /** Write the given contents to the the dot footprint */
+    /** Write the current footprint to the toml file */
     fn save_footprint(&self) -> Result<()> {
         let contents = toml::to_string(&self.footprint)?;
         fs::write(&self.footprint_path, contents)?;
