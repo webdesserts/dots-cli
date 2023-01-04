@@ -53,17 +53,6 @@ pub struct Plan {
     links: Vec<ResolvedLink>,
 }
 
-/**
- * What questions do I have?
- *
- * - When do we resolve? On new() or on validate()?
- * - If we need the persist a reference to a Dot over the course of the entire plan,
- *   where do we store it?
- *   - Reintroduce LinkRequest?
- *   - How do we associate a &dot with each link?
- * - What information do we want available whether we validate or not?
- */
-
 impl Plan {
     pub fn new(force: bool) -> Plan {
         Plan {

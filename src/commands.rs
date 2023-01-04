@@ -2,7 +2,6 @@ use std::process;
 
 use crate::dots::{self, Environment};
 use crate::fs_manager::FSManager;
-use crate::plan::resolve::ResolvedLink;
 use crate::plan::Plan;
 
 pub fn add(url: &str, overwrite: bool) {
