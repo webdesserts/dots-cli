@@ -9,7 +9,7 @@ mod styles {
     pub const RECEIVED: Style = Style::new().red();
 
     pub const NORMAL: Style = Style::new().dim();
-    pub const EMPHASIS: Style = Style::new().reverse().bold();
+    pub const EMPHASIS: Style = Style::new().invert().bold();
 
     pub const SIGN: Style = Style::new().bold();
     pub const SEPARATOR: Style = Style::new().italic().dim();
