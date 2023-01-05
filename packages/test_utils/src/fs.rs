@@ -1,24 +1,24 @@
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use std::fs;
-use utils::stylize::{Stylable, Style};
+use utils::stylize::Style;
 
 use crate::indent;
 
 mod styles {
-    use utils::{style, stylize::Style};
-    pub const PATH: Style = style! { Dimmed };
-    pub const DIR: Style = style! { Bold };
-    pub const LINK: Style = style! { Underline };
+    use utils::stylize::Style;
+    pub const PATH: Style = Style::new().dim();
+    pub const DIR: Style = Style::new().bold();
+    pub const LINK: Style = Style::new().underlined();
 
-    pub const EOF: Style = style! { Dimmed };
+    pub const EOF: Style = Style::new().dim();
 }
 
 pub fn ls<P: AsRef<Utf8Path>>(path: P) -> Result<()> {
     let path = path.as_ref();
 
     println!();
-    println!("{}", path.as_str().apply_style(styles::PATH));
+    println!("{}", styles::PATH.apply(path.as_str()));
 
     for entry in fs::read_dir(path)? {
         let entry = entry?;
@@ -26,14 +26,14 @@ pub fn ls<P: AsRef<Utf8Path>>(path: P) -> Result<()> {
         let mut style = Style::new();
 
         if path.is_dir() {
-            style = style.merge(&styles::DIR);
+            style = style + styles::DIR;
         }
         if path.is_symlink() {
-            style = style.merge(&styles::LINK);
+            style = style + styles::LINK;
         }
 
         if let Some(path) = path.file_name() {
-            println!("{}", indent(2, path).apply_style(style));
+            println!("{}", style.apply(indent(2, path)));
         }
     }
 
@@ -46,9 +46,9 @@ pub fn cat<P: AsRef<Utf8Path>>(path: P) -> Result<()> {
 
     let content = fs::read_to_string(path)?;
     println!();
-    println!("{}", path.as_str().apply_style(styles::PATH));
+    println!("{}", styles::PATH.apply(path.as_str()));
     println!("{}", indent(2, content));
-    println!("{}", "EOF".apply_style(styles::EOF));
+    println!("{}", styles::EOF.apply("EOF"));
     println!();
 
     Ok(())

@@ -5,14 +5,13 @@ use std::fmt::Display;
 use std::fs::FileType;
 use std::path::PathBuf;
 use std::{fmt, fs, io, process};
-use utils::stylize::Stylable;
 
 mod styles {
-    use utils::{style, stylize::Style};
+    use utils::stylize::Style;
 
-    pub const OK: Style = style! { color: Green };
-    pub const ERROR: Style = style! { color: Red };
-    pub const WARN: Style = style! { color: Yellow };
+    pub const OK: Style = Style::new().green();
+    pub const ERROR: Style = Style::new().red();
+    pub const WARN: Style = Style::new().yellow();
 
     pub const WARN_PATH: Style = WARN.underlined();
     pub const ERROR_PATH: Style = ERROR.italic();
@@ -173,9 +172,9 @@ impl Display for ResolvedLink {
         let dest = &self.dest;
 
         let statusmark = if src.has_errors() | dest.has_errors() {
-            "✖".apply_style(styles::ERROR)
+            styles::ERROR.apply("✖")
         } else {
-            "✔".apply_style(styles::OK)
+            styles::OK.apply("✔")
         };
 
         let mut src_path = src.original.path.to_string();
@@ -189,15 +188,15 @@ impl Display for ResolvedLink {
         }
 
         let src_msg = match src.max_issue_level() {
-            Some(Error) => src_path.apply_style(styles::ERROR_PATH).to_string(),
-            Some(Warning) => src_path.apply_style(styles::WARN_PATH).to_string(),
+            Some(Error) => styles::ERROR_PATH.apply(src_path).to_string(),
+            Some(Warning) => styles::WARN_PATH.apply(src_path).to_string(),
             None => src_path,
         };
 
         let dest_path = dest.original.path.to_string();
         let dest_msg = match dest.max_issue_level() {
-            Some(Error) => dest_path.apply_style(styles::ERROR_PATH).to_string(),
-            Some(Warning) => dest_path.apply_style(styles::WARN_PATH).to_string(),
+            Some(Error) => styles::ERROR_PATH.apply(dest_path).to_string(),
+            Some(Warning) => styles::WARN_PATH.apply(dest_path).to_string(),
             None => dest_path,
         };
 

@@ -8,15 +8,14 @@ use std::{
     fmt::{self, Display},
     io,
 };
-use utils::stylize::Stylable;
 
 use super::links::Link;
 use super::resolve::{ResolveIssue, ResolveIssueLevel};
 
 mod styles {
-    use utils::{style, stylize::Style};
+    use utils::stylize::Style;
 
-    pub const TITLE: Style = style! { Bold };
+    pub const TITLE: Style = Style::new().bold();
 }
 
 #[derive(Debug)]
@@ -76,7 +75,7 @@ impl Plan {
         let mut fixed_issues: Vec<&ResolveIssue> = vec![];
         for dot in dots {
             let title = format!("[{name}]", name = &dot.package.name);
-            eprintln!("\n{title}", title = title.apply_style(styles::TITLE));
+            eprintln!("\n{title}", title = styles::TITLE.apply(title));
             let links = dot.links;
 
             for mut link in links {
