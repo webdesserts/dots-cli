@@ -8,7 +8,6 @@ use std::{
     fmt::{self, Display},
     io,
 };
-use utils::stylize::Stylable;
 
 use super::resolve::{ResolveIssue, ResolveIssueLevel};
 
@@ -49,9 +48,9 @@ We always want to return an Array of Errors & Warnings even if it's empty
 */
 
 mod styles {
-    use utils::{style, stylize::Style};
+    use utils::stylize::Style;
 
-    pub const TITLE: Style = style! { Bold };
+    pub const TITLE: Style = Style::new().bold();
 }
 
 #[derive(Debug)]
@@ -95,7 +94,7 @@ impl Plan {
 
         for dot in dots {
             let title = format!("[{name}]", name = &dot.package.package.name);
-            eprintln!("\n{title}", title = title.apply_style(styles::TITLE));
+            eprintln!("\n{title}", title = styles::TITLE.apply(title));
             let links = dot.package.link.clone();
 
             for (src, dest) in links {
