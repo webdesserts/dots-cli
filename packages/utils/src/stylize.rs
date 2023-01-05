@@ -16,7 +16,7 @@ enum Color {
 }
 
 #[derive(Clone, Copy)]
-enum Attribute {
+enum Effect {
     Bold,
     Dimmed,
     Italic,
@@ -35,7 +35,7 @@ const DEFAULT: Style = Style {
     italic: false,
     underlined: false,
     blink: false,
-    reverse: false,
+    invert: false,
     hidden: false,
     strikethrough: false,
 };
@@ -49,7 +49,7 @@ pub struct Style {
     italic: bool,
     underlined: bool,
     blink: bool,
-    reverse: bool,
+    invert: bool,
     hidden: bool,
     strikethrough: bool,
 }
@@ -75,16 +75,16 @@ impl Style {
         self
     }
 
-    const fn set_attr(mut self, attribute: Attribute, enabled: bool) -> Self {
-        match attribute {
-            Attribute::Bold => self.bold = enabled,
-            Attribute::Dimmed => self.dim = enabled,
-            Attribute::Italic => self.italic = enabled,
-            Attribute::Underline => self.underlined = enabled,
-            Attribute::Blink => self.blink = enabled,
-            Attribute::Invert => self.reverse = enabled,
-            Attribute::Hidden => self.hidden = enabled,
-            Attribute::Strikethrough => self.strikethrough = enabled,
+    const fn set_effect(mut self, effect: Effect, enabled: bool) -> Self {
+        match effect {
+            Effect::Bold => self.bold = enabled,
+            Effect::Dimmed => self.dim = enabled,
+            Effect::Italic => self.italic = enabled,
+            Effect::Underline => self.underlined = enabled,
+            Effect::Blink => self.blink = enabled,
+            Effect::Invert => self.invert = enabled,
+            Effect::Hidden => self.hidden = enabled,
+            Effect::Strikethrough => self.strikethrough = enabled,
         }
         self
     }
@@ -140,28 +140,28 @@ impl Style {
     }
 
     pub const fn bold(&self) -> Style {
-        self.set_attr(Attribute::Bold, true)
+        self.set_effect(Effect::Bold, true)
     }
     pub const fn dim(&self) -> Style {
-        self.set_attr(Attribute::Dimmed, true)
+        self.set_effect(Effect::Dimmed, true)
     }
     pub const fn italic(&self) -> Style {
-        self.set_attr(Attribute::Italic, true)
+        self.set_effect(Effect::Italic, true)
     }
     pub const fn underlined(&self) -> Style {
-        self.set_attr(Attribute::Underline, true)
+        self.set_effect(Effect::Underline, true)
     }
     pub const fn blink(&self) -> Style {
-        self.set_attr(Attribute::Blink, true)
+        self.set_effect(Effect::Blink, true)
     }
-    pub const fn reverse(&self) -> Style {
-        self.set_attr(Attribute::Invert, true)
+    pub const fn invert(&self) -> Style {
+        self.set_effect(Effect::Invert, true)
     }
     pub const fn hidden(&self) -> Style {
-        self.set_attr(Attribute::Hidden, true)
+        self.set_effect(Effect::Hidden, true)
     }
     pub const fn strikethrough(&self) -> Style {
-        self.set_attr(Attribute::Strikethrough, true)
+        self.set_effect(Effect::Strikethrough, true)
     }
 
     const fn merge(&self, style: Style) -> Style {
@@ -179,7 +179,7 @@ impl Style {
             italic: style.italic || self.italic,
             underlined: style.underlined || self.underlined,
             blink: style.blink || self.blink,
-            reverse: style.reverse || self.reverse,
+            invert: style.invert || self.invert,
             hidden: style.hidden || self.hidden,
             strikethrough: style.strikethrough || self.strikethrough,
         }
@@ -218,7 +218,7 @@ impl From<&Style> for yansi::Style {
         if style.blink {
             converted = converted.blink()
         }
-        if style.reverse {
+        if style.invert {
             converted = converted.invert()
         }
         if style.hidden {
@@ -238,9 +238,9 @@ impl From<Color> for Style {
     }
 }
 
-impl From<Attribute> for Style {
-    fn from(attribute: Attribute) -> Self {
-        Style::new().set_attr(attribute, true)
+impl From<Effect> for Style {
+    fn from(effect: Effect) -> Self {
+        Style::new().set_effect(effect, true)
     }
 }
 
@@ -273,16 +273,16 @@ impl Add<Color> for Style {
     }
 }
 
-impl Add<Attribute> for Style {
+impl Add<Effect> for Style {
     type Output = Style;
-    fn add(self, attribute: Attribute) -> Self::Output {
-        self.set_attr(attribute, true)
+    fn add(self, effect: Effect) -> Self::Output {
+        self.set_effect(effect, true)
     }
 }
 
-impl Sub<Attribute> for Style {
+impl Sub<Effect> for Style {
     type Output = Style;
-    fn sub(self, attribute: Attribute) -> Self::Output {
-        self.set_attr(attribute, false)
+    fn sub(self, effect: Effect) -> Self::Output {
+        self.set_effect(effect, false)
     }
 }
