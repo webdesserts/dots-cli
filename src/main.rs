@@ -22,12 +22,11 @@ use std::io::Write;
 use clap::Parser;
 use env_logger::fmt::Formatter;
 use env_logger::Builder;
-use utils::stylize::Stylable;
 
 mod styles {
-    use utils::{style, stylize::Style};
+    use utils::stylize::Style;
 
-    const LOG: Style = style! { Bold };
+    const LOG: Style = Style::new().bold();
 
     pub const DEBUG_LOG: Style = LOG;
     pub const INFO_LOG: Style = LOG.blue();
@@ -93,11 +92,11 @@ fn main() {
     let log_format = |buf: &mut Formatter, record: &log::Record| -> Result<(), std::io::Error> {
         use log::Level::*;
         let level = match record.level() {
-            Debug => "[debug]".apply_style(styles::DEBUG_LOG),
-            Info => "[info]".apply_style(styles::INFO_LOG),
-            Warn => "[warn]".apply_style(styles::WARN_LOG),
-            Error => "[error]".apply_style(styles::ERROR_LOG),
-            Trace => "[trace]".apply_style(styles::TRACE_LOG),
+            Debug => styles::DEBUG_LOG.apply("[debug]"),
+            Info => styles::INFO_LOG.apply("[info]"),
+            Warn => styles::WARN_LOG.apply("[warn]"),
+            Error => styles::ERROR_LOG.apply("[error]"),
+            Trace => styles::TRACE_LOG.apply("[trace]"),
         };
         let string = format!("{}", args = record.args());
         let indented = string

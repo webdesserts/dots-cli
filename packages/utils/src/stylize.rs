@@ -1,4 +1,31 @@
-pub use owo_colors::{AnsiColors, Effect, Styled};
+use core::fmt;
+use std::ops::Add;
+
+use yansi;
+
+#[derive(Clone, Copy)]
+enum Color {
+    Black,
+    Red,
+    Green,
+    Blue,
+    Magenta,
+    Yellow,
+    Cyan,
+    White,
+}
+
+#[derive(Clone, Copy)]
+enum Attribute {
+    Bold,
+    Dimmed,
+    Italic,
+    Underline,
+    Blink,
+    Invert,
+    Hidden,
+    Strikethrough,
+}
 
 const DEFAULT: Style = Style {
     color: None,
@@ -8,7 +35,6 @@ const DEFAULT: Style = Style {
     italic: false,
     underlined: false,
     blink: false,
-    blink_fast: false,
     reverse: false,
     hidden: false,
     strikethrough: false,
@@ -16,8 +42,8 @@ const DEFAULT: Style = Style {
 
 #[derive(Clone, Copy)]
 pub struct Style {
-    color: Option<AnsiColors>,
-    background: Option<AnsiColors>,
+    color: Option<Color>,
+    background: Option<Color>,
     bold: bool,
     dim: bool,
     italic: bool,
@@ -25,37 +51,7 @@ pub struct Style {
     blink: bool,
     reverse: bool,
     hidden: bool,
-    blink_fast: bool,
     strikethrough: bool,
-}
-
-#[macro_export]
-macro_rules! style {
-    /* returns final expression if no more tokens remain */
-    (@props () -> ($style:expr)) => { $style };
-    /* Adds a color to the style */
-    (@props (color: $fg:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.color($crate::stylize::AnsiColors::$fg)))
-    };
-    /* Adds a background to the style */
-    (@props (background: $bg:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.background($crate::stylize::AnsiColors::$bg)))
-    };
-    /* Adds a color and matching background to the style */
-    (@props (color: $fg:ident on $bg:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.color($crate::stylize::AnsiColors::$fg).background($crate::stylize::AnsiColors::$bg)))
-    };
-    /* Adds an attribute to the style */
-    (@props ($attr:ident; $($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*) -> ($style.attr($crate::stylize::Effect::$attr)))
-    };
-    (@props ($($rest:tt)*) -> ($style:expr)) => {
-        style!(@props ($($rest)*;) -> ($style))
-    };
-    /* Creates the style and starts parsing for props */
-    ($($props:tt)*) => {
-        style!(@props ($($props)*) -> ($crate::stylize::Style::new()))
-    };
 }
 
 impl Style {
@@ -63,111 +59,113 @@ impl Style {
         Style { ..DEFAULT }
     }
 
-    pub const fn color(&self, color: AnsiColors) -> Style {
-        self.merge(&Self {
+    const fn color(&self, color: Color) -> Style {
+        self.merge(Self {
             color: Some(color),
             ..DEFAULT
         })
     }
 
-    pub const fn background(&self, background: AnsiColors) -> Style {
-        self.merge(&Self {
+    const fn background(&self, background: Color) -> Style {
+        self.merge(Self {
             background: Some(background),
             ..DEFAULT
         })
     }
 
-    pub const fn attr(&self, attribute: Effect) -> Style {
+    const fn attr(&self, attribute: Attribute) -> Style {
         let mut style = Style::new();
 
         match attribute {
-            Effect::Bold => style.bold = true,
-            Effect::Dimmed => style.dim = true,
-            Effect::Italic => style.italic = true,
-            Effect::Underline => style.underlined = true,
-            Effect::Blink => style.blink = true,
-            Effect::Reversed => style.reverse = true,
-            Effect::Hidden => style.hidden = true,
-            Effect::BlinkFast => style.blink_fast = true,
-            Effect::Strikethrough => style.strikethrough = true,
+            Attribute::Bold => style.bold = true,
+            Attribute::Dimmed => style.dim = true,
+            Attribute::Italic => style.italic = true,
+            Attribute::Underline => style.underlined = true,
+            Attribute::Blink => style.blink = true,
+            Attribute::Invert => style.reverse = true,
+            Attribute::Hidden => style.hidden = true,
+            Attribute::Strikethrough => style.strikethrough = true,
         }
 
-        self.merge(&style)
+        self.merge(style)
     }
 
     pub const fn black(&self) -> Style {
-        self.color(AnsiColors::Black)
+        self.color(Color::Black)
     }
     pub const fn red(&self) -> Style {
-        self.color(AnsiColors::Red)
+        self.color(Color::Red)
     }
     pub const fn green(&self) -> Style {
-        self.color(AnsiColors::Green)
+        self.color(Color::Green)
     }
     pub const fn yellow(&self) -> Style {
-        self.color(AnsiColors::Yellow)
+        self.color(Color::Yellow)
     }
     pub const fn blue(&self) -> Style {
-        self.color(AnsiColors::Blue)
+        self.color(Color::Blue)
     }
     pub const fn magenta(&self) -> Style {
-        self.color(AnsiColors::Magenta)
+        self.color(Color::Magenta)
     }
     pub const fn cyan(&self) -> Style {
-        self.color(AnsiColors::Cyan)
+        self.color(Color::Cyan)
     }
     pub const fn white(&self) -> Style {
-        self.color(AnsiColors::White)
+        self.color(Color::White)
     }
 
     pub const fn on_black(&self) -> Style {
-        self.background(AnsiColors::Black)
+        self.background(Color::Black)
     }
     pub const fn on_red(&self) -> Style {
-        self.background(AnsiColors::Red)
+        self.background(Color::Red)
     }
     pub const fn on_green(&self) -> Style {
-        self.background(AnsiColors::Green)
+        self.background(Color::Green)
     }
     pub const fn on_yellow(&self) -> Style {
-        self.background(AnsiColors::Yellow)
+        self.background(Color::Yellow)
     }
     pub const fn on_blue(&self) -> Style {
-        self.background(AnsiColors::Blue)
+        self.background(Color::Blue)
     }
     pub const fn on_magenta(&self) -> Style {
-        self.background(AnsiColors::Magenta)
+        self.background(Color::Magenta)
     }
     pub const fn on_cyan(&self) -> Style {
-        self.background(AnsiColors::Cyan)
+        self.background(Color::Cyan)
     }
     pub const fn on_white(&self) -> Style {
-        self.background(AnsiColors::White)
+        self.background(Color::White)
     }
 
     pub const fn bold(&self) -> Style {
-        self.attr(Effect::Bold)
+        self.attr(Attribute::Bold)
     }
     pub const fn dim(&self) -> Style {
-        self.attr(Effect::Dimmed)
+        self.attr(Attribute::Dimmed)
     }
     pub const fn italic(&self) -> Style {
-        self.attr(Effect::Italic)
+        self.attr(Attribute::Italic)
     }
     pub const fn underlined(&self) -> Style {
-        self.attr(Effect::Underline)
+        self.attr(Attribute::Underline)
     }
     pub const fn blink(&self) -> Style {
-        self.attr(Effect::Blink)
+        self.attr(Attribute::Blink)
     }
     pub const fn reverse(&self) -> Style {
-        self.attr(Effect::Reversed)
+        self.attr(Attribute::Invert)
     }
     pub const fn hidden(&self) -> Style {
-        self.attr(Effect::Hidden)
+        self.attr(Attribute::Hidden)
+    }
+    pub const fn strikethrough(&self) -> Style {
+        self.attr(Attribute::Strikethrough)
     }
 
-    pub const fn merge(&self, style: &Style) -> Style {
+    const fn merge(&self, style: Style) -> Style {
         Style {
             color: match style.color {
                 Some(color) => Some(color),
@@ -184,115 +182,101 @@ impl Style {
             blink: style.blink || self.blink,
             reverse: style.reverse || self.reverse,
             hidden: style.hidden || self.hidden,
-            blink_fast: style.blink_fast || self.blink_fast,
             strikethrough: style.strikethrough || self.strikethrough,
         }
     }
 
-    pub fn apply<D>(&self, val: D) -> Styled<D> {
-        self.to_owo_style().style(val)
+    pub fn apply<D: fmt::Display>(&self, val: D) -> impl fmt::Display {
+        let style: yansi::Style = self.into();
+        style.paint(val)
     }
+}
 
-    fn to_owo_style(&self) -> owo_colors::Style {
-        let mut style = owo_colors::Style::new();
+impl From<&Style> for yansi::Style {
+    fn from(style: &Style) -> Self {
+        let mut converted = yansi::Style::new(yansi::Color::Unset);
 
-        if let Some(fg) = self.color {
-            style = style.color(fg);
+        if let Some(fg) = style.color {
+            converted = converted.fg(fg.into());
         };
 
-        if let Some(bg) = self.background {
-            style = style.on_color(bg);
+        if let Some(bg) = style.background {
+            converted = converted.fg(bg.into());
         };
 
-        if self.bold {
-            style = style.bold()
+        if style.bold {
+            converted = converted.bold()
         }
-        if self.dim {
-            style = style.dimmed()
+        if style.dim {
+            converted = converted.dimmed()
         }
-        if self.italic {
-            style = style.italic()
+        if style.italic {
+            converted = converted.italic()
         }
-        if self.underlined {
-            style = style.underline()
+        if style.underlined {
+            converted = converted.underline()
         }
-        if self.blink {
-            style = style.blink()
+        if style.blink {
+            converted = converted.blink()
         }
-        if self.reverse {
-            style = style.reversed()
+        if style.reverse {
+            converted = converted.invert()
         }
-        if self.hidden {
-            style = style.hidden()
+        if style.hidden {
+            converted = converted.hidden()
         }
-        if self.blink_fast {
-            style = style.blink_fast()
-        }
-        if self.strikethrough {
-            style = style.strikethrough()
+        if style.strikethrough {
+            converted = converted.strikethrough()
         }
 
-        style
+        converted
     }
 }
 
-pub trait Stylable
-where
-    Self: Sized,
-{
-    fn apply_style(self, style: Style) -> Styled<Self>;
-}
-
-impl<'a> Stylable for &'a str {
-    fn apply_style(self, style: Style) -> Styled<Self> {
-        style.apply(self)
+impl From<Color> for Style {
+    fn from(color: Color) -> Self {
+        Style::new().color(color)
     }
 }
 
-impl Stylable for String {
-    fn apply_style(self, style: Style) -> Styled<Self> {
-        style.apply(self)
+impl From<Attribute> for Style {
+    fn from(attribute: Attribute) -> Self {
+        Style::new().attr(attribute)
     }
 }
 
-#[cfg(test)]
-mod tests {
-    // #![feature(trace_macros)]
-    // trace_macros!(true);
-
-    use owo_colors::AnsiColors;
-
-    #[test]
-    fn style_macro_should_accept_a_color() {
-        let style = style! { color: White };
-        assert_eq!(style.color, Some(AnsiColors::White))
+impl From<Color> for yansi::Color {
+    fn from(color: Color) -> Self {
+        match color {
+            Color::Black => yansi::Color::Black,
+            Color::Red => yansi::Color::Red,
+            Color::Green => yansi::Color::Green,
+            Color::Blue => yansi::Color::Blue,
+            Color::Magenta => yansi::Color::Magenta,
+            Color::Cyan => yansi::Color::Cyan,
+            Color::Yellow => yansi::Color::Yellow,
+            Color::White => yansi::Color::White,
+        }
     }
+}
 
-    #[test]
-    fn style_macro_should_allow_a_trailing_comma() {
-        let style = style! { color: White; };
-        assert_eq!(style.color, Some(AnsiColors::White));
-        assert_eq!(style.background, None);
+impl Add<Style> for Style {
+    type Output = Style;
+    fn add(self, rhs: Style) -> Self::Output {
+        self.merge(rhs)
     }
+}
 
-    #[test]
-    fn style_macro_should_accept_a_background_color() {
-        let style = style! { background: Black; };
-        assert_eq!(style.color, None);
-        assert_eq!(style.background, Some(AnsiColors::Black));
+impl Add<Color> for Style {
+    type Output = Style;
+    fn add(self, rhs: Color) -> Self::Output {
+        self.color(rhs)
     }
+}
 
-    #[test]
-    fn style_macro_should_accept_a_color_with_background_with_on_keyword() {
-        let style = style! { color: White on Black; };
-        assert_eq!(style.color, Some(AnsiColors::White));
-        assert_eq!(style.background, Some(AnsiColors::Black))
-    }
-
-    #[test]
-    fn style_macro_should_accept_an_attribute() {
-        let style = style! { Bold; Underline; };
-        assert_eq!(style.bold, true);
-        assert_eq!(style.underlined, true);
+impl Add<Attribute> for Style {
+    type Output = Style;
+    fn add(self, rhs: Attribute) -> Self::Output {
+        self.attr(rhs)
     }
 }

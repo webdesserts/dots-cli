@@ -1,19 +1,18 @@
 use similar::{Algorithm, ChangeTag, TextDiff};
 use std::fmt::Write;
 use std::process::Output;
-use utils::stylize::Stylable;
 
 mod styles {
-    use utils::{style, stylize::Style};
+    use utils::stylize::Style;
 
-    pub const EXPECTED: Style = style! { color: Green };
-    pub const RECEIVED: Style = style! { color: Red };
+    pub const EXPECTED: Style = Style::new().green();
+    pub const RECEIVED: Style = Style::new().red();
 
-    pub const NORMAL: Style = style! { Dimmed };
-    pub const EMPHASIS: Style = style! { Reversed; Bold };
+    pub const NORMAL: Style = Style::new().dim();
+    pub const EMPHASIS: Style = Style::new().reverse().bold();
 
-    pub const SIGN: Style = style! { Bold };
-    pub const SEPARATOR: Style = style! { Italic; Dimmed };
+    pub const SIGN: Style = Style::new().bold();
+    pub const SEPARATOR: Style = Style::new().italic().dim();
 }
 
 pub trait AssertableOutput {
@@ -124,23 +123,22 @@ where
 
                                 let mut line: String = String::from("");
 
-                                let sign_style = style.merge(&styles::SIGN);
+                                let sign_style = style + styles::SIGN;
 
-                                write!(line, "{} ", sign.apply_style(sign_style)).ok();
+                                write!(line, "{} ", sign_style.apply(sign)).ok();
 
                                 for &(emphasis, value) in change.values() {
                                     let mut value_style = style.clone();
 
                                     if emphasis {
-                                        value_style = value_style.merge(&styles::EMPHASIS);
+                                        value_style = value_style + styles::EMPHASIS;
                                     };
 
-                                    write!(line, "{}", value.apply_style(value_style)).ok();
+                                    write!(line, "{}", value_style.apply(value)).ok();
                                 }
 
                                 if change.missing_newline() {
-                                    writeln!(line, "{}", "↵".apply_style(styles::EXPECTED.bold()))
-                                        .ok();
+                                    writeln!(line, "{}", styles::EXPECTED.bold().apply("↵")).ok();
                                 }
 
                                 line
@@ -150,15 +148,15 @@ where
                     .collect();
                 format!(
                     "{separator}{group_diff}",
-                    separator = &group_sep.apply_style(styles::SEPARATOR),
+                    separator = (styles::SEPARATOR).apply(&group_sep),
                 )
             })
             .collect();
 
-        let received_label = "Received ".apply_style(styles::RECEIVED);
-        let expected_label = "Expected ".apply_style(styles::EXPECTED);
-        let expected_sign = "-".apply_style(styles::EXPECTED.merge(&styles::SIGN));
-        let received_sign = "+".apply_style(styles::RECEIVED.merge(&styles::SIGN));
+        let received_label = styles::RECEIVED.apply("Received ");
+        let expected_label = styles::EXPECTED.apply("Expected ");
+        let expected_sign = (styles::EXPECTED + styles::SIGN).apply("-");
+        let received_sign = (styles::RECEIVED + styles::SIGN).apply("+");
 
         let legend = format!("{expected_sign} {expected_label}\n{received_sign} {received_label}");
 
