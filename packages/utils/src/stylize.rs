@@ -1,5 +1,5 @@
 use core::fmt;
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
 use yansi;
 
@@ -65,110 +65,103 @@ impl Style {
         Style { ..DEFAULT }
     }
 
-    const fn color(&self, color: Color) -> Style {
-        self.merge(Self {
-            color: Some(color),
-            ..DEFAULT
-        })
+    const fn set_color(mut self, color: Color) -> Self {
+        self.color = Some(color);
+        self
     }
 
-    const fn background(&self, background: Color) -> Style {
-        self.merge(Self {
-            background: Some(background),
-            ..DEFAULT
-        })
+    const fn set_background(mut self, color: Color) -> Self {
+        self.background = Some(color);
+        self
     }
 
-    const fn attr(&self, attribute: Attribute) -> Style {
-        let mut style = Style::new();
-
+    const fn set_attr(mut self, attribute: Attribute, enabled: bool) -> Self {
         match attribute {
-            Attribute::Bold => style.bold = true,
-            Attribute::Dimmed => style.dim = true,
-            Attribute::Italic => style.italic = true,
-            Attribute::Underline => style.underlined = true,
-            Attribute::Blink => style.blink = true,
-            Attribute::Invert => style.reverse = true,
-            Attribute::Hidden => style.hidden = true,
-            Attribute::Strikethrough => style.strikethrough = true,
+            Attribute::Bold => self.bold = enabled,
+            Attribute::Dimmed => self.dim = enabled,
+            Attribute::Italic => self.italic = enabled,
+            Attribute::Underline => self.underlined = enabled,
+            Attribute::Blink => self.blink = enabled,
+            Attribute::Invert => self.reverse = enabled,
+            Attribute::Hidden => self.hidden = enabled,
+            Attribute::Strikethrough => self.strikethrough = enabled,
         }
-
-        self.merge(style)
+        self
     }
 
     pub const fn black(&self) -> Style {
-        self.color(Color::Black)
+        self.set_color(Color::Black)
     }
     pub const fn red(&self) -> Style {
-        self.color(Color::Red)
+        self.set_color(Color::Red)
     }
     pub const fn green(&self) -> Style {
-        self.color(Color::Green)
+        self.set_color(Color::Green)
     }
     pub const fn yellow(&self) -> Style {
-        self.color(Color::Yellow)
+        self.set_color(Color::Yellow)
     }
     pub const fn blue(&self) -> Style {
-        self.color(Color::Blue)
+        self.set_color(Color::Blue)
     }
     pub const fn magenta(&self) -> Style {
-        self.color(Color::Magenta)
+        self.set_color(Color::Magenta)
     }
     pub const fn cyan(&self) -> Style {
-        self.color(Color::Cyan)
+        self.set_color(Color::Cyan)
     }
     pub const fn white(&self) -> Style {
-        self.color(Color::White)
+        self.set_color(Color::White)
     }
 
     pub const fn on_black(&self) -> Style {
-        self.background(Color::Black)
+        self.set_background(Color::Black)
     }
     pub const fn on_red(&self) -> Style {
-        self.background(Color::Red)
+        self.set_background(Color::Red)
     }
     pub const fn on_green(&self) -> Style {
-        self.background(Color::Green)
+        self.set_background(Color::Green)
     }
     pub const fn on_yellow(&self) -> Style {
-        self.background(Color::Yellow)
+        self.set_background(Color::Yellow)
     }
     pub const fn on_blue(&self) -> Style {
-        self.background(Color::Blue)
+        self.set_background(Color::Blue)
     }
     pub const fn on_magenta(&self) -> Style {
-        self.background(Color::Magenta)
+        self.set_background(Color::Magenta)
     }
     pub const fn on_cyan(&self) -> Style {
-        self.background(Color::Cyan)
+        self.set_background(Color::Cyan)
     }
     pub const fn on_white(&self) -> Style {
-        self.background(Color::White)
+        self.set_background(Color::White)
     }
 
     pub const fn bold(&self) -> Style {
-        self.attr(Attribute::Bold)
+        self.set_attr(Attribute::Bold, true)
     }
     pub const fn dim(&self) -> Style {
-        self.attr(Attribute::Dimmed)
+        self.set_attr(Attribute::Dimmed, true)
     }
     pub const fn italic(&self) -> Style {
-        self.attr(Attribute::Italic)
+        self.set_attr(Attribute::Italic, true)
     }
     pub const fn underlined(&self) -> Style {
-        self.attr(Attribute::Underline)
+        self.set_attr(Attribute::Underline, true)
     }
     pub const fn blink(&self) -> Style {
-        self.attr(Attribute::Blink)
+        self.set_attr(Attribute::Blink, true)
     }
     pub const fn reverse(&self) -> Style {
-        self.attr(Attribute::Invert)
+        self.set_attr(Attribute::Invert, true)
     }
     pub const fn hidden(&self) -> Style {
-        self.attr(Attribute::Hidden)
+        self.set_attr(Attribute::Hidden, true)
     }
     pub const fn strikethrough(&self) -> Style {
-        self.attr(Attribute::Strikethrough)
+        self.set_attr(Attribute::Strikethrough, true)
     }
 
     const fn merge(&self, style: Style) -> Style {
@@ -241,13 +234,13 @@ impl From<&Style> for yansi::Style {
 
 impl From<Color> for Style {
     fn from(color: Color) -> Self {
-        Style::new().color(color)
+        Style::new().set_color(color)
     }
 }
 
 impl From<Attribute> for Style {
     fn from(attribute: Attribute) -> Self {
-        Style::new().attr(attribute)
+        Style::new().set_attr(attribute, true)
     }
 }
 
@@ -276,13 +269,20 @@ impl Add<Style> for Style {
 impl Add<Color> for Style {
     type Output = Style;
     fn add(self, rhs: Color) -> Self::Output {
-        self.color(rhs)
+        self.set_color(rhs)
     }
 }
 
 impl Add<Attribute> for Style {
     type Output = Style;
-    fn add(self, rhs: Attribute) -> Self::Output {
-        self.attr(rhs)
+    fn add(self, attribute: Attribute) -> Self::Output {
+        self.set_attr(attribute, true)
+    }
+}
+
+impl Sub<Attribute> for Style {
+    type Output = Style;
+    fn sub(self, attribute: Attribute) -> Self::Output {
+        self.set_attr(attribute, false)
     }
 }
