@@ -22,6 +22,7 @@ use std::io::Write;
 use clap::Parser;
 use env_logger::fmt::Formatter;
 use env_logger::Builder;
+use utils::stylize::Style;
 
 mod styles {
     use utils::stylize::Style;
@@ -87,6 +88,7 @@ enum Commands {
 }
 
 fn main() {
+    Style::detect_color_support();
     let mut builder = Builder::new();
 
     let log_format = |buf: &mut Formatter, record: &log::Record| -> Result<(), std::io::Error> {

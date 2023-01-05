@@ -55,6 +55,12 @@ pub struct Style {
 }
 
 impl Style {
+    pub fn detect_color_support() {
+        if supports_color::on(supports_color::Stream::Stdout).is_none() {
+            yansi::Paint::disable();
+        }
+    }
+
     pub const fn new() -> Style {
         Style { ..DEFAULT }
     }
