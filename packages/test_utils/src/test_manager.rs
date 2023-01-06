@@ -1,10 +1,13 @@
 use crate::Fixture;
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
+use std::fs;
+use std::io::Read;
 use std::process::Command;
 use tempfile::{tempdir, TempDir};
 use utils::fs::canonicalize;
 use utils::fs::copy_dir;
+use utils::fs::empty_git_directory;
 use utils::git;
 
 pub struct TestManager {
@@ -34,9 +37,18 @@ impl TestManager {
         self.home_dir().join(".dots")
     }
 
+    /** the path of the directory should be used as the installation root for all dots. */
+    pub fn footprint_path(&self) -> Utf8PathBuf {
+        self.dots_dir().join("dot-footprint.toml")
+    }
+
     /** The path of that the given fixture will be located at once initialized. */
     pub fn fixture_dir(&self, fixture: &Fixture) -> Utf8PathBuf {
         self.fixtures_dir().join(fixture.name())
+    }
+
+    pub fn expected_dot_path(&self, fixture: &Fixture) -> Utf8PathBuf {
+        self.dots_dir().join(fixture.name())
     }
 
     /** Creates a copy of the given fixture in the test directory */
@@ -45,7 +57,7 @@ impl TestManager {
         let fixture_dest = self.fixture_dir(fixture);
 
         copy_dir(&fixture_src, &fixture_dest)
-            .expect(format!("Failed to setup fixture {}", fixture_src).as_str());
+            .unwrap_or_else(|_| panic!("Failed to setup fixture {}", fixture_src));
 
         Ok(fixture_dest)
     }
@@ -63,10 +75,39 @@ impl TestManager {
         Ok(fixture_path)
     }
 
+    /** Creates a copy of the given fixture in the test directory */
+    pub fn overwrite_dot(&self, fixture1: &Fixture, fixture2: &Fixture) -> Result<()> {
+        let path = self.expected_dot_path(fixture1);
+        empty_git_directory(&path)?;
+        copy_dir(fixture2.template_path(), &path)?;
+        println!("{}{}", &path, fixture2.template_path());
+        Ok(())
+    }
+
+    pub fn remove_dot(&self, fixture: &Fixture) -> Result<()> {
+        let path = self.expected_dot_path(fixture);
+        fs::remove_dir_all(&path)?;
+        Ok(())
+    }
+
     pub fn cmd(&self, bin: &'static str) -> Result<Command> {
         let mut cmd = Command::new(&bin);
         cmd.env("HOME", self.home_dir());
         Ok(cmd)
+    }
+
+    pub fn read_footprint(&self) -> Result<String> {
+        let path = self.footprint_path();
+        let mut file = fs::File::open(path)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+        Ok(contents)
+    }
+
+    pub fn write_footprint<T: AsRef<str>>(&self, contents: T) -> Result<()> {
+        let contents = contents.as_ref();
+        fs::write(self.footprint_path(), contents)?;
+        Ok(())
     }
 }
 

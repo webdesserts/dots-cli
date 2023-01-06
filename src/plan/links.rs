@@ -1,10 +1,11 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use std::fmt;
+use std::{fmt, fs};
 
 /*=======*\
 *  Links  *
 \*=======*/
 
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct Link {
     /// The path to the dotfile
     pub src: Anchor,
@@ -22,13 +23,24 @@ impl Link {
             dest: Anchor::new_dest(dest),
         }
     }
+
+    pub fn exists(&self) -> bool {
+        let Ok(path) = fs::read_link(&self.dest.path) else { return false };
+        path == self.src.path
+    }
+}
+
+impl fmt::Debug for Link {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} => {}", self.dest.path, self.src.path)
+    }
 }
 
 /*=========*\
 *  Anchors  *
 \*=========*/
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct Anchor {
     /// Whether the path to a dotfile or a symlink
     pub kind: AnchorKind,
@@ -58,7 +70,7 @@ impl Anchor {
     }
 }
 
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Debug, PartialOrd, Ord)]
 pub enum AnchorKind {
     /// An anchor for dotfile path
     Source,

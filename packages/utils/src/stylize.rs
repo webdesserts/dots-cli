@@ -65,16 +65,19 @@ impl Style {
         Style { ..DEFAULT }
     }
 
+    #[must_use]
     const fn set_color(mut self, color: Color) -> Self {
         self.color = Some(color);
         self
     }
 
+    #[must_use]
     const fn set_background(mut self, color: Color) -> Self {
         self.background = Some(color);
         self
     }
 
+    #[must_use]
     const fn set_effect(mut self, effect: Effect, enabled: bool) -> Self {
         match effect {
             Effect::Bold => self.bold = enabled,
@@ -89,81 +92,106 @@ impl Style {
         self
     }
 
+    #[must_use]
     pub const fn black(&self) -> Style {
         self.set_color(Color::Black)
     }
+    #[must_use]
     pub const fn red(&self) -> Style {
         self.set_color(Color::Red)
     }
+    #[must_use]
     pub const fn green(&self) -> Style {
         self.set_color(Color::Green)
     }
+    #[must_use]
     pub const fn yellow(&self) -> Style {
         self.set_color(Color::Yellow)
     }
+    #[must_use]
     pub const fn blue(&self) -> Style {
         self.set_color(Color::Blue)
     }
+    #[must_use]
     pub const fn magenta(&self) -> Style {
         self.set_color(Color::Magenta)
     }
+    #[must_use]
     pub const fn cyan(&self) -> Style {
         self.set_color(Color::Cyan)
     }
+    #[must_use]
     pub const fn white(&self) -> Style {
         self.set_color(Color::White)
     }
 
+    #[must_use]
     pub const fn on_black(&self) -> Style {
         self.set_background(Color::Black)
     }
+    #[must_use]
     pub const fn on_red(&self) -> Style {
         self.set_background(Color::Red)
     }
+    #[must_use]
     pub const fn on_green(&self) -> Style {
         self.set_background(Color::Green)
     }
+    #[must_use]
     pub const fn on_yellow(&self) -> Style {
         self.set_background(Color::Yellow)
     }
+    #[must_use]
     pub const fn on_blue(&self) -> Style {
         self.set_background(Color::Blue)
     }
+    #[must_use]
     pub const fn on_magenta(&self) -> Style {
         self.set_background(Color::Magenta)
     }
+    #[must_use]
     pub const fn on_cyan(&self) -> Style {
         self.set_background(Color::Cyan)
     }
+    #[must_use]
     pub const fn on_white(&self) -> Style {
         self.set_background(Color::White)
     }
 
+    #[must_use]
     pub const fn bold(&self) -> Style {
         self.set_effect(Effect::Bold, true)
     }
+    #[must_use]
     pub const fn dim(&self) -> Style {
         self.set_effect(Effect::Dimmed, true)
     }
+    #[must_use]
     pub const fn italic(&self) -> Style {
         self.set_effect(Effect::Italic, true)
     }
+    #[must_use]
     pub const fn underlined(&self) -> Style {
         self.set_effect(Effect::Underline, true)
     }
+    #[must_use]
     pub const fn blink(&self) -> Style {
         self.set_effect(Effect::Blink, true)
     }
+    #[must_use]
     pub const fn invert(&self) -> Style {
         self.set_effect(Effect::Invert, true)
     }
+    #[must_use]
     pub const fn hidden(&self) -> Style {
         self.set_effect(Effect::Hidden, true)
     }
+    #[must_use]
     pub const fn strikethrough(&self) -> Style {
         self.set_effect(Effect::Strikethrough, true)
     }
 
+    #[must_use]
     const fn merge(&self, style: Style) -> Style {
         Style {
             color: match style.color {
@@ -185,6 +213,7 @@ impl Style {
         }
     }
 
+    #[must_use]
     pub fn apply<D: fmt::Display>(&self, val: D) -> impl fmt::Display {
         let style: yansi::Style = self.into();
         style.paint(val)

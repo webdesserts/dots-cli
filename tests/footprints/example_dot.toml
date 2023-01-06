@@ -1,0 +1,7 @@
+[[links]]
+src = "{HOME}/.dots/example_dot/shell/bashrc"
+dest = "{HOME}/.bashrc"
+
+[[links]]
+src = "{HOME}/.dots/example_dot/shell/zshrc"
+dest = "{HOME}/.zshrc"
