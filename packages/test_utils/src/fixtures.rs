@@ -4,6 +4,8 @@ use utils::fs::current_dir;
 
 pub enum Fixture {
     ExampleDot,
+    ExampleDotWithUnlinkedFile,
+    ExampleDotWithLinkAdded,
     ExampleDotWithDirectory,
     ConflictingDot,
 }
@@ -18,6 +20,8 @@ impl Fixture {
     pub fn name(&self) -> &str {
         match self {
             Self::ExampleDotWithDirectory => "example_dot_with_directory",
+            Self::ExampleDotWithLinkAdded => "example_dot",
+            Self::ExampleDotWithUnlinkedFile => "example_dot",
             Self::ExampleDot => "example_dot",
             Self::ConflictingDot => "conflicting_dot",
         }
@@ -25,7 +29,15 @@ impl Fixture {
 
     /** The path where this specific fixture's template can be found */
     pub fn template_path(&self) -> Utf8PathBuf {
-        Self::templates_root().join(self.name())
+        match self {
+            Self::ExampleDotWithLinkAdded => {
+                Self::templates_root().join("example_dot_with_link_added")
+            }
+            Self::ExampleDotWithUnlinkedFile => {
+                Self::templates_root().join("example_dot_with_unlinked_file")
+            }
+            _ => Self::templates_root().join(self.name()),
+        }
     }
 }
 

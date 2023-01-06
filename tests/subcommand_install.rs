@@ -1,7 +1,9 @@
 mod subcommand_install {
     use std::{fs, os::unix};
-    use test_utils::{cargo_bin, AssertableOutput, Fixture, TestManager, TestResult};
-    use utils::git::commit_all;
+    use test_utils::{
+        cargo_bin, pretty_assert, AssertableOutput, Fixture, TestManager, TestResult,
+    };
+    use utils::{fs::soft_link, git::commit_all};
 
     const BIN: &str = cargo_bin!("dots");
 
@@ -108,9 +110,7 @@ mod subcommand_install {
         let manager = TestManager::new()?;
         let fixture = Fixture::ExampleDot;
         let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
-        let dots_root = manager.dots_dir();
         let home_dir = manager.home_dir();
-        let dot_path = dots_root.join(fixture.name());
 
         fs::remove_file(fixture_path.join("shell/bashrc"))?;
         commit_all(&fixture_path, "Remove bashrc")?;
@@ -401,6 +401,238 @@ mod subcommand_install {
             home_dir.join(".zshrc").read_link()?,
             dot_dir.join("shell/zshrc")
         );
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_write_the_installed_links_to_a_dot_footprint() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let footprint_path = manager.footprint_path();
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        assert!(footprint_path.exists());
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot.toml"),
+                HOME = &home_path
+            ),
+            manager.read_footprint()?,
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn it_should_update_the_footprint_when_adding_a_link_and_a_footprint_already_existed(
+    ) -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture1 = Fixture::ExampleDot;
+        let fixture2 = Fixture::ExampleDotWithLinkAdded;
+        let fixture1_path = manager.setup_fixture_as_git_repo(&fixture1)?;
+        let footprint_path = manager.footprint_path();
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture1_path)
+            .output()?;
+
+        manager.overwrite_dot(&fixture1, &fixture2)?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        assert!(footprint_path.exists());
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot_with_link_added.toml"),
+                HOME = &home_path
+            ),
+            manager.read_footprint()?,
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn it_should_remove_a_link_from_the_footprint_when_the_dot_link_was_removed() -> TestResult
+    {
+        let manager = TestManager::new()?;
+        let fixture1 = Fixture::ExampleDotWithLinkAdded;
+        let fixture2 = Fixture::ExampleDot;
+        let fixture1_path = manager.setup_fixture_as_git_repo(&fixture1)?;
+        let footprint_path = manager.footprint_path();
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture1_path)
+            .output()?;
+
+        manager.overwrite_dot(&fixture1, &fixture2)?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        assert!(footprint_path.exists());
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot.toml"),
+                HOME = &home_path
+            ),
+            manager.read_footprint()?,
+        );
+
+        Ok(())
+    }
+
+    /// This can happen if the symlink was manually removed from both the fs
+    /// and the dot.toml (but maybe not the file?).
+    #[test]
+    pub fn it_should_clean_up_footprint_links_whos_symlink_removed_from_the_fs() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture1 = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture1)?;
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        manager.write_footprint(format!(
+            include_str!("footprints/example_dot_with_link_added.toml"),
+            HOME = home_path
+        ))?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        let footprint = manager.read_footprint()?;
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot.toml"),
+                HOME = home_path
+            ),
+            footprint,
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn it_should_clean_up_footprint_links_whos_symlinks_are_pointing_to_files_outside_the_dots_dir(
+    ) -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        manager.write_footprint(format!(
+            include_str!("footprints/example_dot_with_invalid_link.toml"),
+            HOME = home_path
+        ))?;
+
+        soft_link(home_path.join(".bash_profile"), home_path.join(".bashrc"))?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        // symlink should be left alone
+        assert!(home_path.join(".bash_profile").is_symlink());
+
+        // footprint link should be removed
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot.toml"),
+                HOME = home_path
+            ),
+            manager.read_footprint()?,
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn it_should_clean_up_footprint_links_whos_symlinks_are_pointing_to_a_missing_file_in_the_dots_dir(
+    ) -> TestResult {
+        // Use Case: When you install a dot and one of the dot's links has been removed.
+        // expect footprint link to be removed
+        // expect symlink to be removed from filesystem
+
+        let manager = TestManager::new()?;
+        let fixture1 = Fixture::ExampleDot;
+        let fixture2 = Fixture::ExampleDotWithUnlinkedFile;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture1)?;
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        manager.overwrite_dot(&fixture1, &fixture2)?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        // symlink should be removed
+        assert!(!home_path.join(".bashrc").exists());
+
+        // footprint link should be removed
+        pretty_assert(
+            format!(
+                include_str!("footprints/example_dot_with_unlinked_file.toml"),
+                HOME = home_path
+            ),
+            manager.read_footprint()?,
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn it_should_clean_up_footprint_links_whos_symlinks_are_not_present_in_any_dot_toml(
+    ) -> TestResult {
+        // expect footprint link to be removed
+        // expect the symlink to be removed from the filesystem
+
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let home_path = manager.home_dir();
+
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        manager.remove_dot(&fixture)?;
+
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        assert!(!home_path.join(".bashrc").is_symlink());
+        assert!(!home_path.join(".zshrc").is_symlink());
+
+        pretty_assert(
+            include_str!("footprints/empty_footprint.toml"),
+            manager.read_footprint()?,
+        );
+
         Ok(())
     }
 }

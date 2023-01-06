@@ -49,7 +49,7 @@ where
 {
     let path = path.as_ref();
 
-    map_result(Command::new("git").arg("init").current_dir(&path).output())?;
+    map_result(Command::new("git").arg("init").current_dir(path).output())?;
 
     Ok(())
 }
@@ -65,7 +65,7 @@ where
             .arg("config")
             .arg(key)
             .arg(value)
-            .current_dir(&path)
+            .current_dir(path)
             .output(),
     )?;
 
@@ -82,7 +82,7 @@ where
         Command::new("git")
             .arg("add")
             .arg("--all")
-            .current_dir(&path)
+            .current_dir(path)
             .output(),
     )?;
 
@@ -91,7 +91,7 @@ where
             .arg("commit")
             .arg("-m")
             .arg(format!("\"{message}\""))
-            .current_dir(&path)
+            .current_dir(path)
             .output(),
     )?;
 

@@ -15,6 +15,8 @@ extern crate toml;
 mod commands;
 mod dot_package;
 pub mod dots;
+mod footprint;
+mod fs_manager;
 pub mod plan;
 
 use std::io::Write;
@@ -100,7 +102,7 @@ fn main() {
             Error => styles::ERROR_LOG.apply("[error]"),
             Trace => styles::TRACE_LOG.apply("[trace]"),
         };
-        let string = format!("{}", args = record.args());
+        let string = format!("{args}", args = record.args());
         let indented = string
             .lines()
             .enumerate()
@@ -125,14 +127,14 @@ fn main() {
     let cli = Cli::parse();
 
     match &cli.commands {
-        Some(Commands::Add { repo, overwrite }) => commands::add(repo, overwrite),
+        Some(Commands::Add { repo, overwrite }) => commands::add(repo, *overwrite),
         Some(Commands::Install {
             repo,
             overwrite,
             force,
             dry,
-        }) => commands::install(repo, overwrite, force, dry),
-        Some(Commands::List { origins }) => commands::list(origins),
+        }) => commands::install(repo, *overwrite, *force, *dry),
+        Some(Commands::List { origins }) => commands::list(*origins),
         Some(Commands::Path { dot }) => commands::path(dot),
         _ => {
             println!("USAGE:\n    dots [SUBCOMMAND]")
