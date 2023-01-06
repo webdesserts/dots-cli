@@ -3,4 +3,4 @@ name = "conflicting_dot"
 authors = [ "Michael Mullins" ]
 
 [link]
-"shell/bashrc" = "~/.bashrc"
+"~/.bashrc" = "shell/bashrc"

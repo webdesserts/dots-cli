@@ -3,4 +3,4 @@ name = "example_dot"
 authors = [ "Michael Mullins" ]
 
 [link]
-"shell/zshrc" = "~/.zshrc"
+"~/.zshrc" = "shell/zshrc"

@@ -3,6 +3,6 @@ name = "example_dot"
 authors = ["Michael Mullins"]
 
 [link]
-"shell/bashrc" = "~/.bashrc"
-"shell/bash_profile" = "~/.bash_profile"
-"shell/zshrc" = "~/.zshrc"
+"~/.bashrc" = "shell/bashrc" 
+"~/.bash_profile" = "shell/bash_profile"
+"~/.zshrc" = "shell/zshrc"
