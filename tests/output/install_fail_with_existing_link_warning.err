@@ -1,7 +1,7 @@
 
 [example_dot]
-✔ shell/bashrc => ~/.bashrc
-✔ shell/zshrc => ~/.zshrc
+✔ ~/.bashrc => shell/bashrc
+✔ ~/.zshrc => shell/zshrc
 
 [warn] Destination already exists as a symbolic link to another file: ~/.bashrc
 
