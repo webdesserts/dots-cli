@@ -1,0 +1,8 @@
+[package]
+name = "example_dot"
+authors = ["Michael Mullins"]
+
+[link]
+"~/.bashrc" = "shell/bashrc" 
+"~/.bash_profile" = "shell/bashrc"
+"~/.zshrc" = "shell/zshrc"

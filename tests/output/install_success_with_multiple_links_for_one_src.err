@@ -1,0 +1,12 @@
+[info] Adding {SRC_PATH}
+[info] Cloning...
+[info] Copying to {DEST_PATH}
+[info] Done!
+
+[example_dot]
+✔ ~/.bash_profile => shell/bashrc
+✔ ~/.bashrc => shell/bashrc
+✔ ~/.zshrc => shell/zshrc
+
+[info] Looks Good! Nothing wrong with the current install plan!
+[info] Install was a success!
