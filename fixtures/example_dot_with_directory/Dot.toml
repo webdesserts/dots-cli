@@ -3,4 +3,4 @@ name = "example_dot_with_directory"
 authors = ["Michael Mullins"]
 
 [link]
-"bin" = "~/bin"
+"~/bin" = "bin"

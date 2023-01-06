@@ -1,10 +1,10 @@
 
 [conflicting_dot]
-✔ shell/bashrc => ~/.bashrc
+✔ ~/.bashrc => shell/bashrc
 
 [example_dot]
-✖ shell/bashrc => ~/.bashrc
-✔ shell/zshrc => ~/.zshrc
+✖ ~/.bashrc => shell/bashrc
+✔ ~/.zshrc => shell/zshrc
 
 [error] Multiple dots link to the following destination: ~/.bashrc
 

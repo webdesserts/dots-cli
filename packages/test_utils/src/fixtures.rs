@@ -6,6 +6,7 @@ pub enum Fixture {
     ExampleDot,
     ExampleDotWithUnlinkedFile,
     ExampleDotWithLinkAdded,
+    ExampleDotWithMultiLink,
     ExampleDotWithDirectory,
     ConflictingDot,
 }
@@ -21,6 +22,7 @@ impl Fixture {
         match self {
             Self::ExampleDotWithDirectory => "example_dot_with_directory",
             Self::ExampleDotWithLinkAdded => "example_dot",
+            Self::ExampleDotWithMultiLink => "example_dot",
             Self::ExampleDotWithUnlinkedFile => "example_dot",
             Self::ExampleDot => "example_dot",
             Self::ConflictingDot => "conflicting_dot",
@@ -32,6 +34,9 @@ impl Fixture {
         match self {
             Self::ExampleDotWithLinkAdded => {
                 Self::templates_root().join("example_dot_with_link_added")
+            }
+            Self::ExampleDotWithMultiLink => {
+                Self::templates_root().join("example_dot_with_multi_link")
             }
             Self::ExampleDotWithUnlinkedFile => {
                 Self::templates_root().join("example_dot_with_unlinked_file")
