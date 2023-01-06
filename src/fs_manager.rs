@@ -1,5 +1,5 @@
 use anyhow::Result;
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8PathBuf;
 use std::{fs, io, os::unix};
 
 use crate::{dots::Environment, footprint::Footprint, plan::links::Link};
@@ -51,7 +51,7 @@ impl FSManager {
                 self.remove_footprint_link(link)?;
             } else if !valid_links.contains(link) {
                 debug!("    link is on fs but is no longer present in dot files, removing symlink & footprint link");
-                self.remove_symlink(&link.dest.path)?;
+                self.remove_symlink(link)?;
                 self.remove_footprint_link(link)?;
             } else {
                 debug!("    leaving link alone")
@@ -70,15 +70,15 @@ impl FSManager {
     /**
      * Removes the given symlink from fs
      */
-    pub fn remove_symlink(&self, dest: &Utf8Path) -> io::Result<()> {
-        fs::remove_file(dest)?;
+    pub fn remove_symlink(&self, link: &Link) -> io::Result<()> {
+        fs::remove_file(&link.dest.path)?;
         Ok(())
     }
 
     /** Creates the given symlink and tracks that link in the dot footprint */
-    pub fn create_symlink(&mut self, src: &Utf8Path, dest: &Utf8Path) -> Result<()> {
-        unix::fs::symlink(src, dest)?;
-        self.footprint.links.insert(Link::new(src, dest));
+    pub fn create_symlink(&mut self, link: &Link) -> Result<()> {
+        unix::fs::symlink(&link.src.path, &link.dest.path)?;
+        self.footprint.links.insert(link.clone());
         self.save_footprint()?;
 
         Ok(())

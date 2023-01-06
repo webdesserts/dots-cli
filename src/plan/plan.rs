@@ -151,19 +151,16 @@ impl Plan {
     }
 
     pub fn execute(&self, fs_manager: &mut FSManager, force: bool) -> Result<()> {
-        for link in &self.links {
-            let src = match &link.src.path {
-                Some(path) => path,
-                None => continue,
-            };
-            let dest = match &link.dest.path {
-                Some(path) => path,
-                None => continue,
-            };
+        let links: Vec<Link> = self
+            .links
+            .iter()
+            .filter_map(|resolved_link| resolved_link.as_link())
+            .collect();
 
-            if dest.is_symlink() {
-                fs_manager.remove_symlink(dest)?;
-            } else if dest.is_file() {
+        for link in links {
+            if link.dest.path.is_symlink() {
+                fs_manager.remove_symlink(&link)?;
+            } else if link.dest.path.is_file() {
                 if !force {
                     return Err(anyhow::Error::new(io::Error::new(
                         io::ErrorKind::AlreadyExists,
@@ -171,8 +168,8 @@ impl Plan {
                     )));
                 }
 
-                fs::remove_file(dest)?;
-            } else if dest.is_dir() {
+                fs::remove_file(&link.dest.path)?;
+            } else if link.dest.path.is_dir() {
                 if !force {
                     return Err(anyhow::Error::new(io::Error::new(
                         io::ErrorKind::AlreadyExists,
@@ -180,14 +177,14 @@ impl Plan {
                     )));
                 }
 
-                fs::remove_dir_all(dest)?;
+                fs::remove_dir_all(&link.dest.path)?;
             }
 
-            if let Some(parent) = dest.parent() {
+            if let Some(parent) = link.dest.path.parent() {
                 fs::create_dir_all(parent)?;
             }
 
-            fs_manager.create_symlink(src, dest)?;
+            fs_manager.create_symlink(&link)?;
         }
         Ok(())
     }
@@ -218,6 +215,7 @@ impl Plan {
             .collect()
     }
 
+    #[allow(unused)]
     fn errors(&self) -> Vec<&ResolveIssue> {
         self.issues()
             .into_iter()
