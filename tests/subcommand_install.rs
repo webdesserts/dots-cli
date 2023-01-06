@@ -79,6 +79,49 @@ mod subcommand_install {
         assert_eq!(home_dir.join("bin").read_link()?, dot_path.join("bin"));
         Ok(())
     }
+
+    #[test]
+    fn it_should_display_and_install_the_given_plan_when_it_contains_multiple_links_pointing_to_the_same_src(
+    ) -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDotWithMultiLink;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
+        let home_dir = manager.home_dir();
+        let dot_path = dots_root.join(fixture.name());
+
+        let output = manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        let expected_err = format!(
+            std::include_str!("output/install_success_with_multiple_links_for_one_src.err"),
+            SRC_PATH = fixture_path,
+            DEST_PATH = dot_path,
+        );
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_success();
+
+        assert!(dot_path.is_dir());
+        assert!(dot_path.join("Dot.toml").is_file());
+        assert!(home_dir.join(".bashrc").is_symlink());
+        assert!(home_dir.join(".bash_profile").is_symlink());
+        assert_eq!(
+            home_dir.join(".bashrc").read_link()?,
+            dot_path.join("shell/bashrc")
+        );
+        assert_eq!(
+            home_dir.join(".bash_profile").read_link()?,
+            dot_path.join("shell/bashrc")
+        );
+        Ok(())
+    }
+
     #[test]
     fn it_should_display_the_install_plan_but_not_install_if_the_dry_option_is_passed() -> TestResult
     {

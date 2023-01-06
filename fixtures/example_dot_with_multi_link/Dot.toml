@@ -4,5 +4,5 @@ authors = ["Michael Mullins"]
 
 [link]
 "~/.bashrc" = "shell/bashrc" 
-"~/.bash_profile" = "shell/bash_profile"
+"~/.bash_profile" = "shell/bashrc"
 "~/.zshrc" = "shell/zshrc"

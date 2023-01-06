@@ -24,7 +24,7 @@ impl Dot {
         let links = config
             .link
             .iter()
-            .map(|(src, dest)| resolve(path, Link::new(src, dest)))
+            .map(|(dest, src)| resolve(path, Link::new(src, dest)))
             .collect();
 
         Ok(Dot {

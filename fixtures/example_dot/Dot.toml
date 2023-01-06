@@ -3,5 +3,5 @@ name = "example_dot"
 authors = [ "Michael Mullins" ]
 
 [link]
-"shell/bashrc" = "~/.bashrc"
-"shell/zshrc" = "~/.zshrc"
+"~/.bashrc" = "shell/bashrc"
+ "~/.zshrc" = "shell/zshrc"

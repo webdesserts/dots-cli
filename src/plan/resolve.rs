@@ -200,7 +200,7 @@ impl Display for ResolvedLink {
             None => dest_path,
         };
 
-        write!(f, "{} {} => {}", statusmark, src_msg, dest_msg)
+        write!(f, "{} {} => {}", statusmark, dest_msg, src_msg)
     }
 }
 
