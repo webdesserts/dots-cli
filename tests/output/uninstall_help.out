@@ -1,0 +1,11 @@
+dots-uninstall 
+Removes and unlinks dots
+
+USAGE:
+    dots uninstall [DOT_NAME]
+
+ARGS:
+    <DOT_NAME>    The name of the dot you'd like to remove
+
+OPTIONS:
+    -h, --help    Print help information

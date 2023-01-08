@@ -57,6 +57,22 @@ pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
     }
 }
 
+pub fn uninstall(name: &Option<String>) {
+    let env = Environment::new();
+    if let Some(name) = name {
+        dots::remove(name, &env).unwrap();
+    };
+    let plan = Plan::new(false);
+    let mut fs_manager = FSManager::init(&env);
+    let dots = dots::find_all(&env);
+    plan.clean(&env, &mut fs_manager, &dots)
+        .unwrap_or_else(|err| {
+            error!("failed to clean current install:");
+            error!("{}", err);
+            process::exit(1);
+        });
+}
+
 pub fn list(origins: bool) {
     let env = Environment::new();
     let mut lines = vec![];
