@@ -147,6 +147,32 @@ pub fn add(url: &str, overwrite: bool, env: &Environment) {
     };
 }
 
+pub fn remove(dot_name: &str, env: &Environment) -> Result<()> {
+    match find(dot_name, env) {
+        Some(dot) => {
+            fs::remove_dir_all(&dot.path).unwrap_or_else(|err| {
+                error!("Unable to remove dot directory:\n{}", dot.path);
+                error!("{}", err);
+                process::exit(1);
+            });
+        }
+        None => {
+            error!(
+                "Unable to find an installed dot with the name: {}",
+                dot_name
+            );
+            process::exit(1);
+        }
+    }
+    Ok(())
+}
+
+pub fn find(dot_name: &str, env: &Environment) -> Option<Dot> {
+    find_all(env)
+        .into_iter()
+        .find(|dot| dot.package.name == dot_name)
+}
+
 pub fn find_all(env: &Environment) -> Vec<Dot> {
     let dir = match env.root.read_dir() {
         Ok(read_dir) => read_dir,
