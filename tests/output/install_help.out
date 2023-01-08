@@ -1,5 +1,5 @@
 dots-install 
-Installs all Dots
+Downloads and links dots
 
 USAGE:
     dots install [OPTIONS] [REPO]

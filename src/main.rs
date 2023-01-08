@@ -56,7 +56,7 @@ enum Commands {
         overwrite: bool,
     },
 
-    /// Installs all Dots
+    /// Downloads and links dots
     Install {
         /// An optional git url that points to a Dot repo that you want to add before installing
         repo: Option<String>,
@@ -72,6 +72,12 @@ enum Commands {
         /// Run through the install plan without actually making any changes
         #[clap(long)]
         dry: bool,
+    },
+
+    /// Removes and unlinks dots
+    Uninstall {
+        /// The name of the dot you'd like to remove
+        dot_name: Option<String>,
     },
 
     /// List the names of all installed dots
@@ -134,6 +140,7 @@ fn main() {
             force,
             dry,
         }) => commands::install(repo, *overwrite, *force, *dry),
+        Some(Commands::Uninstall { dot_name }) => commands::uninstall(dot_name),
         Some(Commands::List { origins }) => commands::list(*origins),
         Some(Commands::Path { dot }) => commands::path(dot),
         _ => {
