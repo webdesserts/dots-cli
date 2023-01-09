@@ -15,4 +15,5 @@ SUBCOMMANDS:
     install      Downloads and links dots
     list         List the names of all installed dots
     path         Returns the installed location of a given dot
+    status       Get the current git status of each dot
     uninstall    Removes and unlinks dots

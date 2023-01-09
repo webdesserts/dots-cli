@@ -1,8 +1,17 @@
 use std::process;
 
+use utils::git;
+use utils::text::indent;
+
 use crate::dots::{self, Environment};
 use crate::fs_manager::FSManager;
 use crate::plan::Plan;
+
+mod styles {
+    use utils::stylize::Style;
+
+    pub const HEADER: Style = Style::new().bold();
+}
 
 pub fn add(url: &str, overwrite: bool) {
     let env = Environment::new();
@@ -84,6 +93,22 @@ pub fn list(origins: bool) {
 
         let line = format!("{name}{remote}", name = dot.package.name);
         lines.push(line);
+    }
+
+    print!("{}", lines.join("\n"));
+}
+
+pub fn status() {
+    let env = Environment::new();
+    let mut lines: Vec<String> = vec![];
+    for dot in dots::find_all(&env) {
+        let status = git::get_status(&dot.path).unwrap_or_else(|error| {
+            error!("Unable to get dot status\n{}", error);
+            process::exit(1)
+        });
+
+        lines.push(format!("{}", styles::HEADER.apply(dot.package.name)));
+        lines.push(indent(2, &status));
     }
 
     print!("{}", lines.join("\n"));

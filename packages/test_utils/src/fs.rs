@@ -1,9 +1,7 @@
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use std::fs;
-use utils::stylize::Style;
-
-use crate::indent;
+use utils::{stylize::Style, text::indent};
 
 mod styles {
     use utils::stylize::Style;
@@ -47,7 +45,7 @@ pub fn cat<P: AsRef<Utf8Path>>(path: P) -> Result<()> {
     let content = fs::read_to_string(path)?;
     println!();
     println!("{}", styles::PATH.apply(path.as_str()));
-    println!("{}", indent(2, content));
+    println!("{}", indent(2, &content));
     println!("{}", styles::EOF.apply("EOF"));
     println!();
 
