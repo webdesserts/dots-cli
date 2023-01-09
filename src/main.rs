@@ -88,6 +88,9 @@ enum Commands {
         origins: bool,
     },
 
+    /// Get the current git status of each dot
+    Status,
+
     /// Returns the installed location of a given dot
     Path {
         /// The dot package name that you would like to search for
@@ -142,6 +145,7 @@ fn main() {
         }) => commands::install(repo, *overwrite, *force, *dry),
         Some(Commands::Uninstall { dot_name }) => commands::uninstall(dot_name),
         Some(Commands::List { origins }) => commands::list(*origins),
+        Some(Commands::Status) => commands::status(),
         Some(Commands::Path { dot }) => commands::path(dot),
         _ => {
             println!("USAGE:\n    dots [SUBCOMMAND]")

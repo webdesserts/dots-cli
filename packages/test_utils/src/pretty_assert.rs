@@ -1,5 +1,6 @@
-use similar::{Algorithm, ChangeTag, DiffableStr, TextDiff};
+use similar::{Algorithm, ChangeTag, TextDiff};
 use std::fmt::Write;
+use utils::text::indent;
 
 mod styles {
     use utils::stylize::Style;
@@ -84,27 +85,7 @@ where
 
         let legend = format!("{expected_sign} {expected_label}\n{received_sign} {received_label}");
 
-        println!("\n{legend}\n\n{diff}\n", diff = indent(2, diff_text));
+        println!("\n{legend}\n\n{diff}\n", diff = indent(2, &diff_text));
         panic!("assertion failed")
-    }
-}
-
-pub fn indent<S>(indent: usize, string: S) -> String
-where
-    S: AsRef<str>,
-{
-    let string = string.as_ref();
-    let has_extra_newline = string.ends_with_newline();
-    let lines: Vec<String> = string
-        .lines()
-        .map(|line: &str| format!("{indent}{line}", indent = " ".repeat(indent)))
-        .collect();
-
-    let string = lines.join("\n");
-
-    if has_extra_newline {
-        format!("{string}\n")
-    } else {
-        string
     }
 }

@@ -128,6 +128,20 @@ pub fn get_origin() -> Result<String, GitError> {
     Ok(string.trim().to_string())
 }
 
+pub fn get_status(dir: &Utf8Path) -> Result<String, GitError> {
+    let output = map_result(
+        Command::new("git")
+            .arg("status")
+            .arg("--porcelain=v1")
+            .current_dir(dir)
+            .output(),
+    )?;
+
+    let string = String::from_utf8(output.stdout).expect("unable to convert status output to utf8");
+
+    Ok(string.trim_end().to_string())
+}
+
 fn map_result(result: Result<Output, io::Error>) -> Result<Output, GitError> {
     match result {
         Ok(output) => {
