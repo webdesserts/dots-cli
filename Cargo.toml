@@ -1,6 +1,6 @@
 [package]
 name = "dots"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2021"
 license = "MIT"
 readme = "Readme.md"
@@ -13,7 +13,7 @@ homepage = "https://github.com/webdesserts/dots-cli"
 members = ["packages/*"]
 
 [dependencies]
-utils = { package = "dots_internal_utils", version = "^0.4.0", path = "packages/utils" }
+utils = { package = "dots_internal_utils", version = "^0.5.0", path = "packages/utils" }
 
 # paths & io
 camino = { version = "^1.0.5", features = ['serde1'] }
