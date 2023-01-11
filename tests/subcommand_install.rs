@@ -54,6 +54,42 @@ mod subcommand_install {
     }
 
     #[test]
+    fn it_can_be_ran_multiple_times_with_no_change_or_error() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
+        let home_dir = manager.home_dir();
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        // first run
+        manager.cmd(BIN)?.arg("install").output()?;
+        // second run
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+        let expected_err = std::include_str!("output/install_success.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_success();
+
+        let installed_dot_path = dots_root.join(fixture.name());
+
+        assert!(installed_dot_path.is_dir());
+        assert!(installed_dot_path.join("Dot.toml").is_file());
+        assert_eq!(
+            home_dir.join(".bashrc").read_link()?,
+            installed_dot_path.join("shell/bashrc")
+        );
+        assert_eq!(
+            home_dir.join(".zshrc").read_link()?,
+            installed_dot_path.join("shell/zshrc")
+        );
+        Ok(())
+    }
+
+    #[test]
     fn it_should_display_and_install_the_given_plan_when_a_dot_links_a_directory() -> TestResult {
         let manager = TestManager::new()?;
         let fixture = Fixture::ExampleDotWithDirectory;

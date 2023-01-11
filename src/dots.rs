@@ -210,6 +210,9 @@ pub fn find_all(env: &Environment) -> Vec<Dot> {
         };
 
         let utf8_path = Utf8PathBuf::from_path_buf(path).expect("Error parsing path as Utf8");
+        if !utf8_path.is_dir() {
+            continue;
+        }
 
         if let Ok(dot) = Dot::new(utf8_path) {
             dots.push(dot)
