@@ -43,7 +43,7 @@ mod styles {
 struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,
-    /// prints extra logs for debugging purposes
+    /// Print extra logs for debugging purposes
     #[clap(long)]
     debug: bool,
 }
