@@ -68,6 +68,10 @@ impl Anchor {
             kind: AnchorKind::Destination,
         }
     }
+
+    pub fn exists(&self) -> bool {
+        self.path.is_symlink()
+    }
 }
 
 #[derive(Eq, PartialEq, Clone, Debug, PartialOrd, Ord)]
