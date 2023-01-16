@@ -43,6 +43,9 @@ mod styles {
 struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,
+    /// Print extra logs for debugging purposes
+    #[clap(long)]
+    debug: bool,
 }
 
 #[derive(Subcommand)]
@@ -128,12 +131,15 @@ fn main() {
         writeln!(buf, "{}", indented)
     };
 
-    builder
-        .format(log_format)
-        .filter(None, log::LevelFilter::Info)
-        .init();
-
     let cli = Cli::parse();
+
+    let log_level = if cli.debug {
+        log::LevelFilter::Debug
+    } else {
+        log::LevelFilter::Info
+    };
+
+    builder.format(log_format).filter(None, log_level).init();
 
     match &cli.commands {
         Some(Commands::Add { repo, overwrite }) => commands::add(repo, *overwrite),

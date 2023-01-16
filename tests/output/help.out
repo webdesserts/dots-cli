@@ -3,9 +3,10 @@ Michael Mullins <michael@webdesserts.com>
 A cli for managing all your dot(file)s
 
 USAGE:
-    dots [SUBCOMMAND]
+    dots [OPTIONS] [SUBCOMMAND]
 
 OPTIONS:
+        --debug      Print extra logs for debugging purposes
     -h, --help       Print help information
     -V, --version    Print version information
 
