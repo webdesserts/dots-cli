@@ -714,4 +714,35 @@ mod subcommand_install {
 
         Ok(())
     }
+
+    #[test]
+    fn it_should_display_and_install_the_given_plan_when_a_dot_links_to_itself() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDotWithSelfLink;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
+        let home_dir = manager.home_dir();
+
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+        let expected_err = std::include_str!("output/install_success_when_self_linking.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_success();
+
+        let installed_dot_path = dots_root.join(fixture.name());
+
+        assert!(installed_dot_path.is_dir());
+        assert!(installed_dot_path.join("Dot.toml").is_file());
+        assert_eq!(
+            home_dir.join("test_self_link").read_link()?,
+            installed_dot_path
+        );
+
+        Ok(())
+    }
+
 }

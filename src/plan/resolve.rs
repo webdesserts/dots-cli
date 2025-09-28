@@ -183,7 +183,7 @@ impl Display for ResolvedLink {
             _ => false,
         };
 
-        if is_directory {
+        if is_directory && !src_path.ends_with('/') {
             src_path += "/"
         }
 

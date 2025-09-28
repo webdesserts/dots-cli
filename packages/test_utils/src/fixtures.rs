@@ -9,6 +9,7 @@ pub enum Fixture {
     ExampleDotWithMultiLink,
     ExampleDotWithDirectory,
     ConflictingDot,
+    ExampleDotWithSelfLink,
 }
 
 impl Fixture {
@@ -26,6 +27,7 @@ impl Fixture {
             Self::ExampleDotWithUnlinkedFile => "example_dot",
             Self::ExampleDot => "example_dot",
             Self::ConflictingDot => "conflicting_dot",
+            Self::ExampleDotWithSelfLink => "example_dot_with_self_link",
         }
     }
 
