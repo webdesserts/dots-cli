@@ -745,4 +745,97 @@ mod subcommand_install {
         Ok(())
     }
 
+    #[test]
+    fn it_should_stop_tracking_directories_that_contain_files() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let home_dir = manager.home_dir();
+
+        // Add the dot
+        manager
+            .cmd(BIN)?
+            .arg("add")
+            .arg(&fixture_path)
+            .output()?;
+
+        // Switch to fixture with nested directories
+        manager.overwrite_dot(&fixture, &Fixture::ExampleDotWithNestedDirectories)?;
+
+        // Install the dot - this will create ~/.config/zsh/ directory and track it
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        // Verify the directory was created and check dirs in footprint
+        let tracked_dir = home_dir.join(".config/zsh");
+        assert!(tracked_dir.is_dir());
+        let footprint = manager.read_footprint()?;
+        assert!(footprint.contains(&format!("\"{}\"", tracked_dir))); // Check for quoted path in dirs array
+
+        // User adds their own file to the tracked directory
+        fs::write(tracked_dir.join("zsh_history"), "# command history")?;
+
+        // Switch back to basic fixture (removes nested links)
+        manager.overwrite_dot(&fixture, &Fixture::ExampleDot)?;
+
+        // Run install again which triggers cleanup
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        // The directory should no longer be tracked since it contains user files
+        let footprint = manager.read_footprint()?;
+        assert!(!footprint.contains(&format!("\"{}\"", tracked_dir))); // Check dirs array is empty
+
+        // But the directory and user file should still exist
+        assert!(tracked_dir.is_dir());
+        assert!(tracked_dir.join("zsh_history").is_file());
+
+        Ok(())
+    }
+
+
+    #[test]
+    fn it_should_remove_nonexistent_directories_from_tracking() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let home_dir = manager.home_dir();
+
+        // Add the dot
+        manager
+            .cmd(BIN)?
+            .arg("add")
+            .arg(&fixture_path)
+            .output()?;
+
+        // Switch to fixture with nested directories
+        manager.overwrite_dot(&fixture, &Fixture::ExampleDotWithNestedDirectories)?;
+
+        // Install the dot - this will create ~/.config/zsh/ directory and track it
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        // Verify the directory was created and is tracked
+        let tracked_dir = home_dir.join(".config/zsh");
+        assert!(tracked_dir.is_dir());
+        let footprint = manager.read_footprint()?;
+        assert!(footprint.contains(&format!("\"{}\"", tracked_dir)));
+
+        // Switch back to basic fixture (removes nested links)
+        manager.overwrite_dot(&fixture, &Fixture::ExampleDot)?;
+
+        // User manually deletes the directory (since they no longer need it)
+        fs::remove_dir_all(&tracked_dir)?;
+        assert!(!tracked_dir.exists());
+
+        // Run install again which triggers cleanup
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        // The directory should no longer be tracked since it's not needed anymore
+        let footprint = manager.read_footprint()?;
+        assert!(!footprint.contains(&format!("\"{}\"", tracked_dir)));
+
+        // And the directory should stay deleted since no symlink needs it
+        assert!(!tracked_dir.exists());
+
+        Ok(())
+    }
+
 }

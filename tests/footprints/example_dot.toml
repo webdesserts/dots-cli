@@ -1,3 +1,5 @@
+dirs = []
+
 [[links]]
 src = "{HOME}/.dots/example_dot/shell/bashrc"
 dest = "{HOME}/.bashrc"

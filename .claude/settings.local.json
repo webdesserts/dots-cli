@@ -1,6 +1,13 @@
 {
   "permissions": {
-    "allow": ["Bash(gh issue view:*)", "Bash(cargo test:*)", "Bash(cat:*)"],
+    "allow": [
+      "Bash(gh issue view:*)",
+      "Bash(cargo test:*)",
+      "Bash(cat:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo clippy:*)",
+      "WebSearch"
+    ],
     "deny": [],
     "ask": []
   }

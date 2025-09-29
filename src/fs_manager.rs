@@ -45,6 +45,37 @@ impl FSManager {
         Ok(())
     }
 
+    /** Removes a directory from the footprint tracking */
+    pub fn remove_footprint_dir(&mut self, dir_path: &Utf8PathBuf) -> Result<()> {
+        self.footprint.dirs.remove(dir_path);
+        self.save_footprint()?;
+        Ok(())
+    }
+
+    /** Creates a directory and tracks it if it didn't exist before */
+    pub fn create_directory(&mut self, dir_path: &Utf8PathBuf) -> Result<()> {
+        let existed = dir_path.exists();
+        fs::create_dir_all(dir_path)?;
+        // Only track directories that we actually created
+        if !existed {
+            self.footprint.dirs.insert(dir_path.clone());
+            self.save_footprint()?;
+        }
+        Ok(())
+    }
+
+    /** Removes a file from the filesystem */
+    pub fn remove_file(&self, file_path: &Utf8PathBuf) -> io::Result<()> {
+        fs::remove_file(file_path)?;
+        Ok(())
+    }
+
+    /** Removes a directory and all its contents from the filesystem */
+    pub fn remove_directory(&self, dir_path: &Utf8PathBuf) -> io::Result<()> {
+        fs::remove_dir_all(dir_path)?;
+        Ok(())
+    }
+
     /** Write the current footprint to the toml file */
     fn save_footprint(&self) -> Result<()> {
         let contents = toml::to_string(&self.footprint)?;

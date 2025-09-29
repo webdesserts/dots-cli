@@ -123,9 +123,60 @@ impl Plan {
             }
         }
 
+        // Clean up tracked directories that are now empty
+        let mut tracked_dirs: Vec<_> = fs_manager.footprint.dirs.iter().cloned().collect();
+        // Sort by depth (deepest first) to handle nested directories correctly
+        tracked_dirs.sort_by_key(|b| std::cmp::Reverse(b.components().count()));
+
+        let mut dir_removals: Vec<camino::Utf8PathBuf> = vec![];
+        for dir_path in tracked_dirs {
+            if dir_path.is_dir() {
+                match std::fs::read_dir(&dir_path) {
+                    Ok(mut entries) => {
+                        if entries.next().is_none() {
+                            // Directory is empty - try to remove
+                            let remove_action = Action::RemoveDir(dir_path.clone());
+                            if !remove_action.should_skip() {
+                                match remove_action.execute(fs_manager) {
+                                    Ok(_) => {
+                                        // Successfully removed
+                                        dir_removals.push(dir_path);
+                                    }
+                                    Err(err) => {
+                                        // Failed to remove empty directory (permissions?)
+                                        warn!("Unable to remove empty directory {}: {}", dir_path, err);
+                                        warn!("You may need to remove it manually with appropriate permissions");
+                                        // Keep tracking - don't add to dir_removals
+                                    }
+                                }
+                            }
+                        } else {
+                            // Directory contains files - stop tracking it
+                            // The user has claimed this directory for their own use
+                            dir_removals.push(dir_path);
+                        }
+                    }
+                    Err(err) => {
+                        // Can't read directory (permissions?)
+                        warn!("Unable to access directory {} for cleanup: {}", dir_path, err);
+                        warn!("You may need to check permissions or remove it manually");
+                        // Keep tracking - don't add to dir_removals
+                    }
+                }
+            } else {
+                // Directory doesn't exist - stop tracking
+                dir_removals.push(dir_path);
+            }
+        }
+
         // Update footprint entries directly
         for link in footprint_removals {
             fs_manager.remove_footprint_link(&link)?;
+        }
+
+        // Remove cleaned directories from footprint tracking
+        for dir_path in dir_removals {
+            fs_manager.remove_footprint_dir(&dir_path)?;
         }
         Ok(())
     }

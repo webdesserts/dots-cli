@@ -41,10 +41,10 @@ impl Action {
         use Action::*;
 
         match self {
-            CreateDir(path) => std::fs::create_dir_all(path)?,
+            CreateDir(path) => fs.create_directory(path)?,
             CreateLink(link) => fs.create_symlink(link)?,
-            RemoveFile(path) => std::fs::remove_file(path)?,
-            RemoveDir(path) => std::fs::remove_dir_all(path)?,
+            RemoveFile(path) => fs.remove_file(path)?,
+            RemoveDir(path) => fs.remove_directory(path)?,
             RemoveLink(link) => fs.remove_symlink(link)?,
         };
         Ok(())
