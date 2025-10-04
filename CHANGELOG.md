@@ -6,7 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [0.5.3] - 2025-01-10
+## [0.5.4] - 2025-10-04
+
+### Changed
+- Updated release process documentation to use cargo-release step-by-step workflow
+- Release process now keeps all version bumps in PRs to main
+
+### Internal
+- Improved CONTRIBUTING.md with clearer cargo-release instructions
+
+## [0.5.3] - 2025-10-04
 
 ### Added
 - Debug flag support for verbose logging (#57)
@@ -44,7 +53,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.5.0] - 2024-XX-XX
 <!-- Previous release, details to be filled in -->
 
-[Unreleased]: https://github.com/webdesserts/dots-cli/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/webdesserts/dots-cli/compare/v0.5.4...HEAD
+[0.5.4]: https://github.com/webdesserts/dots-cli/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/webdesserts/dots-cli/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/webdesserts/dots-cli/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/webdesserts/dots-cli/compare/v0.5.0...v0.5.1
