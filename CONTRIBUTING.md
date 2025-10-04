@@ -161,7 +161,7 @@ git checkout main
 git pull origin main
 
 # Publish packages, create tags, and push
-cargo release --workspace --exclude test_utils --execute --no-commit
+cargo release --workspace --exclude test_utils --execute
 ```
 
 This will:
