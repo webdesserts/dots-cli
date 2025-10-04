@@ -172,12 +172,22 @@ This will:
 **Note**: The `--workspace` flag processes all packages. We exclude `test_utils` since it's internal-only.
 
 ### Version Numbering
-Version numbers follow the pattern `major.minor.patch`:
-- **Patch** (0.5.2 -> 0.5.3): Bug fixes and minor changes
-- **Minor** (0.5.3 -> 0.6.0): New features and improvements
-- **Major** (0.6.0 -> 1.0.0): Major changes
+Version numbers follow semantic versioning (`major.minor.patch`), adapted for a CLI tool:
 
-Note: This project does not strictly adhere to semantic versioning.
+- **Patch** (0.5.2 -> 0.5.3): Bug fixes, internal improvements, documentation updates
+- **Minor** (0.5.3 -> 0.6.0): New features, improvements that don't break existing usage
+- **Major** (0.6.0 -> 1.0.0): Breaking changes to command signatures or install behavior
+
+**Breaking change examples:**
+- Changing command flags or arguments in incompatible ways
+- Changing install behavior that would break existing successful installs
+- Removing commands or features
+
+**Not breaking changes:**
+- Adding new commands or flags
+- Bug fixes that correct incorrect behavior
+- Internal refactoring
+- Improved error messages or output formatting
 
 ### Manual Release (if needed)
 If `cargo-release` isn't available:
