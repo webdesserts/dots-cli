@@ -36,6 +36,17 @@ impl fmt::Debug for Link {
     }
 }
 
+impl fmt::Display for Link {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} => {}",
+            utils::fs::pretty_path(&self.dest.path),
+            utils::fs::pretty_path(&self.src.path)
+        )
+    }
+}
+
 /*=========*\
 *  Anchors  *
 \*=========*/

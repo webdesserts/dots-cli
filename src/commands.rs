@@ -51,6 +51,9 @@ pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
         Err(err) => {
             error!("Install Failed!");
             error!("{}", err);
+            if let Some(cause) = err.source() {
+                error!("{}", cause);
+            }
 
             process::exit(1)
         }
@@ -61,6 +64,9 @@ pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
         .unwrap_or_else(|err| {
             error!("failed to clean current install:");
             error!("{}", err);
+            if let Some(cause) = err.source() {
+                error!("{}", cause);
+            }
             process::exit(1);
         });
 
@@ -82,6 +88,9 @@ pub fn uninstall(name: &Option<String>) {
         .unwrap_or_else(|err| {
             error!("failed to clean current install:");
             error!("{}", err);
+            if let Some(cause) = err.source() {
+                error!("{}", cause);
+            }
             process::exit(1);
         });
 }

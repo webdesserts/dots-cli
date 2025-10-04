@@ -1,0 +1,8 @@
+[example_dot]
+✔ ~/.bashrc => shell/bashrc
+✔ ~/.zshrc => shell/zshrc
+
+[info] Looks Good! Nothing wrong with the current install plan!
+[error] Install Failed!
+[error] Failed to update ~/.dots/dot-footprint.toml
+[error] Permission denied (os error 13)

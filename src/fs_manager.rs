@@ -20,6 +20,9 @@ impl FSManager {
         }
     }
 
+    pub fn footprint_path(&self) -> &Utf8Path {
+        &self.footprint_path
+    }
 
     // ============================================================================
     // Filesystem Primitives (no footprint changes)

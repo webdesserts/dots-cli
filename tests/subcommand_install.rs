@@ -841,4 +841,29 @@ mod subcommand_install {
         Ok(())
     }
 
+    #[test]
+    fn it_should_show_footprint_path_when_permission_denied() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDot;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+
+        // Add the dot and do initial install to create footprint
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
+        manager.cmd(BIN)?.arg("install").output()?;
+
+        // Make footprint readonly to simulate permission denied error
+        manager.make_readonly(manager.footprint_path())?;
+
+        // Try to install again - this will need to update the footprint and fail
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+        let expected_err = std::include_str!("output/install_fail_with_readonly_footprint.err");
+
+        output
+            .assert_stderr_eq(expected_err)
+            .assert_stdout_eq("")
+            .assert_fail();
+
+        Ok(())
+    }
+
 }

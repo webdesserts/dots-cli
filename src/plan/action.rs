@@ -1,3 +1,4 @@
+use anyhow::Context;
 use camino::Utf8PathBuf;
 
 use crate::fs_manager::FSManager;
@@ -41,23 +42,30 @@ impl Action {
 
         match self {
             CreateDir(path) => {
-                let was_created = fs.create_directory(path)?;
+                let was_created = fs.create_directory(path)
+                    .with_context(|| format!("Failed to create directory {}", path))?;
                 if was_created {
-                    fs.track_directory(path)?;
+                    fs.track_directory(path)
+                        .with_context(|| format!("Failed to update {}", utils::fs::pretty_path(fs.footprint_path())))?;
                 }
             }
             CreateLink(link) => {
-                fs.create_symlink(link)?;
-                fs.track_symlink(link)?;
+                fs.create_symlink(link)
+                    .with_context(|| format!("Failed to create symlink {}", link))?;
+                fs.track_symlink(link)
+                    .with_context(|| format!("Failed to update {}", utils::fs::pretty_path(fs.footprint_path())))?;
             }
             RemoveFile(path) => {
-                fs.remove_file(path)?;
+                fs.remove_file(path)
+                    .with_context(|| format!("Failed to remove file {}", path))?;
             }
             RemoveDir(path) => {
-                fs.remove_directory(path)?;
+                fs.remove_directory(path)
+                    .with_context(|| format!("Failed to remove directory {}", path))?;
             }
             RemoveLink(link) => {
-                fs.remove_symlink(link)?;
+                fs.remove_symlink(link)
+                    .with_context(|| format!("Failed to remove symlink at {}", utils::fs::pretty_path(&link.dest.path)))?;
             }
         };
         Ok(())
