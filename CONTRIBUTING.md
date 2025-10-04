@@ -114,7 +114,7 @@ Checks formatting and clippy on nightly.
 
 ### Release Steps
 
-**1. Pre-release checks** (fix any issues before versioning)
+**1. Pre-release checks on version branch** (fix any issues before versioning)
 ```bash
 cargo test --all
 cargo clippy --all-targets -- -D warnings
@@ -133,38 +133,43 @@ git add CHANGELOG.md
 git commit -m "docs: update CHANGELOG for v0.X.X"
 ```
 
-**3. Run release**
+**3. Bump versions on version branch**
 ```bash
-# For patch release (0.5.2 -> 0.5.3)
-cargo release patch --execute
-
-# For minor release (0.5.3 -> 0.6.0)
-cargo release minor --execute
-
-# For major release (0.6.0 -> 1.0.0)
-cargo release major --execute
+# This will bump versions and create a commit (but not publish or tag)
+cargo release patch --workspace --exclude test_utils --execute --no-publish --no-tag --no-push
 ```
 
-This will:
-- Update version in `Cargo.toml`
-- Create a version bump commit
-- Create a git tag (e.g., `v0.5.3`)
-- Push commits and tags to GitHub
-- Publish to crates.io (if configured)
+This updates:
+- Version numbers in all workspace `Cargo.toml` files
+- Dependencies between workspace packages
+- Creates a version bump commit
 
-**4. Create Pull Request**
-- Push your feature branch to GitHub
-- Create a PR from your branch to `main`
+Push the version branch:
+```bash
+git push origin v0.5.x
+```
+
+**4. Create PR and merge to main**
+- Create a PR from your version branch to `main`
 - Wait for CI checks to pass
 - Merge the PR on GitHub
 
-**5. Release from main**
+**5. Publish from main**
 After the PR is merged:
 ```bash
 git checkout main
 git pull origin main
-cargo release patch --execute
+
+# Publish packages, create tags, and push
+cargo release --workspace --exclude test_utils --execute --no-commit
 ```
+
+This will:
+- Publish `dots_internal_utils` to crates.io
+- Publish `dots` to crates.io
+- Create and push git tags
+
+**Note**: The `--workspace` flag processes all packages. We exclude `test_utils` since it's internal-only.
 
 ### Version Numbering
 Version numbers follow the pattern `major.minor.patch`:
@@ -178,17 +183,18 @@ Note: This project does not strictly adhere to semantic versioning.
 If `cargo-release` isn't available:
 
 ```bash
-# 1. Update version in Cargo.toml manually
+# 1. Update versions in Cargo.toml files manually
 # 2. Commit version bump
-git add Cargo.toml
-git commit -m "chore: bump version to 0.5.3"
+git add Cargo.toml packages/*/Cargo.toml
+git commit -m "chore: Release v0.X.X"
 
-# 3. Create and push tag
-git tag v0.5.3
-git push origin v0.5.x --tags
+# 3. Create PR to main and merge
 
-# 4. Publish to crates.io
-cargo publish
+# 4. From main, publish and tag
+cargo publish -p dots_internal_utils
+cargo publish -p dots
+git tag v0.X.X
+git push origin --tags
 ```
 
 ## Branch Strategy
