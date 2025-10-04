@@ -152,11 +152,18 @@ This will:
 - Push commits and tags to GitHub
 - Publish to crates.io (if configured)
 
-**4. Merge to master** (optional, for syncing main branch)
+**4. Create Pull Request**
+- Push your feature branch to GitHub
+- Create a PR from your branch to `main`
+- Wait for CI checks to pass
+- Merge the PR on GitHub
+
+**5. Release from main**
+After the PR is merged:
 ```bash
-git checkout master
-git merge v0.5.x
-git push origin master
+git checkout main
+git pull origin main
+cargo release patch --execute
 ```
 
 ### Version Numbering
@@ -186,9 +193,9 @@ cargo publish
 
 ## Branch Strategy
 
-- **master**: Stable releases
+- **main**: Stable releases (publish from this branch)
 - **v0.5.x**: Current development branch for 0.5.x releases
-- **feature branches**: For new features, merged into v0.5.x
+- **feature branches**: For new features, merged into version branches via PR to main
 
 ## Code Style
 
