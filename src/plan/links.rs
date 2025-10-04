@@ -25,7 +25,9 @@ impl Link {
     }
 
     pub fn exists(&self) -> bool {
-        let Ok(path) = fs::read_link(&self.dest.path) else { return false };
+        let Ok(path) = fs::read_link(&self.dest.path) else {
+            return false;
+        };
         path == self.src.path
     }
 }

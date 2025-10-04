@@ -101,7 +101,7 @@ impl FSManager {
 
     fn read_and_parse_footprint(footprint_path: &Utf8PathBuf) -> Footprint {
         let Ok(string) = fs::read_to_string(footprint_path) else {
-            return Footprint::default()
+            return Footprint::default();
         };
         return toml::from_str(string.as_ref()).unwrap_or_else(|err| {
             warn!("Error parsing {footprint_path}:\n{err}");

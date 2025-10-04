@@ -753,11 +753,7 @@ mod subcommand_install {
         let home_dir = manager.home_dir();
 
         // Add the dot
-        manager
-            .cmd(BIN)?
-            .arg("add")
-            .arg(&fixture_path)
-            .output()?;
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
         // Switch to fixture with nested directories
         manager.overwrite_dot(&fixture, &Fixture::ExampleDotWithNestedDirectories)?;
@@ -781,7 +777,9 @@ mod subcommand_install {
         let output = manager.cmd(BIN)?.arg("install").output()?;
 
         // Verify the warning output
-        output.assert_stderr_eq(include_str!("output/install_warns_when_directory_has_user_files.err"));
+        output.assert_stderr_eq(include_str!(
+            "output/install_warns_when_directory_has_user_files.err"
+        ));
 
         // The directory should no longer be tracked since it contains user files
         let footprint = manager.read_footprint()?;
@@ -794,7 +792,6 @@ mod subcommand_install {
         Ok(())
     }
 
-
     #[test]
     fn it_should_remove_nonexistent_directories_from_tracking() -> TestResult {
         let manager = TestManager::new()?;
@@ -803,11 +800,7 @@ mod subcommand_install {
         let home_dir = manager.home_dir();
 
         // Add the dot
-        manager
-            .cmd(BIN)?
-            .arg("add")
-            .arg(&fixture_path)
-            .output()?;
+        manager.cmd(BIN)?.arg("add").arg(&fixture_path).output()?;
 
         // Switch to fixture with nested directories
         manager.overwrite_dot(&fixture, &Fixture::ExampleDotWithNestedDirectories)?;
@@ -865,5 +858,4 @@ mod subcommand_install {
 
         Ok(())
     }
-
 }

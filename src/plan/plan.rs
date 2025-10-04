@@ -7,7 +7,6 @@
  * Uses the Actions system for filesystem operations to enable dry-run support,
  * error collection, and operation inspection.
  */
-
 use crate::dots::{Dot, Environment};
 use crate::fs_manager::FSManager;
 use crate::plan::resolve::{ResolveIssueKind, ResolvedLink};
@@ -79,7 +78,13 @@ impl Plan {
     ///
     /// After cleanup, reconciles the footprint by removing stale entries and warning
     /// about directories that can't be removed due to user files.
-    pub fn clean(&self, env: &Environment, fs_manager: &mut FSManager, dots: &[Dot], dry_run: bool) -> Result<()> {
+    pub fn clean(
+        &self,
+        env: &Environment,
+        fs_manager: &mut FSManager,
+        dots: &[Dot],
+        dry_run: bool,
+    ) -> Result<()> {
         let current_links: Vec<Link> = dots
             .iter()
             .flat_map(|dot| &dot.links)
@@ -121,7 +126,9 @@ impl Plan {
             .dirs
             .iter()
             .filter(|dir_path| {
-                let is_needed = current_links.iter().any(|link| link.dest.path.starts_with(dir_path));
+                let is_needed = current_links
+                    .iter()
+                    .any(|link| link.dest.path.starts_with(dir_path));
 
                 if !is_needed && dir_path.is_dir() {
                     // Check if has user files
@@ -159,9 +166,9 @@ impl Plan {
             // Remove directories that don't exist or aren't needed by current links
             footprint.dirs.retain(|dir_path| {
                 let dir_exists = dir_path.is_dir();
-                let is_needed = current_links.iter().any(|link| {
-                    link.dest.path.starts_with(dir_path)
-                });
+                let is_needed = current_links
+                    .iter()
+                    .any(|link| link.dest.path.starts_with(dir_path));
 
                 dir_exists && is_needed
             });
@@ -269,7 +276,12 @@ impl Plan {
     ///
     /// Collects multiple errors instead of failing fast to provide comprehensive
     /// feedback about what went wrong during installation.
-    pub fn execute(&self, _env: &Environment, fs_manager: &mut FSManager, force: bool) -> Result<()> {
+    pub fn execute(
+        &self,
+        _env: &Environment,
+        fs_manager: &mut FSManager,
+        force: bool,
+    ) -> Result<()> {
         let links: Vec<Link> = self
             .links
             .iter()
@@ -372,14 +384,18 @@ impl Plan {
             .collect()
     }
 
-
     /// Generates cleanup actions for stale symlinks and empty directories.
     ///
     /// Returns actions that need to be executed to clean up the filesystem based on:
     /// - Symlinks in footprint that don't exist anymore or point to wrong targets
     /// - Symlinks in footprint that aren't in current dot.toml files
     /// - Empty tracked directories that aren't needed by current links
-    fn generate_cleanup_actions(&self, env: &Environment, fs_manager: &FSManager, current_links: &[Link]) -> Vec<Action> {
+    fn generate_cleanup_actions(
+        &self,
+        env: &Environment,
+        fs_manager: &FSManager,
+        current_links: &[Link],
+    ) -> Vec<Action> {
         let mut actions = vec![];
 
         // Clean up stale symlinks
@@ -408,9 +424,9 @@ impl Plan {
             if dir_path.is_dir() && !Self::directory_contains_files(dir_path, fs_manager) {
                 // Directory is empty and exists
                 // Check if any current links still need this directory
-                let still_needed = current_links.iter().any(|link| {
-                    link.dest.path.starts_with(dir_path)
-                });
+                let still_needed = current_links
+                    .iter()
+                    .any(|link| link.dest.path.starts_with(dir_path));
 
                 if !still_needed {
                     actions.push(Action::RemoveDir(dir_path.clone()));

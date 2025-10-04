@@ -9,7 +9,8 @@
       "WebSearch",
       "Read(//tmp/**)",
       "Bash(cargo build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(cargo fmt:*)"
     ],
     "deny": [],
     "ask": []
