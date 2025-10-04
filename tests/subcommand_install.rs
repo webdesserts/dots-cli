@@ -778,7 +778,10 @@ mod subcommand_install {
         manager.overwrite_dot(&fixture, &Fixture::ExampleDot)?;
 
         // Run install again which triggers cleanup
-        manager.cmd(BIN)?.arg("install").output()?;
+        let output = manager.cmd(BIN)?.arg("install").output()?;
+
+        // Verify the warning output
+        output.assert_stderr_eq(include_str!("output/install_warns_when_directory_has_user_files.err"));
 
         // The directory should no longer be tracked since it contains user files
         let footprint = manager.read_footprint()?;

@@ -70,135 +70,126 @@ impl Plan {
         }
     }
 
-    /**
-     * Cleans up stale footprint entries and broken symlinks.
-     *
-     * This method performs footprint maintenance by:
-     * 1. Removing footprint entries for symlinks that were manually deleted
-     * 2. Removing stale symlinks that point to incorrect targets and their footprint entries
-     * 3. Removing footprint entries for symlinks pointing outside the dots directory
-     * 4. Removing symlinks that are no longer present in any dot.toml and their footprint entries
-     */
-    pub fn clean(&self, env: &Environment, fs_manager: &mut FSManager, dots: &[Dot]) -> Result<()> {
-        let links: Vec<Link> = dots
+    /// Cleans up stale symlinks and empty directories, then reconciles the footprint.
+    ///
+    /// Generates and executes cleanup actions for:
+    /// - Symlinks in footprint that no longer exist or point to wrong targets
+    /// - Symlinks in footprint that aren't in current dot.toml files
+    /// - Empty tracked directories that aren't needed by current links
+    ///
+    /// After cleanup, reconciles the footprint by removing stale entries and warning
+    /// about directories that can't be removed due to user files.
+    pub fn clean(&self, env: &Environment, fs_manager: &mut FSManager, dots: &[Dot], dry_run: bool) -> Result<()> {
+        let current_links: Vec<Link> = dots
             .iter()
             .flat_map(|dot| &dot.links)
             .filter_map(|resolved_link| resolved_link.as_link())
             .collect();
 
-        let mut fs_actions: Vec<Action> = vec![];
-        let mut footprint_removals: Vec<Link> = vec![];
+        // Generate cleanup actions
+        let cleanup_actions = self.generate_cleanup_actions(env, fs_manager, &current_links);
 
-        // Generate cleanup actions based on footprint vs reality
-        for footprint_link in fs_manager.footprint.links.iter().cloned() {
-            if !footprint_link.dest.path.is_symlink() {
-                debug!("no symlink detected, removing footprint link");
-                // Symlink was deleted manually, just clean footprint
-                footprint_removals.push(footprint_link);
-            } else if !footprint_link.exists() {
-                debug!("symlink detected, but pointing to wrong dest, removing symlink and footprint link");
-                // Stale symlink pointing to wrong target, remove it and clean footprint
-                fs_actions.push(Action::RemoveLink(footprint_link.clone()));
-                footprint_removals.push(footprint_link);
-            } else if !footprint_link.src.path.starts_with(env.root()) {
-                debug!("symlink exists, but source is outside of dots dir, removing footprint link");
-                // Symlink points outside dots directory, just clean footprint
-                footprint_removals.push(footprint_link);
-            } else if !links.contains(&footprint_link) {
-                debug!("symlink exists, but not in any dot toml, removing symlink and footprint link");
-                // Symlink exists but not in any current dot.toml, remove it and clean footprint
-                fs_actions.push(Action::RemoveLink(footprint_link.clone()));
-                footprint_removals.push(footprint_link);
+        if dry_run {
+            // Just log what would be cleaned up
+            debug!("DRY RUN - Cleanup actions that would be executed:");
+            for action in &cleanup_actions {
+                debug!("  {:?}", action);
             }
-        }
-
-        debug!("CLEANUP ACTIONS");
-
-        // Execute filesystem actions with skip logic
-        for action in fs_actions {
-            let should_skip = action.should_skip();
-            debug!("skip: {}, action: {:?}", should_skip, action);
-            if !should_skip {
-                action.execute(fs_manager)?;
-            }
-        }
-
-        // Clean up tracked directories that are now empty
-        let mut tracked_dirs: Vec<_> = fs_manager.footprint.dirs.iter().cloned().collect();
-        // Sort by depth (deepest first) to handle nested directories correctly
-        tracked_dirs.sort_by_key(|b| std::cmp::Reverse(b.components().count()));
-
-        let mut dir_removals: Vec<camino::Utf8PathBuf> = vec![];
-        for dir_path in tracked_dirs {
-            if dir_path.is_dir() {
-                match std::fs::read_dir(&dir_path) {
-                    Ok(mut entries) => {
-                        if entries.next().is_none() {
-                            // Directory is empty - try to remove
-                            let remove_action = Action::RemoveDir(dir_path.clone());
-                            if !remove_action.should_skip() {
-                                match remove_action.execute(fs_manager) {
-                                    Ok(_) => {
-                                        // Successfully removed
-                                        dir_removals.push(dir_path);
-                                    }
-                                    Err(err) => {
-                                        // Failed to remove empty directory (permissions?)
-                                        warn!("Unable to remove empty directory {}: {}", dir_path, err);
-                                        warn!("You may need to remove it manually with appropriate permissions");
-                                        // Keep tracking - don't add to dir_removals
-                                    }
-                                }
-                            }
-                        } else {
-                            // Directory contains files - stop tracking it
-                            // The user has claimed this directory for their own use
-                            dir_removals.push(dir_path);
+        } else {
+            // Execute cleanup actions
+            debug!("CLEANUP ACTIONS");
+            for action in cleanup_actions {
+                let should_skip = action.should_skip();
+                debug!("skip: {}, action: {:?}", should_skip, action);
+                if !should_skip {
+                    match action.execute(fs_manager) {
+                        Ok(_) => {}
+                        Err(err) => {
+                            // Log error but continue with other cleanup actions
+                            warn!("Cleanup action failed: {}", err);
+                            warn!("You may need to clean up manually");
                         }
                     }
-                    Err(err) => {
-                        // Can't read directory (permissions?)
-                        warn!("Unable to access directory {} for cleanup: {}", dir_path, err);
-                        warn!("You may need to check permissions or remove it manually");
-                        // Keep tracking - don't add to dir_removals
-                    }
                 }
-            } else {
-                // Directory doesn't exist - stop tracking
-                dir_removals.push(dir_path);
             }
         }
 
-        // Update footprint entries directly
-        for link in footprint_removals {
-            fs_manager.remove_footprint_link(&link)?;
+        // Reconcile footprint after cleanup
+        // Check for directories with user files before reconciliation
+        let dirs_with_user_files: Vec<_> = fs_manager
+            .footprint
+            .dirs
+            .iter()
+            .filter(|dir_path| {
+                let is_needed = current_links.iter().any(|link| link.dest.path.starts_with(dir_path));
+
+                if !is_needed && dir_path.is_dir() {
+                    // Check if has user files
+                    fs_manager
+                        .read_dir(dir_path)
+                        .ok()
+                        .map(|entries| {
+                            entries.filter_map(|e| e.ok()).any(|entry| {
+                                let path = entry.path();
+                                path.is_file() && !path.is_symlink()
+                            })
+                        })
+                        .unwrap_or(false)
+                } else {
+                    false
+                }
+            })
+            .cloned()
+            .collect();
+
+        // Warn about directories we can't remove
+        for dir_path in &dirs_with_user_files {
+            warn!(
+                "Cannot remove directory {} - it contains files that were not created by dots",
+                utils::fs::pretty_path(dir_path)
+            );
         }
 
-        // Remove cleaned directories from footprint tracking
-        for dir_path in dir_removals {
-            fs_manager.remove_footprint_dir(&dir_path)?;
-        }
+        fs_manager.edit_footprint(|footprint| {
+            // Remove links that don't exist or point outside dots directory
+            footprint.links.retain(|link| {
+                link.dest.path.is_symlink() && link.src.path.starts_with(env.root())
+            });
+
+            // Remove directories that don't exist or aren't needed by current links
+            footprint.dirs.retain(|dir_path| {
+                let dir_exists = dir_path.is_dir();
+                let is_needed = current_links.iter().any(|link| {
+                    link.dest.path.starts_with(dir_path)
+                });
+
+                dir_exists && is_needed
+            });
+        })?;
+
         Ok(())
     }
 
-    /**
-     * Validates the dotfiles installation plan and detects conflicts.
-     *
-     * Uses the ResolvedLink system to check for missing files, conflicting symlinks,
-     * permission issues, and duplicate destinations. Shows warnings and errors
-     * to the user before any filesystem changes are made.
-     *
-     * Returns Ok if the plan can proceed, or Err if there are unresolved issues.
-     */
-    pub fn validate(&mut self, dots: Vec<Dot>) -> Result<(), PlanError> {
+    /// Validates the dotfiles installation plan and detects conflicts.
+    ///
+    /// Uses the ResolvedLink system to check for missing files, conflicting symlinks,
+    /// permission issues, and duplicate destinations. Shows warnings and errors
+    /// to the user before any filesystem changes are made.
+    ///
+    /// Returns Ok if the plan can proceed, or Err if there are unresolved issues.
+    pub fn validate(&mut self, dots: &[Dot]) -> Result<(), PlanError> {
         let mut suggest_force = false;
         let mut fixed_issues: Vec<&ResolveIssue> = vec![];
-        for dot in dots {
+        for (index, dot) in dots.iter().enumerate() {
             let title = format!("[{name}]", name = &dot.package.name);
-            eprintln!("\n{title}", title = styles::TITLE.apply(title));
-            let links = dot.links;
+            if index > 0 {
+                eprintln!();
+            }
+            eprintln!("{title}", title = styles::TITLE.apply(title));
+            let links = &dot.links;
 
-            for mut link in links {
+            for link in links {
+                let mut link = link.clone();
                 if let Some(resolved_dest) = &link.dest.path {
                     let duplicates = self.duplicates(resolved_dest);
                     if !duplicates.is_empty() {
@@ -270,17 +261,15 @@ impl Plan {
         }
     }
 
-    /**
-     * Executes the dotfiles installation using the Actions system.
-     *
-     * Trusts that validation has passed and performs the actual filesystem operations
-     * to install dotfiles. Uses Actions to create directories, symlinks, and remove
-     * conflicting files (when force=true).
-     *
-     * Collects multiple errors instead of failing fast to provide comprehensive
-     * feedback about what went wrong during installation.
-     */
-    pub fn execute(&self, fs_manager: &mut FSManager, force: bool) -> Result<()> {
+    /// Executes the dotfiles installation using the Actions system.
+    ///
+    /// Trusts that validation has passed and performs the actual filesystem operations
+    /// to install dotfiles. Uses Actions to create directories, symlinks, and remove
+    /// conflicting files (when force=true).
+    ///
+    /// Collects multiple errors instead of failing fast to provide comprehensive
+    /// feedback about what went wrong during installation.
+    pub fn execute(&self, _env: &Environment, fs_manager: &mut FSManager, force: bool) -> Result<()> {
         let links: Vec<Link> = self
             .links
             .iter()
@@ -289,7 +278,7 @@ impl Plan {
 
         let mut actions: Vec<Action> = vec![];
 
-        for link in links {
+        for link in &links {
             if link.dest.path.is_symlink() {
                 actions.push(Action::RemoveLink(link.clone()));
             } else if link.dest.path.is_file() {
@@ -381,5 +370,63 @@ impl Plan {
             .into_iter()
             .filter(|&issue| matches!(issue.level(), ResolveIssueLevel::Error))
             .collect()
+    }
+
+
+    /// Generates cleanup actions for stale symlinks and empty directories.
+    ///
+    /// Returns actions that need to be executed to clean up the filesystem based on:
+    /// - Symlinks in footprint that don't exist anymore or point to wrong targets
+    /// - Symlinks in footprint that aren't in current dot.toml files
+    /// - Empty tracked directories that aren't needed by current links
+    fn generate_cleanup_actions(&self, env: &Environment, fs_manager: &FSManager, current_links: &[Link]) -> Vec<Action> {
+        let mut actions = vec![];
+
+        // Clean up stale symlinks
+        for footprint_link in &fs_manager.footprint.links {
+            // Skip links that point outside dots directory - they're not ours to manage
+            if !footprint_link.src.path.starts_with(env.root()) {
+                continue;
+            }
+
+            if footprint_link.dest.path.is_symlink() {
+                if !footprint_link.exists() {
+                    // Stale symlink pointing to wrong target
+                    actions.push(Action::RemoveLink(footprint_link.clone()));
+                } else if !current_links.contains(footprint_link) {
+                    // Symlink not in current dot.toml
+                    actions.push(Action::RemoveLink(footprint_link.clone()));
+                }
+            }
+        }
+
+        // Clean up empty directories (sort by depth, deepest first)
+        let mut tracked_dirs: Vec<_> = fs_manager.footprint.dirs.iter().collect();
+        tracked_dirs.sort_by_key(|dir| std::cmp::Reverse(dir.components().count()));
+
+        for dir_path in tracked_dirs {
+            if dir_path.is_dir() && !Self::directory_contains_files(dir_path, fs_manager) {
+                // Directory is empty and exists
+                // Check if any current links still need this directory
+                let still_needed = current_links.iter().any(|link| {
+                    link.dest.path.starts_with(dir_path)
+                });
+
+                if !still_needed {
+                    actions.push(Action::RemoveDir(dir_path.clone()));
+                }
+            }
+        }
+
+        actions
+    }
+
+    /// Checks if a directory contains any files (not empty or only has subdirs)
+    fn directory_contains_files(dir_path: &Utf8Path, fs_manager: &FSManager) -> bool {
+        if let Ok(entries) = fs_manager.read_dir(dir_path) {
+            entries.count() > 0
+        } else {
+            false
+        }
     }
 }

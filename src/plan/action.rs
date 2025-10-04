@@ -31,35 +31,46 @@ pub enum Action {
 }
 
 impl Action {
-    /**
-     * Executes the filesystem operation represented by this action.
-     *
-     * Performs the actual filesystem changes. Operations that affect symlinks
-     * (CreateLink/RemoveLink) automatically update the footprint tracking.
-     */
+    /// Executes the filesystem operation represented by this action.
+    ///
+    /// Orchestrates FSManager primitives to perform filesystem changes and footprint tracking:
+    /// - Creations (CreateDir, CreateLink) are always tracked in the footprint
+    /// - Removals (RemoveLink, RemoveDir, RemoveFile) only touch filesystem, footprint is reconciled later
     pub fn execute(&self, fs: &mut FSManager) -> anyhow::Result<()> {
         use Action::*;
 
         match self {
-            CreateDir(path) => fs.create_directory(path)?,
-            CreateLink(link) => fs.create_symlink(link)?,
-            RemoveFile(path) => fs.remove_file(path)?,
-            RemoveDir(path) => fs.remove_directory(path)?,
-            RemoveLink(link) => fs.remove_symlink(link)?,
+            CreateDir(path) => {
+                let was_created = fs.create_directory(path)?;
+                if was_created {
+                    fs.track_directory(path)?;
+                }
+            }
+            CreateLink(link) => {
+                fs.create_symlink(link)?;
+                fs.track_symlink(link)?;
+            }
+            RemoveFile(path) => {
+                fs.remove_file(path)?;
+            }
+            RemoveDir(path) => {
+                fs.remove_directory(path)?;
+            }
+            RemoveLink(link) => {
+                fs.remove_symlink(link)?;
+            }
         };
         Ok(())
     }
 
-    /**
-     * Determines if this action should be skipped to avoid expected filesystem errors.
-     *
-     * This method checks the current filesystem state to avoid operations that would
-     * produce "expected" errors that we'd have to filter out later (like NotFound
-     * when removing non-existent files, or AlreadyExists when creating existing dirs).
-     *
-     * This is primarily about error avoidance, not performance - we want to collect
-     * only "real" errors, not expected errors from no-op operations.
-     */
+    /// Determines if this action should be skipped to avoid expected filesystem errors.
+    ///
+    /// This method checks the current filesystem state to avoid operations that would
+    /// produce "expected" errors that we'd have to filter out later (like NotFound
+    /// when removing non-existent files, or AlreadyExists when creating existing dirs).
+    ///
+    /// This is primarily about error avoidance, not performance - we want to collect
+    /// only "real" errors, not expected errors from no-op operations.
     pub fn should_skip(&self) -> bool {
         use Action::*;
         match self {

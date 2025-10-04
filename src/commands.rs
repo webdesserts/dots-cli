@@ -22,24 +22,18 @@ pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
     let env = Environment::new();
     if let Some(url) = repo {
         dots::add(url, overwrite, &env);
+        eprintln!();
     };
     let dots = dots::find_all(&env);
 
     let mut plan = Plan::new(force);
 
     let mut fs_manager = FSManager::init(&env);
-    plan.clean(&env, &mut fs_manager, &dots)
-        .unwrap_or_else(|err| {
-            error!("failed to clean current install:");
-            error!("{}", err);
-            process::exit(1);
-        });
 
     /* Validate whether the plan passes or fails */
-    match plan.validate(dots) {
-        Ok(plan) => {
+    match plan.validate(&dots) {
+        Ok(_) => {
             info!("Looks Good! Nothing wrong with the current install plan!");
-            plan
         }
         Err(err) => {
             error!("{}", err);
@@ -50,20 +44,28 @@ pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
 
     if dry {
         process::exit(1)
-    } else {
-        match plan.execute(&mut fs_manager, force) {
-            Ok(_) => {
-                info!("Install was a success!");
-                process::exit(0)
-            }
-            Err(err) => {
-                error!("Install Failed!");
-                error!("{}", err);
+    }
 
-                process::exit(1)
-            }
+    match plan.execute(&env, &mut fs_manager, force) {
+        Ok(_) => {}
+        Err(err) => {
+            error!("Install Failed!");
+            error!("{}", err);
+
+            process::exit(1)
         }
     }
+
+    // Clean up stale symlinks and directories after installation
+    plan.clean(&env, &mut fs_manager, &dots, false)
+        .unwrap_or_else(|err| {
+            error!("failed to clean current install:");
+            error!("{}", err);
+            process::exit(1);
+        });
+
+    info!("Install was a success!");
+    process::exit(0)
 }
 
 pub fn uninstall(name: &Option<String>) {
@@ -74,7 +76,9 @@ pub fn uninstall(name: &Option<String>) {
     let plan = Plan::new(false);
     let mut fs_manager = FSManager::init(&env);
     let dots = dots::find_all(&env);
-    plan.clean(&env, &mut fs_manager, &dots)
+
+    // Clean up stale symlinks and directories, then reconcile footprint
+    plan.clean(&env, &mut fs_manager, &dots, false)
         .unwrap_or_else(|err| {
             error!("failed to clean current install:");
             error!("{}", err);

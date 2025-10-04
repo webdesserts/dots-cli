@@ -88,3 +88,14 @@ where
     path.canonicalize()
         .map(|path| Utf8PathBuf::from_path_buf(path).unwrap())
 }
+
+/// Convert absolute paths to use ~ for home directory (opposite of canonicalize)
+pub fn pretty_path<P>(path: P) -> String
+where
+    P: AsRef<Utf8Path>,
+{
+    let path = path.as_ref();
+    path.strip_prefix(home())
+        .map(|rel_path| format!("~/{}", rel_path))
+        .unwrap_or_else(|_| path.to_string())
+}
