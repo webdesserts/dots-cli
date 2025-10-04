@@ -160,10 +160,12 @@ git push origin master
 ```
 
 ### Version Numbering
-We follow [Semantic Versioning](https://semver.org/):
-- **Patch** (0.5.2 -> 0.5.3): Bug fixes, non-breaking changes
-- **Minor** (0.5.3 -> 0.6.0): New features, non-breaking changes
-- **Major** (0.6.0 -> 1.0.0): Breaking changes
+Version numbers follow the pattern `major.minor.patch`:
+- **Patch** (0.5.2 -> 0.5.3): Bug fixes and minor changes
+- **Minor** (0.5.3 -> 0.6.0): New features and improvements
+- **Major** (0.6.0 -> 1.0.0): Major changes
+
+Note: This project does not strictly adhere to semantic versioning.
 
 ### Manual Release (if needed)
 If `cargo-release` isn't available:
