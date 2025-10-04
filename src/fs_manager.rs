@@ -1,12 +1,12 @@
 use anyhow::Result;
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use std::{fs, io, os::unix};
 
 use crate::{dots::Environment, footprint::Footprint, plan::links::Link};
 
 pub struct FSManager {
     footprint_path: Utf8PathBuf,
-    footprint: Footprint,
+    pub footprint: Footprint,
 }
 
 impl FSManager {
@@ -20,71 +20,79 @@ impl FSManager {
         }
     }
 
-    /**
-     * This method does three things:
-     *
-     * 1. removes any footprint links that DO NOT have corresponding symlinks on the fs
-     * 2. removes any footprint links that DO have corresponding symlinks on the fs, but those symlinks
-     *    do no point to the correct source.
-     * 3. removes the symlink for footprint links that DO NOT have corresponding links in any Dot.toml
-     */
-    pub fn clean(&mut self, valid_links: &Vec<Link>, env: &Environment) -> Result<()> {
-        let original_footprint = self.footprint.clone();
-        debug!("VALID LINKS");
-        for link in valid_links {
-            debug!("  {link:?}")
-        }
-        debug!("FOOTPRINT LINKS");
-        for link in &original_footprint.links {
-            let symlink_exists = link.dest.path.is_symlink();
-            debug!("  {link:?}");
-            debug!("    link is on fs: {}", link.exists());
-            debug!("    link is in dots: {}", valid_links.contains(link));
-            if !symlink_exists {
-                debug!("    no symlink detected, removing footprint link");
-                self.remove_footprint_link(link)?;
-            } else if !link.exists() {
-                debug!("    symlink detected, but pointing to wrong dest, removing footprint link");
-                self.remove_footprint_link(link)?;
-            } else if !link.src.path.starts_with(env.root()) {
-                debug!("    symlink exists, but source is outside of dots dir, removing footprint link");
-                self.remove_footprint_link(link)?;
-            } else if !valid_links.contains(link) {
-                debug!("    link is on fs but is no longer present in dot files, removing symlink & footprint link");
-                self.remove_symlink(link)?;
-                self.remove_footprint_link(link)?;
-            } else {
-                debug!("    leaving link alone")
-            }
-        }
+    pub fn footprint_path(&self) -> &Utf8Path {
+        &self.footprint_path
+    }
+
+    // ============================================================================
+    // Filesystem Primitives (no footprint changes)
+    // ============================================================================
+
+    /// Creates a symlink on the filesystem
+    pub fn create_symlink(&self, link: &Link) -> io::Result<()> {
+        unix::fs::symlink(&link.src.path, &link.dest.path)?;
         Ok(())
     }
 
-    /** Removes a link from the footprint file */
-    fn remove_footprint_link(&mut self, link: &Link) -> Result<()> {
-        self.footprint.links.remove(link);
-        self.save_footprint()?;
-        Ok(())
-    }
-
-    /**
-     * Removes the given symlink from fs
-     */
+    /// Removes a symlink from the filesystem
     pub fn remove_symlink(&self, link: &Link) -> io::Result<()> {
         fs::remove_file(&link.dest.path)?;
         Ok(())
     }
 
-    /** Creates the given symlink and tracks that link in the dot footprint */
-    pub fn create_symlink(&mut self, link: &Link) -> Result<()> {
-        unix::fs::symlink(&link.src.path, &link.dest.path)?;
-        self.footprint.links.insert(link.clone());
-        self.save_footprint()?;
+    /// Creates a directory on the filesystem, returns true if it was created
+    pub fn create_directory(&self, dir_path: &Utf8Path) -> io::Result<bool> {
+        let existed = dir_path.exists();
+        fs::create_dir_all(dir_path)?;
+        Ok(!existed)
+    }
 
+    /// Removes a directory from the filesystem
+    pub fn remove_directory(&self, dir_path: &Utf8Path) -> io::Result<()> {
+        fs::remove_dir_all(dir_path)?;
         Ok(())
     }
 
-    /** Write the current footprint to the toml file */
+    /// Removes a file from the filesystem
+    pub fn remove_file(&self, file_path: &Utf8Path) -> io::Result<()> {
+        fs::remove_file(file_path)?;
+        Ok(())
+    }
+
+    /// Reads directory entries
+    pub fn read_dir(&self, dir_path: &Utf8Path) -> io::Result<fs::ReadDir> {
+        fs::read_dir(dir_path)
+    }
+
+    // ============================================================================
+    // Footprint Primitives (no filesystem changes)
+    // ============================================================================
+
+    /// Adds a symlink to the footprint tracking
+    pub fn track_symlink(&mut self, link: &Link) -> Result<()> {
+        self.footprint.links.insert(link.clone());
+        self.save_footprint()?;
+        Ok(())
+    }
+
+    /// Adds a directory to the footprint tracking
+    pub fn track_directory(&mut self, dir_path: &Utf8Path) -> Result<()> {
+        self.footprint.dirs.insert(dir_path.to_path_buf());
+        self.save_footprint()?;
+        Ok(())
+    }
+
+    /// Edit the footprint with a closure, automatically saving changes when done
+    pub fn edit_footprint<F>(&mut self, f: F) -> Result<()>
+    where
+        F: FnOnce(&mut Footprint),
+    {
+        f(&mut self.footprint);
+        self.save_footprint()?;
+        Ok(())
+    }
+
+    /// Write the current footprint to the toml file
     fn save_footprint(&self) -> Result<()> {
         let contents = toml::to_string(&self.footprint)?;
         fs::write(&self.footprint_path, contents)?;
@@ -93,7 +101,7 @@ impl FSManager {
 
     fn read_and_parse_footprint(footprint_path: &Utf8PathBuf) -> Footprint {
         let Ok(string) = fs::read_to_string(footprint_path) else {
-            return Footprint::default()
+            return Footprint::default();
         };
         return toml::from_str(string.as_ref()).unwrap_or_else(|err| {
             warn!("Error parsing {footprint_path}:\n{err}");

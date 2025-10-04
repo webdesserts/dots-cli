@@ -99,4 +99,30 @@ mod subcommand_list {
 
         Ok(())
     }
+
+    #[test]
+    fn it_should_ignore_hidden_directories_in_dots_folder() -> TestResult {
+        use std::fs;
+
+        let fixture1 = Fixture::ExampleDot;
+        let manager = TestManager::new()?;
+        let fixture1_path = manager.setup_fixture_as_git_repo(&fixture1)?;
+
+        // Add a normal dot
+        manager.cmd(BIN)?.arg("add").arg(&fixture1_path).output()?;
+
+        // Create a hidden directory in the .dots folder (like .claude)
+        let hidden_dir = manager.dots_dir().join(".claude");
+        fs::create_dir_all(&hidden_dir)?;
+
+        let output = manager.cmd(BIN)?.arg("list").output()?;
+
+        // Should only show the normal dot, not the hidden directory
+        output
+            .assert_stderr_eq("")
+            .assert_stdout_eq("example_dot")
+            .assert_success();
+
+        Ok(())
+    }
 }

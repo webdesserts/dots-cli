@@ -3,3 +3,5 @@
 ✔ ~/.zshrc => shell/zshrc
 
 [info] Looks Good! Nothing wrong with the current install plan!
+[warn] Cannot remove directory ~/.config/zsh - it contains files that were not created by dots
+[info] Install was a success!

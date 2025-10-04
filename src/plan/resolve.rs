@@ -56,7 +56,7 @@ where
             let issue_kind = match err.kind() {
                 io::NotFound => link::NotFound,
                 io::PermissionDenied => link::PermissionDenied,
-                _ => link::IO(err),
+                _ => link::IO(err.to_string()),
             };
 
             let issue = ResolveIssue::new(&src.original, issue_kind);
@@ -131,7 +131,7 @@ fn resolve_dest(anchor: Anchor, src: &ResolvedAnchor) -> ResolvedAnchor {
 \*================*/
 
 /// A Link where both the symlink and dotfile path have been resolved and checked for issues
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct ResolvedLink {
     /// The resolved anchor for the dotfile
     pub src: ResolvedAnchor,
@@ -156,8 +156,12 @@ impl ResolvedLink {
     }
     /// Returns a simplified link if all paths are valid
     pub fn as_link(&self) -> Option<Link> {
-        let Some(src) = &self.src.path else { return None };
-        let Some(dest) = &self.dest.path else { return None };
+        let Some(src) = &self.src.path else {
+            return None;
+        };
+        let Some(dest) = &self.dest.path else {
+            return None;
+        };
         Some(Link {
             src: Anchor::new_src(src),
             dest: Anchor::new_dest(dest),
@@ -183,7 +187,7 @@ impl Display for ResolvedLink {
             _ => false,
         };
 
-        if is_directory {
+        if is_directory && !src_path.ends_with('/') {
             src_path += "/"
         }
 
@@ -210,7 +214,7 @@ impl Display for ResolvedLink {
 
 /// A ResolvedAnchor is an Anchor whos path has been cannonicalized and checked for potential issues.
 /// Any issues that are found are collected for reporting back to the user.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct ResolvedAnchor {
     /// Resolved path. If the path is not a valid FS path it will be `None`
     pub path: Option<Utf8PathBuf>,
@@ -279,7 +283,7 @@ impl ResolvedAnchor {
  * the user. Errors should stop the install in its tracks.
  */
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct ResolveIssue {
     pub kind: ResolveIssueKind,
     pub anchor: Anchor,
@@ -291,14 +295,14 @@ pub enum ResolveIssueLevel {
     Warning,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ResolveIssueKind {
     Conflict,
     AlreadyExists(fs::FileType),
     InvalidPath(String),
     NotFound,
     PermissionDenied,
-    IO(io::Error),
+    IO(String),
 }
 
 impl Eq for ResolveIssueKind {}
@@ -322,7 +326,7 @@ impl ResolveIssue {
     }
 
     fn io(anchor: &Anchor, error: io::Error) -> Self {
-        Self::new(anchor, ResolveIssueKind::IO(error))
+        Self::new(anchor, ResolveIssueKind::IO(error.to_string()))
     }
 
     pub fn level(&self) -> ResolveIssueLevel {

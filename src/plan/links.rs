@@ -25,7 +25,9 @@ impl Link {
     }
 
     pub fn exists(&self) -> bool {
-        let Ok(path) = fs::read_link(&self.dest.path) else { return false };
+        let Ok(path) = fs::read_link(&self.dest.path) else {
+            return false;
+        };
         path == self.src.path
     }
 }
@@ -33,6 +35,17 @@ impl Link {
 impl fmt::Debug for Link {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} => {}", self.dest.path, self.src.path)
+    }
+}
+
+impl fmt::Display for Link {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} => {}",
+            utils::fs::pretty_path(&self.dest.path),
+            utils::fs::pretty_path(&self.src.path)
+        )
     }
 }
 
@@ -67,6 +80,10 @@ impl Anchor {
             path: path.as_ref().to_owned(),
             kind: AnchorKind::Destination,
         }
+    }
+
+    pub fn exists(&self) -> bool {
+        self.path.is_symlink()
     }
 }
 

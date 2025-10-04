@@ -214,6 +214,13 @@ pub fn find_all(env: &Environment) -> Vec<Dot> {
             continue;
         }
 
+        // Skip hidden directories (starting with .)
+        if let Some(file_name) = utf8_path.file_name() {
+            if file_name.starts_with('.') {
+                continue;
+            }
+        }
+
         if let Ok(dot) = Dot::new(utf8_path) {
             dots.push(dot)
         }

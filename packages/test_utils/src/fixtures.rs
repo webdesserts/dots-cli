@@ -8,7 +8,9 @@ pub enum Fixture {
     ExampleDotWithLinkAdded,
     ExampleDotWithMultiLink,
     ExampleDotWithDirectory,
+    ExampleDotWithNestedDirectories,
     ConflictingDot,
+    ExampleDotWithSelfLink,
 }
 
 impl Fixture {
@@ -21,28 +23,26 @@ impl Fixture {
     pub fn name(&self) -> &str {
         match self {
             Self::ExampleDotWithDirectory => "example_dot_with_directory",
+            Self::ExampleDotWithNestedDirectories => "example_dot",
             Self::ExampleDotWithLinkAdded => "example_dot",
             Self::ExampleDotWithMultiLink => "example_dot",
             Self::ExampleDotWithUnlinkedFile => "example_dot",
             Self::ExampleDot => "example_dot",
             Self::ConflictingDot => "conflicting_dot",
+            Self::ExampleDotWithSelfLink => "example_dot_with_self_link",
         }
     }
 
     /** The path where this specific fixture's template can be found */
     pub fn template_path(&self) -> Utf8PathBuf {
-        match self {
-            Self::ExampleDotWithLinkAdded => {
-                Self::templates_root().join("example_dot_with_link_added")
-            }
-            Self::ExampleDotWithMultiLink => {
-                Self::templates_root().join("example_dot_with_multi_link")
-            }
-            Self::ExampleDotWithUnlinkedFile => {
-                Self::templates_root().join("example_dot_with_unlinked_file")
-            }
-            _ => Self::templates_root().join(self.name()),
-        }
+        let subpath = match self {
+            Self::ExampleDotWithLinkAdded => "example_dot_with_link_added",
+            Self::ExampleDotWithMultiLink => "example_dot_with_multi_link",
+            Self::ExampleDotWithUnlinkedFile => "example_dot_with_unlinked_file",
+            Self::ExampleDotWithNestedDirectories => "example_dot_with_nested_directories",
+            _ => self.name(),
+        };
+        Self::templates_root().join(subpath)
     }
 }
 

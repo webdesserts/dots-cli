@@ -1,3 +1,5 @@
+dirs = []
+
 [[links]]
 src = "{HOME}/.bashrc"
 dest = "{HOME}/.bash_profile"

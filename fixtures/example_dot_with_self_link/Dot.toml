@@ -1,0 +1,6 @@
+[package]
+name = "example_dot_with_self_link"
+authors = ["Test Author"]
+
+[link]
+"~/test_self_link" = "./"

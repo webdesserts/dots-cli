@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh issue view:*)",
+      "Bash(cargo test:*)",
+      "Bash(cat:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo clippy:*)",
+      "WebSearch",
+      "Read(//tmp/**)",
+      "Bash(cargo build:*)",
+      "Bash(git add:*)",
+      "Bash(cargo fmt:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

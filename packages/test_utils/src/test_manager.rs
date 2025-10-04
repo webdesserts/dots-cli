@@ -1,6 +1,7 @@
 use crate::Fixture;
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
+use std::cell::RefCell;
 use std::fs;
 use std::io::Read;
 use std::process::Command;
@@ -12,12 +13,19 @@ use utils::git;
 
 pub struct TestManager {
     tmpdir: TempDir,
+    /// Tracks files we've made readonly for testing permission errors.
+    /// Stores (path, original_readonly_state) so we can restore permissions
+    /// before the temp directory cleanup attempts to delete files.
+    readonly_files: RefCell<Vec<(Utf8PathBuf, bool)>>,
 }
 
 impl TestManager {
     pub fn new() -> Result<Self> {
         let tmpdir = tempdir()?;
-        let test_manager = TestManager { tmpdir };
+        let test_manager = TestManager {
+            tmpdir,
+            readonly_files: RefCell::new(Vec::new()),
+        };
         Ok(test_manager)
     }
 
@@ -108,6 +116,60 @@ impl TestManager {
         let contents = contents.as_ref();
         fs::write(self.footprint_path(), contents)?;
         Ok(())
+    }
+
+    /// Makes a file readonly for testing permission errors.
+    ///
+    /// The file's original permissions will be automatically restored when the
+    /// TestManager is dropped (at the end of the test). This ensures temp directory
+    /// cleanup doesn't fail due to readonly files.
+    ///
+    /// ## Example
+    /// ```rust
+    /// #[test]
+    /// fn test_permission_error() -> TestResult {
+    ///     let manager = TestManager::new()?;
+    ///     // ... setup code ...
+    ///
+    ///     // Make footprint readonly to test permission denied error handling
+    ///     manager.make_readonly(manager.footprint_path())?;
+    ///
+    ///     // ... test code ...
+    ///
+    /// } // Permissions automatically restored here when manager drops
+    /// ```
+    pub fn make_readonly(&self, path: impl AsRef<Utf8Path>) -> Result<()> {
+        let path = path.as_ref();
+        let perms = fs::metadata(path)?.permissions();
+
+        // Store original state for restoration on drop
+        self.readonly_files
+            .borrow_mut()
+            .push((path.to_owned(), perms.readonly()));
+
+        // Make the file readonly
+        let mut new_perms = perms;
+        new_perms.set_readonly(true);
+        fs::set_permissions(path, new_perms)?;
+
+        Ok(())
+    }
+}
+
+impl Drop for TestManager {
+    fn drop(&mut self) {
+        // Restore all readonly permissions before temp directory cleanup.
+        // This prevents the temp directory cleanup from failing when trying
+        // to delete readonly files.
+        for (path, original_readonly) in self.readonly_files.borrow().iter() {
+            let _ = (|| -> Result<()> {
+                let mut perms = fs::metadata(path)?.permissions();
+                perms.set_readonly(*original_readonly);
+                fs::set_permissions(path, perms)?;
+                Ok(())
+            })();
+        }
+        // tmpdir drops after this and cleans up the temp directory
     }
 }
 
