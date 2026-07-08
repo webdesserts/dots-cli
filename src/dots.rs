@@ -173,6 +173,22 @@ pub fn find(dot_name: &str, env: &Environment) -> Option<Dot> {
         .find(|dot| dot.package.name == dot_name)
 }
 
+/// Helper to consolidate IO error handling for directory operations.
+/// Handles `PermissionDenied` with a specific message, and all other errors with a generic message.
+/// Both cases print an error and exit.
+fn handle_io_error(err: &io::Error, context: &str) -> ! {
+    match err.kind() {
+        io::ErrorKind::PermissionDenied => {
+            error!("Unable access {context}:\n{err}");
+            process::exit(1);
+        }
+        _ => {
+            error!("Error while accessing {context}:\n{err}");
+            process::exit(1);
+        }
+    }
+}
+
 pub fn find_all(env: &Environment) -> Vec<Dot> {
     let dir = match env.root.read_dir() {
         Ok(read_dir) => read_dir,
@@ -180,14 +196,7 @@ pub fn find_all(env: &Environment) -> Vec<Dot> {
             use io::ErrorKind as Kind;
             match err.kind() {
                 Kind::NotFound => return vec![],
-                Kind::PermissionDenied => {
-                    error!("Unable access dots directory:\n{}", err);
-                    process::exit(1);
-                }
-                _ => {
-                    error!("Error while accessing dots directory:\n{}", err);
-                    process::exit(1);
-                }
+                _ => handle_io_error(&err, "dots directory"),
             }
         }
     };
@@ -197,16 +206,7 @@ pub fn find_all(env: &Environment) -> Vec<Dot> {
     for entry in dir {
         let path = match entry {
             Ok(entry) => entry.path(),
-            Err(err) => match err.kind() {
-                io::ErrorKind::PermissionDenied => {
-                    error!("Unable access dots directory:\n{}", err);
-                    process::exit(1);
-                }
-                _ => {
-                    error!("Error while accessing dots directory:\n{}", err);
-                    process::exit(1);
-                }
-            },
+            Err(err) => handle_io_error(&err, "dots directory"),
         };
 
         let utf8_path = Utf8PathBuf::from_path_buf(path).expect("Error parsing path as Utf8");
