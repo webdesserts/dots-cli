@@ -31,8 +31,8 @@ impl fmt::Display for GitError {
                 write!(f, "Git failed with the following Io error:\n{}", err)
             }
             GitErrorKind::Command(output) => {
-                let err = std::str::from_utf8(&output.stderr).unwrap();
-                let out = std::str::from_utf8(&output.stdout).unwrap();
+                let err = String::from_utf8_lossy(&output.stderr);
+                let out = String::from_utf8_lossy(&output.stdout);
 
                 write!(f, "Git exited with the following output\n{err}{out}",)
             }
@@ -161,5 +161,35 @@ fn map_result(result: Result<Output, io::Error>) -> Result<Output, GitError> {
                 kind: GitErrorKind::Io(err),
             }),
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::process::ExitStatus;
+
+    #[test]
+    fn test_git_error_display_with_invalid_utf8_does_not_panic() {
+        // Construct an Output with non-UTF-8 bytes (0xFF) in stderr
+        // and stdout to test that from_utf8_lossy handles it gracefully
+        let invalid_utf8_stderr = vec![0xFF, 0xFE, 0x80, 0x81];
+        let invalid_utf8_stdout = vec![0xDE, 0xAD, 0xBE, 0xEF];
+
+        let output = Output {
+            status: ExitStatus::default(), // dummy exit status
+            stdout: invalid_utf8_stdout,
+            stderr: invalid_utf8_stderr,
+        };
+
+        let git_error = GitError {
+            kind: GitErrorKind::Command(output),
+        };
+
+        // This should NOT panic thanks to from_utf8_lossy
+        let display = format!("{}", git_error);
+
+        // Verify the display string contains replacement characters
+        assert!(display.contains("Git exited with the following output"));
     }
 }
