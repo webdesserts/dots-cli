@@ -858,4 +858,86 @@ mod subcommand_install {
 
         Ok(())
     }
+
+    /// Regression test for: "dots install silently succeeds when a link's source path changes in Dot.toml"
+    ///
+    /// Scenario: Configure a link, run dots install, change the source path in Dot.toml,
+    /// run dots install again. Assert that (a) the destination symlink exists and points
+    /// to the new source, and (b) a footprint entry exists for the updated link.
+    #[test]
+    pub fn it_should_update_symlink_when_source_path_changes_in_dot_toml() -> TestResult {
+        let manager = TestManager::new()?;
+        let fixture = Fixture::ExampleDotSourceChangeV1;
+        let fixture_path = manager.setup_fixture_as_git_repo(&fixture)?;
+        let dots_root = manager.dots_dir();
+        let home_path = manager.home_dir();
+        let footprint_path = manager.footprint_path();
+
+        // Step 1: Install the fixture (~/.bashrc -> shell/bashrc)
+        manager
+            .cmd(BIN)?
+            .arg("install")
+            .arg(&fixture_path)
+            .output()?;
+
+        let dot_path = dots_root.join(fixture.name());
+        assert!(dot_path.is_dir());
+        assert!(dot_path.join("Dot.toml").is_file());
+
+        // Verify initial symlink points to the first source (shell/bashrc)
+        let bashrc_path = home_path.join(".bashrc");
+        assert!(bashrc_path.is_symlink(), "Initial symlink should exist");
+        assert_eq!(
+            bashrc_path.read_link()?,
+            dot_path.join("shell/bashrc"),
+            "Symlink should initially point to shell/bashrc"
+        );
+
+        // Verify initial footprint contains the first link
+        let footprint_v1 = manager.read_footprint()?;
+        assert!(
+            footprint_v1.contains("shell/bashrc"),
+            "Footprint should initially contain shell/bashrc"
+        );
+
+        // Step 2: Modify Dot.toml to change source path to shell/zshrc
+        // The fixture has both bashrc and zshrc files, so we can change the link
+        let dot_toml_path = dot_path.join("Dot.toml");
+        let new_dot_toml = r#"[package]
+name = "example_dot_source_change_v1"
+authors = [ "Test Author" ]
+
+[link]
+"~/.bashrc" = "shell/zshrc"
+"#;
+        std::fs::write(&dot_toml_path, new_dot_toml)?;
+
+        // Step 3: Run install again with --force to update the symlink
+        let output = manager.cmd(BIN)?.arg("install").arg("--force").output()?;
+        output.assert_success();
+
+        // Assertion (a): The destination symlink exists and points to the new source
+        assert!(
+            bashrc_path.is_symlink(),
+            "Symlink should still exist after source path change"
+        );
+        assert_eq!(
+            bashrc_path.read_link()?,
+            dot_path.join("shell/zshrc"),
+            "Symlink should point to the new source (shell/zshrc) after source path change"
+        );
+
+        // Assertion (b): A footprint entry exists for the updated link
+        let footprint_v2 = manager.read_footprint()?;
+        assert!(
+            footprint_v2.contains("shell/zshrc"),
+            "Footprint should contain the new source (shell/zshrc)"
+        );
+        assert!(
+            footprint_path.exists(),
+            "Footprint file should exist"
+        );
+
+        Ok(())
+    }
 }

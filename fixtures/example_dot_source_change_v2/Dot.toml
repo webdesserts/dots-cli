@@ -1,0 +1,6 @@
+[package]
+name = "example_dot_source_change_v2"
+authors = [ "Test Author" ]
+
+[link]
+"~/.bashrc" = "shell/zshrc"

@@ -1,0 +1,6 @@
+[package]
+name = "example_dot_source_change_v1"
+authors = [ "Test Author" ]
+
+[link]
+"~/.bashrc" = "shell/bashrc"
