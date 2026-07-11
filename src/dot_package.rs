@@ -37,7 +37,7 @@ impl DotPackageConfig {
             Ok(package) => package,
             Err(err) => {
                 error!("Error parsing Dot.toml:\n{}", err);
-                return Err(anyhow!("Error reading Dot.toml"));
+                return Err(anyhow!("Error parsing Dot.toml"));
             }
         };
 
