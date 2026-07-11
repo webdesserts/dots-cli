@@ -123,7 +123,7 @@ pub fn get_origin() -> Result<String, GitError> {
             .output(),
     )?;
 
-    let string = String::from_utf8(output.stdout).expect("unable to convert origin output to utf8");
+    let string = String::from_utf8_lossy(&output.stdout);
 
     Ok(string.trim().to_string())
 }
@@ -137,7 +137,7 @@ pub fn get_status(dir: &Utf8Path) -> Result<String, GitError> {
             .output(),
     )?;
 
-    let string = String::from_utf8(output.stdout).expect("unable to convert status output to utf8");
+    let string = String::from_utf8_lossy(&output.stdout);
 
     Ok(string.trim_end().to_string())
 }
