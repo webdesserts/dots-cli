@@ -97,13 +97,32 @@ fn resolve_dest(anchor: Anchor, src: &ResolvedAnchor) -> ResolvedAnchor {
                         let src_path: Option<PathBuf> = src.path.as_ref().map(|path| path.into());
                         match path.read_link() {
                             Ok(linked_path) => {
+                                // Clone for potential use in source-path-change check
+                                let linked_path_clone = linked_path.clone();
+                                
                                 if Some(linked_path) == src_path {
+                                    // Symlink already points to the desired source - no issue
                                     None
                                 } else {
-                                    Some(ResolveIssue::new(
-                                        &dest.original,
-                                        ResolveIssueKind::AlreadyExists(file_type),
-                                    ))
+                                    // Symlink exists but points to a different source.
+                                    // Check if this is a "source-path-change" scenario:
+                                    // - If the existing symlink points to a file inside the
+                                    //   dots directory, it's a source-path-change (silently update)
+                                    // - Otherwise, warn about overwriting a user's file
+                                    let dots_dir = Utf8PathBuf::from(home().join(".dots"));
+                                    let is_source_path_change = linked_path_clone
+                                        .starts_with(&dots_dir);
+
+                                    if is_source_path_change {
+                                        // Source path changed - this is OK
+                                        None
+                                    } else {
+                                        // Overwriting a user's symlink - warn
+                                        Some(ResolveIssue::new(
+                                            &dest.original,
+                                            ResolveIssueKind::AlreadyExists(file_type),
+                                        ))
+                                    }
                                 }
                             }
                             Err(_) => None,

@@ -912,8 +912,10 @@ authors = [ "Test Author" ]
 "#;
         std::fs::write(&dot_toml_path, new_dot_toml)?;
 
-        // Step 3: Run install again with --force to update the symlink
-        let output = manager.cmd(BIN)?.arg("install").arg("--force").output()?;
+        // Step 3: Run install again WITHOUT --force to update the symlink
+        // This is the key scenario: the source path changed but the link is still valid
+        // (the target file shell/zshrc exists in the dot package)
+        let output = manager.cmd(BIN)?.arg("install").output()?;
         output.assert_success();
 
         // Assertion (a): The destination symlink exists and points to the new source

@@ -13,6 +13,7 @@ use crate::plan::resolve::{ResolveIssueKind, ResolvedLink};
 use anyhow::Result;
 use camino::Utf8Path;
 use std::{
+    collections::HashSet,
     fmt::{self, Display},
     io,
 };
@@ -398,6 +399,12 @@ impl Plan {
     ) -> Vec<Action> {
         let mut actions = vec![];
 
+        // Collect all destination paths from current links for quick lookup
+        let current_dest_paths: HashSet<_> = current_links
+            .iter()
+            .map(|link| &link.dest.path)
+            .collect();
+
         // Clean up stale symlinks
         for footprint_link in &fs_manager.footprint.links {
             // Skip links that point outside dots directory - they're not ours to manage
@@ -406,6 +413,13 @@ impl Plan {
             }
 
             if footprint_link.dest.path.is_symlink() {
+                // Check if this destination path is covered by a current link.
+                // If so, we should NOT remove it - the current link will recreate/update it.
+                // This handles the case where a link's source path changed in Dot.toml.
+                if current_dest_paths.contains(&footprint_link.dest.path) {
+                    continue;
+                }
+
                 if !footprint_link.exists() {
                     // Stale symlink pointing to wrong target
                     actions.push(Action::RemoveLink(footprint_link.clone()));
