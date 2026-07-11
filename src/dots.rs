@@ -2,7 +2,7 @@ use crate::dot_package::{DotPackageConfig, DotPackageMeta};
 use crate::plan::links::Link;
 use crate::plan::resolve::{resolve, ResolvedLink};
 use crate::utils::{self, fs::home};
-use anyhow::Result;
+use anyhow::{bail, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use std::{env, fs, io, process};
 use tempfile::tempdir;
@@ -150,18 +150,10 @@ pub fn add(url: &str, overwrite: bool, env: &Environment) {
 pub fn remove(dot_name: &str, env: &Environment) -> Result<()> {
     match find(dot_name, env) {
         Some(dot) => {
-            fs::remove_dir_all(&dot.path).unwrap_or_else(|err| {
-                error!("Unable to remove dot directory:\n{}", dot.path);
-                error!("{}", err);
-                process::exit(1);
-            });
+            fs::remove_dir_all(&dot.path)?;
         }
         None => {
-            error!(
-                "Unable to find an installed dot with the name: {}",
-                dot_name
-            );
-            process::exit(1);
+            bail!("Unable to find an installed dot with the name: {}", dot_name);
         }
     }
     Ok(())

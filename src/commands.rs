@@ -77,7 +77,10 @@ pub fn install(repo: &Option<String>, overwrite: bool, force: bool, dry: bool) {
 pub fn uninstall(name: &Option<String>) {
     let env = Environment::new();
     if let Some(name) = name {
-        dots::remove(name, &env).unwrap();
+        if let Err(err) = dots::remove(name, &env) {
+            error!("{}", err);
+            process::exit(1);
+        }
     };
     let plan = Plan::new(false);
     let mut fs_manager = FSManager::init(&env);
