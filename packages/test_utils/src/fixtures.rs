@@ -12,7 +12,6 @@ pub enum Fixture {
     ConflictingDot,
     ExampleDotWithSelfLink,
     ExampleDotSourceChangeV1,
-    ExampleDotSourceChangeV2,
 }
 
 impl Fixture {
@@ -33,7 +32,6 @@ impl Fixture {
             Self::ConflictingDot => "conflicting_dot",
             Self::ExampleDotWithSelfLink => "example_dot_with_self_link",
             Self::ExampleDotSourceChangeV1 => "example_dot_source_change_v1",
-            Self::ExampleDotSourceChangeV2 => "example_dot_source_change_v2",
         }
     }
 
@@ -45,7 +43,6 @@ impl Fixture {
             Self::ExampleDotWithUnlinkedFile => "example_dot_with_unlinked_file",
             Self::ExampleDotWithNestedDirectories => "example_dot_with_nested_directories",
             Self::ExampleDotSourceChangeV1 => "example_dot_source_change_v1",
-            Self::ExampleDotSourceChangeV2 => "example_dot_source_change_v2",
             _ => self.name(),
         };
         Self::templates_root().join(subpath)
